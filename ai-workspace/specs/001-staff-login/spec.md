@@ -36,7 +36,7 @@ Provide a sign-in screen for optical store staff to access the ERP/POS. The UI m
 | Left branding panel (logo, headline, hero, features, copyright) | Social login |
 | Right login form panel (welcome, fields, actions, footer) | Multi-tenant store picker on login |
 
-**Primary target:** tablet (iPad / Android tablet). On phone, show **form panel only**; branding panel hidden below 768px.
+**Primary target:** tablet (iPad / Android tablet). On phone, show **form panel only**; branding panel hidden when phone breakpoint rules apply (see [`002-common-components`](../002-common-components/spec.md#responsive-breakpoints-canonical)).
 
 ### Page structure
 
@@ -121,7 +121,7 @@ Implementation must be visually indistinguishable from **`EyewaLogin.png`** (ful
 ### Layout and spacing
 
 - Page background: **light grey**; centered **white rounded card** with subtle shadow (~1080px max width on tablet)
-- Split: **~45% branding / ~55% form** on tablet (≥768px)
+- Split: **~45% branding / ~55% form** on tablet (`(min-width: 768px)` or `(min-width: 600px) and (min-height: 700px)`)
 - Form content vertically centered in right panel; max-width ~440px
 - Watermark **below card**: “Powered by **FADEL**” — grey text, **FADEL** in purple bold
 - Touch-friendly tap targets (min ~44px height on buttons and inputs)
@@ -240,7 +240,7 @@ Store staff need a fast, trustworthy way to open the system at the start of a sh
 - [x] Left panel shows logo, headline, hero, three features, copyright
 - [x] **All colors, fonts, borders, radii, spacing, and control styles match** the Visual design section and reference
 - [x] “Powered by **FADEL**” watermark below the card
-- [x] Phone (<768px): form-only card; branding panel hidden
+- [x] Phone: form-only card; branding panel hidden (phone breakpoint rules)
 - [ ] Side-by-side comparison with `EyewaLogin.png` shows no intentional visual differences (QA sign-off pending)
 
 ### Story 8 — Show logged-in staff in POS header and profile
@@ -580,7 +580,7 @@ npm start
 
 ## Out of scope
 
-- **Left branding / marketing panel** on phone-only simplified view (hidden <768px; not removed from spec)
+- **Left branding / marketing panel** on phone-only simplified view (hidden on phone breakpoints; not removed from spec)
 - Self-service user registration
 - Social login (Google, Apple, etc.)
 - Multi-tenant store picker on this screen (unless specified in a follow-up story)

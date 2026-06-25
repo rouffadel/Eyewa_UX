@@ -3,7 +3,7 @@ component: app-header
 parent: specs/002-common-components
 status: done
 created: 2026-06-18
-updated: 2026-06-24
+updated: 2026-06-26
 source: raw-knowledge/files/POSScreen.png
 ---
 
@@ -115,10 +115,18 @@ Tapping or typing in the header search field queries the Eyewa **`customersearch
 
 ## Responsive
 
+Canonical breakpoint rules: [`../../spec.md#responsive-breakpoints-canonical`](../../spec.md#responsive-breakpoints-canonical).
+
 | Breakpoint | Behavior |
 |------------|----------|
-| **Tablet (≥768px)** | Full ERP row; search grows; name + store always visible |
-| **Phone (<768px)** | Same structure; search may shrink; loyalty label may hide |
+| **Tablet** | Full ERP single row; search grows; name + store visible |
+| **Phone** | Search wraps to second row; loyalty label hidden; profile text hidden |
+| **Narrow tablet (600–767px wide, ≥700px tall)** | Full single row (not phone wrap); hide `ERP` suffix and tighten padding to fit |
+
+| Detection | Media query |
+|-----------|-------------|
+| Tablet | `(min-width: 768px)` **or** `(min-width: 600px) and (min-height: 700px)` |
+| Phone | `(max-width: 599px)` **or** `(max-width: 767px) and (max-height: 699px)` |
 
 ## Component API
 

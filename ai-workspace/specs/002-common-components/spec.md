@@ -3,7 +3,7 @@ feature: common-components
 status: in-progress
 owner: 
 created: 2026-06-18
-updated: 2026-06-24
+updated: 2026-06-26
 source: raw-knowledge/files/POSScreen.png
 reference: Eyewa POS shell — tablet header + bottom navigation
 used_by: poc-landing and future POS features
@@ -66,6 +66,54 @@ Add to `src/styles.css` (extends login tokens from `001-staff-login`):
 | `--color-nav-inactive` | Inactive tab — grey |
 | `--header-height-app-bar` | App bar height (~56–72px) |
 | `--bottom-nav-height` | Bottom nav height (~56–64px) |
+| `--breakpoint-tablet` | Wide tablet threshold — `768px` |
+| `--breakpoint-tablet-portrait-min` | Narrow tablet portrait min width — `600px` |
+| `--breakpoint-tablet-portrait-height` | Narrow tablet portrait min height — `700px` |
+| `--breakpoint-phone-max` | Phone max width — `599px` |
+| `--breakpoint-tablet-wide` | Wide tablet padding/grid tuning — `1024px` |
+
+## Responsive breakpoints (canonical)
+
+All POS shell and Sell features share one breakpoint strategy. CSS variables above document the values; **media queries repeat the pixel literals** (CSS does not allow `var()` inside `@media`).
+
+### Why two tablet paths?
+
+Android tablets (e.g. **Nokia T20 10.4"**, 1200×2000 px) often report a **~600 px CSS viewport width** in portrait because of device pixel ratio. A single `min-width: 768px` rule would incorrectly show the **phone stacked layout** on a large tablet.
+
+### Tablet layout
+
+Apply tablet layout when **either**:
+
+- `(min-width: 768px)` — iPad, landscape tablets, wide Android tablets
+- `(min-width: 600px) and (min-height: 700px)` — tall portrait tablets with narrow CSS width (Nokia T20, many 10" Android tablets)
+
+### Phone layout
+
+Apply phone layout when **either**:
+
+- `(max-width: 599px)` — typical phones in portrait
+- `(max-width: 767px) and (max-height: 699px)` — phones in landscape (avoids false tablet detection)
+
+### Container queries (card-level)
+
+Where a card sits inside a narrow dashboard column, use **`container-type: inline-size`** on the card root and `@container` rules so grids adapt to **column width**, not only viewport width. Used by product catalog and payment cards on the Sell dashboard.
+
+### Reference viewports (manual QA)
+
+| Device / size | CSS viewport (approx.) | Expected layout |
+|---------------|------------------------|-----------------|
+| iPhone portrait | 375×667 | Phone stack |
+| iPhone landscape | 667×375 | Phone stack |
+| Nokia T20 portrait | 600×1000 | Tablet (3-column Sell grid) |
+| Nokia T20 landscape | 1200×750 | Tablet (3-column Sell grid) |
+| iPad / 1024×768 | 1024×768 | Tablet (full ERP header + 3-column Sell) |
+
+### Adoption status
+
+| Feature | Canonical breakpoints | Notes |
+|---------|----------------------|-------|
+| Sell dashboard, shell header, login | **Done** | Media + container queries |
+| Prescription, measurements, create customer | **Pending** | Still use `min-width: 768px`; align to canonical rules |
 
 ## Shared requirements
 
@@ -113,6 +161,7 @@ npm start
 # + New Customer → /home/createcustomer (chrome hidden)
 # Header search → type mobile → select result → Sell customer card updates
 # Bottom tabs switch Sell / Prescription / Measurements / Delivery / More
+# Nokia T20 portrait (~600×1000): Sell tab shows 3-column tablet grid, not phone stack
 ```
 
 ## Open questions (shared)

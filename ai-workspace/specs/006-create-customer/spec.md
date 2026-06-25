@@ -73,7 +73,7 @@ Standalone page (same chrome pattern as profile):
 └───────────────────────────────────────┘
 ```
 
-**Tablet (≥768px):** form is centered (max ~720px); labels and inputs align in a horizontal row; action buttons align with the input column.
+**Tablet:** form is centered (max ~720px); labels and inputs align in a horizontal row; action buttons align with the input column. Use canonical tablet rules from [`002-common-components`](../002-common-components/spec.md#responsive-breakpoints-canonical) (implementation: `≥768px` today; align to `600px + height` rule in follow-up).
 
 | Region | Behavior |
 |--------|----------|

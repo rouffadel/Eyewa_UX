@@ -3,7 +3,7 @@ component: product-catalog-card
 parent: specs/005-sell-dashboard
 status: in-progress
 created: 2026-06-20
-updated: 2026-06-18
+updated: 2026-06-26
 ---
 
 # Component: Product catalog card
@@ -40,7 +40,17 @@ Active tab: blue text + underline.
 | SKU | FRM-0001 |
 | Price | **650.00 SAR** |
 
-Grid: 4 columns tablet, 2 phone. Pagination dots stub.
+Grid adapts by **viewport** and **card column width** (`container-type: inline-size` on `.catalog-card`):
+
+| Context | Columns |
+|---------|---------|
+| Phone (viewport) | 2 |
+| Tablet (viewport) | 3 (compact tiles) |
+| Card column ≤ 420px (`@container`) | 2 |
+| Card column ≥ 560px (`@container`) | 3 |
+| Card column ≥ 720px (`@container`) | 4 |
+
+Pagination dots stub.
 
 Tap tile → **add to cart** (blocked if no customer selected).
 

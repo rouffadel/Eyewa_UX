@@ -214,7 +214,7 @@ Login UI must not hard-code URLs; use `AppConfigService.settings.apiUrl`.
 ### Step 5 — Visual QA
 1. Side-by-side screenshot compare with `EyewaLogin.png` (form panel)
 2. Adjust tokens until spacing, colors, and radii match
-3. Check 375px and 768px breakpoints
+3. Check breakpoints: 375px phone, 768px tablet, ~600×1000 Nokia T20 portrait (split card visible)
 
 ### Step 6 — Auth API integration (Phase 3 — **next**)
 

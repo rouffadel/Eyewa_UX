@@ -3,7 +3,7 @@ feature: sell-dashboard
 status: draft
 spec: ./spec.md
 project: optical-pos
-updated: 2026-06-20
+updated: 2026-06-26
 depends_on: specs/002-common-components
 ---
 
@@ -93,28 +93,28 @@ Remove or delete `features/pos/welcome/` after migration. Default redirect `/hom
 
 ### Layout — `SellDashboardComponent`
 
-**Tablet grid (≥768px):**
+**Tablet grid** — apply when [`002-common-components`](../002-common-components/spec.md#responsive-breakpoints-canonical) tablet rules match:
 
 ```css
+/* Tablet: (min-width: 768px) OR (min-width: 600px AND min-height: 700px) */
 .sell-dashboard {
   display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(360px, 2fr) minmax(280px, 1.2fr);
-  gap: 1rem;
-  padding: 1rem;
-  align-items: start;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0.625rem;
+  padding: 0.625rem;
+  min-height: var(--sell-panel-min-height);
+  overflow: hidden;
 }
 
-.sell-dashboard__col-left,
-.sell-dashboard__col-middle,
-.sell-dashboard__col-right {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  min-width: 0;
-}
+.sell-dashboard__panel--left  { grid-column: 1 / span 3; }  /* ~25% */
+.sell-dashboard__panel--middle { grid-column: 4 / span 5; } /* ~42% */
+.sell-dashboard__panel--right  { grid-column: 9 / span 4; }  /* ~33% */
 ```
 
-**Phone (<768px):** single column — same DOM order as spec (customer → latest Rx → catalog → cart → payment).
+At `≥1024px`, increase gap/padding only. Panels use `overflow-y: auto` so content scrolls inside fixed chrome (header + bottom nav).
+
+**Phone** — apply when phone rules match: single column — same DOM order as spec (customer → latest Rx → catalog → cart → payment). Phone panels get frosted card wrappers.
 
 **Card chrome (shared):**
 
@@ -352,6 +352,7 @@ Full entity definitions → optional [`data-model.md`](./data-model.md) (create 
 
 - [ ] Sell tab active in bottom nav at `/home/sell`
 - [ ] Tablet 1024×768: three columns match upper reference layout
+- [ ] Nokia T20 portrait (~600×1000 CSS): three columns; no phone stack; payment methods readable
 - [ ] Phone 375px: vertical stack, no horizontal scroll
 - [ ] Landscape tablet: cards scroll independently where needed
 - [ ] Compare customer, catalog, cart, payment cards to `POSScreen.png`

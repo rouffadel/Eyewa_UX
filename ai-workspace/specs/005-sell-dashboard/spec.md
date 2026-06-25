@@ -3,7 +3,7 @@ feature: sell-dashboard
 status: in-progress
 owner: 
 created: 2026-06-20
-updated: 2026-06-24
+updated: 2026-06-26
 source: raw-knowledge/files/POSScreen.png
 reference: Eyewa POS — Sell tab upper dashboard (top cards only)
 depends_on: specs/002-common-components
@@ -73,9 +73,21 @@ Tablet-first **Sell tab** at `/home/sell`: three-column layout with **five cards
 
 | Breakpoint | Behavior |
 |------------|----------|
-| **Tablet ≥768px** | CSS grid: 3 columns; catalog + cart stacked in column 2 |
-| **Phone <768px** | Stack: Customer → Rx → Catalog → Cart → Payment |
+| **Tablet** | CSS grid: 3 columns (25% / 42% / 33% on a 12-col grid); catalog + cart stacked in column 2; panels scroll independently |
+| **Phone** | Stack: Customer → Rx → Catalog → Cart → Payment |
 | **Rotation** | Reflow; scroll within cards |
+
+**Tablet detection** (see [`002-common-components`](../002-common-components/spec.md#responsive-breakpoints-canonical)):
+
+- `(min-width: 768px)` **or** `(min-width: 600px) and (min-height: 700px)`
+
+**Phone detection:**
+
+- `(max-width: 599px)` **or** `(max-width: 767px) and (max-height: 699px)`
+
+**Grid columns (tablet):** 12-column grid — left `span 3`, middle `span 5`, right `span 4` (~25% / ~42% / ~33%). Gives the payment column more room than the previous 3-6-3 split on narrow tablets (e.g. Nokia T20 portrait).
+
+**Card-level responsiveness:** Product catalog and payment cards use CSS **container queries** so product tiles and payment methods reflow inside narrow columns without horizontal overflow.
 
 ## Navigation
 
@@ -145,7 +157,7 @@ Details: [`services/spec.md`](./services/spec.md)
 
 ## Open questions
 
-- [ ] Exact column width ratios — `fr` units vs fixed reference?
+- [ ] Exact column width ratios — **resolved:** 12-col grid spans 3 / 5 / 4 (~25% / ~42% / ~33%)
 - [ ] Require customer before add-to-cart? (**Yes** in current app)
 - [ ] VAT from `AppConfigService.vatRate`? (**Yes** — 15%)
 - [ ] **View All** prescriptions — modal vs route?

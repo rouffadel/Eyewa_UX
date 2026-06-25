@@ -3,7 +3,7 @@ component: payment-card
 parent: specs/005-sell-dashboard
 status: done
 created: 2026-06-20
-updated: 2026-06-18
+updated: 2026-06-26
 ---
 
 # Component: Payment card
@@ -46,6 +46,8 @@ Large bold blue: **{amount} SAR**
 | Card | Outline |
 | Mixed | Outline |
 | More (…) | Outline |
+
+**Responsive:** Default layout is 4 columns in one row. When the payment card column is narrow (`@container (max-width: 320px)`), methods reflow to a **2×2 grid** with smaller tap targets — required on narrow tablet portrait columns (e.g. Nokia T20).
 
 ## Primary CTA
 

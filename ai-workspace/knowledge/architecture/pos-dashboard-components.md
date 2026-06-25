@@ -214,15 +214,22 @@ Detailed spec: [`specs/002-common-components/components/bottom-nav/spec.md`](../
 | Component | Responsibility |
 |-----------|----------------|
 | `PosShellComponent` | Header + main content area + bottom nav |
-| `PosDashboardLayoutComponent` | CSS Grid for tablet (multi-card); stacks or tabs on phone |
-| `ResponsiveBreakpointService` | Detect phone vs tablet; switch layout mode |
+| `PosDashboardLayoutComponent` | CSS Grid for tablet (multi-card); stacks on phone |
 
 ### Responsive strategy
 
+Canonical rules: [`specs/002-common-components/spec.md`](../specs/002-common-components/spec.md#responsive-breakpoints-canonical).
+
 | Breakpoint | Layout |
 |------------|--------|
-| **Tablet (≥768px)** | Multi-column grid as in the reference (customer + catalog + cart + payment side by side) |
-| **Phone (<768px)** | Bottom nav drives full-screen sections; Sell tab shows customer → catalog → cart → payment as a vertical flow or sub-tabs |
+| **Tablet** | Multi-column grid as in the reference (customer + catalog + cart + payment side by side) |
+| **Phone** | Bottom nav drives full-screen sections; Sell tab shows customer → catalog → cart → payment as a vertical stack |
+
+**Tablet detection:** `(min-width: 768px)` **or** `(min-width: 600px) and (min-height: 700px)` — covers Android tablets (e.g. Nokia T20 10.4") whose CSS width is ~600px in portrait.
+
+**Sell dashboard grid (tablet):** 12-column CSS grid — columns span 3 / 5 / 4 (~25% / ~42% / ~33%). Product catalog and payment cards use **container queries** for column-width-aware grids.
+
+`ResponsiveBreakpointService` (JS breakpoint detection) remains **out of scope** — layout is CSS-only via media and container queries.
 
 ## 5. Supporting services & state
 

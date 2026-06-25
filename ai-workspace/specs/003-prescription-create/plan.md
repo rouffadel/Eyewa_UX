@@ -125,7 +125,7 @@ Mock save attaches `customerId: 'cust-demo-001'` when not provided.
 
 - Outer: `.prescription-page` padding inside shell content safe areas
 - Card: `.prescription-card` white, border, radius 12px
-- Body grid: OD/OS two columns on `≥640px`; shared fields third column on tablet (`≥768px`)
+- Body grid: OD/OS two columns on `≥640px`; shared fields third column on tablet (canonical rules in [`002-common-components`](../002-common-components/spec.md#responsive-breakpoints-canonical); implementation: `≥768px` today)
 - Footer: `.prescription-actions` — primary Save full width; Print + Cancel row with printer SVG icon
 - Messages: success / error / info inline banners with `role="status"` / `role="alert"`
 

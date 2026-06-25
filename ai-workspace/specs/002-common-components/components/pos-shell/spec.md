@@ -3,7 +3,7 @@ component: pos-shell
 parent: specs/002-common-components
 status: done
 created: 2026-06-18
-updated: 2026-06-24
+updated: 2026-06-26
 source: raw-knowledge/files/POSScreen.png
 ---
 
@@ -60,9 +60,11 @@ Controlled by `PosShellComponent.hideShellChrome`.
 
 ## Responsive main content
 
+Canonical breakpoint rules: [`../../spec.md#responsive-breakpoints-canonical`](../../spec.md#responsive-breakpoints-canonical).
+
 | Breakpoint | Behavior |
 |------------|----------|
-| **Tablet** | Multi-column grids per feature spec (e.g. Sell dashboard) |
+| **Tablet** | Multi-column grids per feature spec (e.g. Sell dashboard 3-column grid) |
 | **Mobile** | Single column; tab switches full-screen section |
 
 ## User stories
