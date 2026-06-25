@@ -1,0 +1,6 @@
+[submodule "optical-pos-angular-capacitor-ux"]
+	path = optical-pos-angular-capacitor-ux
+	url = https://github.com/ishaqshaik222/optical-pos-angular-capacitor-ux.git
+[submodule "ai-workspace/optical-pos-angular-capacitor-ux"]
+	path = ai-workspace/optical-pos-angular-capacitor-ux
+	url = https://github.com/ishaqshaik222/optical-pos-angular-capacitor-ux.git
