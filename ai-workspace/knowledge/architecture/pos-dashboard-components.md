@@ -158,7 +158,8 @@ Detailed spec: [`specs/005-sell-dashboard/components/customer-profile-card/spec.
 ### `ProductCatalogCardComponent`
 
 - `Tabs` (Frames, Lenses, Accessories, Contact Lens)
-- Search + barcode scan + filter actions
+- Search field with **barcode scan icon inside** (right) + filter action
+- `BarcodeScanService` (`@capacitor/barcode-scanner`) → mock `findProductByBarcode()` → add to cart
 - `ProductGridComponent` → list of `ProductCardComponent`
 - `PaginationDots` for carousel pages
 
@@ -173,18 +174,39 @@ Detailed spec: [`specs/005-sell-dashboard/components/customer-profile-card/spec.
 - "Clear Cart" footer action
 - Empty state when no items
 
-### `PaymentCheckoutCardComponent`
+### `PaymentCheckoutCardComponent` (`PaymentCardComponent`)
 
 - `SummaryRow` list (Subtotal, Discount input, VAT, Total)
-- `ToggleSwitch` for loyalty redemption
+- `ToggleSwitch` for loyalty redemption (off by default)
 - `PaymentMethodSelectorComponent` (Cash, Card, Mixed, More — icon chips)
-- `PayAndPrintButton` (primary CTA, loading/disabled states)
+- Mixed panel: independent cash/card inputs + **Amount Paid** + **Balance**
+- **Pay** + **Pay & Print** (side by side); F9 hint
+- Register shortcuts (2×2): Daily report, Cash report, Open register, Close register (stubs)
+
+### `InvoicePreviewComponent`
+
+- Route: `/home/sell/invoice` (lazy)
+- Fields from `Invoice.jpeg`; POS card styling
+- Opened after **Pay & Print**; Print stub; Cancel → Sell
+
+### `PrescriptionHistoryComponent` (003)
+
+- Route: `/home/prescription/history`
+- Selectable list of saved prescriptions per customer
+- **View on Sell Dashboard** updates latest Rx on Sell
+- Linked from Sell **View All** / **View History**
+
+Detailed spec: [`specs/003-prescription-create/spec.md`](../../specs/003-prescription-create/spec.md)
 
 ### `PrescriptionFormCardComponent`
 
+- Customer banner from `SellSessionStore`
+- Collapsible **FRAMES** accordion — frame line cards (category, brand, model, price, qty, discount)
+- Collapsible **LENSES** accordion — Order Lens toggle; lens line cards when enabled
 - `PrescriptionGrid` for OD/OS
 - Numeric fields: SPH, CYL, AXIS, ADD, PD, Near PD, VD, Notes
 - Actions: Save Prescription, Print, Cancel
+- **No date or doctor fields** on this tab
 - Optional `EyeDiagram` reference
 
 Detailed spec: [`specs/003-prescription-create/spec.md`](../../specs/003-prescription-create/spec.md)
@@ -241,11 +263,12 @@ Canonical rules: [`specs/002-common-components/spec.md`](../specs/002-common-com
 | `PrescriptionService` | OD/OS values, validation rules |
 | `MeasurementService` | Fitting measurements per order |
 | `OrderService` | Order status, stage transitions |
-| `PaymentService` | Totals, discount, VAT, loyalty redemption, payment method |
+| `SellSessionStore` | Customer, cart, payment draft, invoice, barcode scan orchestration |
+| `PaymentService` | Totals, discount, VAT, loyalty, mixed balance, validation |
+| `BarcodeScanService` | Capacitor barcode scan |
+| `invoice.mapper` | Invoice preview view model |
 | `AuthService` | Staff session, branch context (see `specs/001-staff-login/`) |
-| `NotificationService` | In-app alerts badge |
-| `PrintService` | Receipt generation after pay |
-| `BarcodeScannerService` | Camera / hardware scanner integration |
+| `PrintService` | Receipt generation after pay (Phase 4) |
 | `AppConfigService` | API URL, VAT rate, currency |
 
 ### State management
@@ -263,7 +286,7 @@ This keeps cards in sync without tight coupling.
 
 | Plugin / capability | Used by |
 |---------------------|---------|
-| `@capacitor/camera` or barcode plugin | Product scan |
+| `@capacitor/barcode-scanner` | Product scan in catalog search (**Done**) |
 | `@capacitor/haptics` | Tap feedback on pay, add to cart |
 | `@capacitor/status-bar` | Match header color on native |
 | `@capacitor/keyboard` | Adjust layout when keyboard opens (prescription forms) |
@@ -322,7 +345,8 @@ src/app/
 - **Shell components index:** [`specs/002-common-components/spec.md`](../../specs/002-common-components/spec.md)
 - **Component specs:** [`app-header`](../../specs/002-common-components/components/app-header/spec.md) · [`profile-page`](../../specs/002-common-components/components/profile-page/spec.md) · [`bottom-nav`](../../specs/002-common-components/components/bottom-nav/spec.md) · [`pos-shell`](../../specs/002-common-components/components/pos-shell/spec.md)
 - **Sell dashboard index:** [`specs/005-sell-dashboard/spec.md`](../../specs/005-sell-dashboard/spec.md)
-- **Sell components:** [customer-profile-card](../../specs/005-sell-dashboard/components/customer-profile-card/spec.md) · [latest-prescription-summary](../../specs/005-sell-dashboard/components/latest-prescription-summary/spec.md) · [product-catalog-card](../../specs/005-sell-dashboard/components/product-catalog-card/spec.md) · [cart-card](../../specs/005-sell-dashboard/components/cart-card/spec.md) · [payment-card](../../specs/005-sell-dashboard/components/payment-card/spec.md) · [services](../../specs/005-sell-dashboard/services/spec.md)
+- **Sell components:** [customer-profile-card](../../specs/005-sell-dashboard/components/customer-profile-card/spec.md) · [latest-prescription-summary](../../specs/005-sell-dashboard/components/latest-prescription-summary/spec.md) · [product-catalog-card](../../specs/005-sell-dashboard/components/product-catalog-card/spec.md) · [cart-card](../../specs/005-sell-dashboard/components/cart-card/spec.md) · [payment-card](../../specs/005-sell-dashboard/components/payment-card/spec.md) · [invoice-preview](../../specs/005-sell-dashboard/components/invoice-preview/spec.md) · [services](../../specs/005-sell-dashboard/services/spec.md)
+- Invoice reference: [`raw-knowledge/files/Invoice.jpeg`](../../raw-knowledge/files/Invoice.jpeg)
 - Visual reference: [`raw-knowledge/files/POSScreen.png`](../../raw-knowledge/files/POSScreen.png)
 - Auth prerequisite: [`specs/001-staff-login/`](../../specs/001-staff-login/)
 - Implementation target: `optical-pos-angular-capacitor-ux/`

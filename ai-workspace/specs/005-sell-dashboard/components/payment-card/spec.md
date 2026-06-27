@@ -3,14 +3,14 @@ component: payment-card
 parent: specs/005-sell-dashboard
 status: done
 created: 2026-06-20
-updated: 2026-06-26
+updated: 2026-06-28
 ---
 
 # Component: Payment card
 
 **Parent index:** [`../../spec.md`](../../spec.md)
 
-**Column 3** — totals, loyalty redemption, payment methods, **Pay & Print**.
+**Column 3** — totals, loyalty redemption, payment methods, checkout actions, register shortcuts.
 
 ## Title
 
@@ -30,56 +30,81 @@ updated: 2026-06-26
 | Element | Reference |
 |---------|-----------|
 | Label | Redeem Loyalty Points |
-| Toggle | On/off |
-| Points input | Numeric |
-| Deduction | Green negative amount |
+| Toggle | Off by default; resets on customer change and after pay |
+| Points input | Read-only; populated when toggle on |
+| Deduction | Green negative amount when redeemed |
 
 ## Payable amount
 
-Large bold blue: **{amount} SAR**
+Bold blue: **{amount} SAR**
 
-## Payment methods (2×2 grid)
+## Payment methods (4-column grid)
 
-| Method | Default |
-|--------|---------|
-| Cash | Selected (green border + check) |
-| Card | Outline |
-| Mixed | Outline |
-| More (…) | Outline |
+| Method | Behavior |
+|--------|----------|
+| Cash | Full payable on cash; auto-synced |
+| Card | Full payable on card; auto-synced |
+| Mixed | Independent cash + card inputs |
+| More (…) | Blocks pay until another method selected |
 
-**Responsive:** Default layout is 4 columns in one row. When the payment card column is narrow (`@container (max-width: 320px)`), methods reflow to a **2×2 grid** with smaller tap targets — required on narrow tablet portrait columns (e.g. Nokia T20).
+**Responsive:** `@container (max-width: 320px)` → methods reflow to **2×2**.
 
-## Primary CTA
+### Mixed method panel
 
-| Button | Notes |
-|--------|-------|
-| **PAY & PRINT** | Full-width blue; optional **F9** hint |
+| Field | Behavior |
+|-------|----------|
+| Cash | Editable; does **not** auto-fill card |
+| Card | Editable; does **not** auto-fill cash |
+| Amount Paid | `cash + card` (read-only summary) |
+| Balance | `payable − amount paid`; red when &gt; 0 |
 
-Disabled when cart empty or no customer.
+Pay enabled only when balance is **0.00** (within ±0.01), both mixed amounts &gt; 0, customer selected, cart non-empty.
+
+## Footer — checkout actions
+
+| Row | Buttons |
+|-----|---------|
+| Primary | **PAY** (outline) · **PAY & PRINT** (blue primary) |
+| Hint | F9 Pay & Print |
+| Register | **Daily report** · **Cash report** · **Open register** · **Close register** (2×2 grid) |
+
+| Button | Behavior (Phase 2) |
+|--------|---------------------|
+| **PAY** | Validate → record mock payment → status toast with breakdown → stay on Sell |
+| **PAY & PRINT** | Validate → build invoice → navigate `/home/sell/invoice` |
+| Register actions | Status toast stubs via `runPaymentRegisterAction()` |
+
+Disabled when `canPay()` is false.
 
 ## Copy
 
 | Element | Text |
 |---------|------|
 | Title | PAYMENT |
-| Subtotal / Discount / VAT / Total | As labeled |
-| Loyalty | Redeem Loyalty Points |
 | Payable | Payable Amount |
-| CTA | PAY & PRINT |
+| Mixed summary | Amount Paid, Balance |
+| CTAs | PAY, PAY & PRINT |
+| Register | Daily report, Cash report, Open register, Close register |
 | Currency | SAR |
 
 ## User stories
 
 - [x] Subtotal, discount, VAT, total, loyalty toggle, methods
-- [x] Pay & Print stub with valid cart + customer
-- [x] Totals update when cart or discount changes
-- [ ] Live payment API + print (Phase 3–4)
+- [x] Cash / Card / Mixed payment validation
+- [x] Mixed shows Amount Paid and Balance while entering split
+- [x] **Pay** records payment and stays on dashboard
+- [x] **Pay & Print** opens [invoice preview](../invoice-preview/spec.md)
+- [x] Register report buttons (stubs)
+- [x] Sticky footer with scrollable body (mixed inputs do not hide CTAs)
+- [ ] Live payment API (Phase 3)
+- [ ] Register reports + open/close register APIs (Phase 3)
+- [ ] Receipt print (Phase 4)
 
 ## Implementation
 
 | File | Role |
 |------|------|
 | `payment-card/payment-card.component.*` | UI |
-| `models/payment.models.ts` | `PaymentDraft`, methods |
-| `services/payment.service.ts` | VAT/totals math |
-| `services/sell-session.store.ts` | `paymentDraft`, `paymentTotals`, `canPay` |
+| `models/payment.models.ts` | `PaymentDraft`, `PaymentRegisterAction` |
+| `services/payment.service.ts` | Totals, mixed balance helpers, validation |
+| `services/sell-session.store.ts` | `paymentDraft`, `canPay`, `pay()`, `payAndPrint()` |

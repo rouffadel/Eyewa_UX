@@ -3,7 +3,7 @@ feature: sell-dashboard
 status: in-progress
 owner: 
 created: 2026-06-20
-updated: 2026-06-26
+updated: 2026-06-28
 source: raw-knowledge/files/POSScreen.png
 reference: Eyewa POS — Sell tab upper dashboard (top cards only)
 depends_on: specs/002-common-components
@@ -28,7 +28,8 @@ Tablet-first **Sell tab** at `/home/sell`: three-column layout with **five cards
 | **Product catalog** | [`components/product-catalog-card/spec.md`](./components/product-catalog-card/spec.md) | 2 (top) | **Done** (mock catalog) |
 | **Cart** | [`components/cart-card/spec.md`](./components/cart-card/spec.md) | 2 (bottom) | **Done** |
 | **Payment** | [`components/payment-card/spec.md`](./components/payment-card/spec.md) | 3 | **Done** |
-| **Services & state** | [`services/spec.md`](./services/spec.md) | — | Partial (customer search **Done**; catalog/payment APIs next) |
+| **Invoice preview** | [`components/invoice-preview/spec.md`](./components/invoice-preview/spec.md) | — (route) | **Done** (mock) |
+| **Services & state** | [`services/spec.md`](./services/spec.md) | — | Partial (checkout APIs next) |
 
 **Shell:** [`SellDashboardComponent`](../../../optical-pos-angular-capacitor-ux/src/app/features/pos/sell/sell-dashboard.component.ts) composes all cards.
 
@@ -55,9 +56,9 @@ Tablet-first **Sell tab** at `/home/sell`: three-column layout with **five cards
 | Phase | Scope | Status |
 |-------|--------|--------|
 | **1 — Layout & cards** | Grid, five cards, mock data | **Done** |
-| **2 — Interaction & state** | Cart, catalog tabs, payment, customer session | **Done** |
-| **3 — API integration** | Brand, order lens, catalog, payment APIs | **In progress** |
-| **4 — Native** | Barcode scan, Pay & Print | Planned |
+| **2 — Interaction & state** | Cart, catalog tabs, payment, barcode scan, invoice preview | **Done** |
+| **3 — API integration** | Brand, order lens, catalog, payment, register APIs | **In progress** |
+| **4 — Native** | Receipt print, register reports | Partial (barcode scan **Done**) |
 
 **Implementation plan:** [`plan.md`](./plan.md)
 
@@ -97,8 +98,12 @@ Tablet-first **Sell tab** at `/home/sell`: three-column layout with **five cards
 | Header customer search | `SellSessionStore.searchAndSelectCustomer()` (mock Phase 2) |
 | **+ New Customer** | [`006-create-customer`](../006-create-customer/spec.md) → session → Sell tab |
 | **New Prescription** (Rx card) | `/home/prescription` |
+| **View All** / **View History** (Rx card) | `/home/prescription/history` |
 | Product tap | Add to cart (requires customer) |
-| **Pay & Print** | Stub Phase 2; API + print Phase 3–4 |
+| Catalog barcode scan | Scan → lookup → add to cart / filter search |
+| **Pay** | Mock payment → status toast; stay on Sell |
+| **Pay & Print** | Mock payment → [`/home/sell/invoice`](./components/invoice-preview/spec.md) |
+| Register actions | Daily report, Cash report, Open/Close register → stubs |
 
 ## User stories (rollup)
 
@@ -107,7 +112,8 @@ Tablet-first **Sell tab** at `/home/sell`: three-column layout with **five cards
 | Sell dashboard on tablet | All cards + layout | **Done** |
 | Customer and Rx context | [customer-profile-card](./components/customer-profile-card/spec.md), [latest-prescription-summary](./components/latest-prescription-summary/spec.md) | **Done** (Rx mock) |
 | Browse and add products | [product-catalog-card](./components/product-catalog-card/spec.md) | **Done** (mock) |
-| Cart and checkout | [cart-card](./components/cart-card/spec.md), [payment-card](./components/payment-card/spec.md) | **Done** |
+| Cart and checkout | [cart-card](./components/cart-card/spec.md), [payment-card](./components/payment-card/spec.md), [invoice-preview](./components/invoice-preview/spec.md) | **Done** (mock) |
+| Barcode product scan | [product-catalog-card](./components/product-catalog-card/spec.md) | **Done** (Capacitor + mock) |
 | Phone layout | Index layout rules | **Done** |
 
 ## Shared requirements
@@ -136,7 +142,8 @@ Tablet-first **Sell tab** at `/home/sell`: three-column layout with **five cards
 | Customer create / session | [`006`](../006-create-customer/spec.md), `CustomerSessionService` | Customer |
 | Order lenses / Rx | `Admin/GetOrderLense` | Latest Rx |
 | Brands / catalog | `Admin/GetBrand` | Catalog |
-| Payment / order | TBD | Payment, Cart |
+| Payment / order | TBD | Payment, Cart, Invoice |
+| Register reports | TBD | Payment footer actions |
 
 Details: [`services/spec.md`](./services/spec.md)
 
@@ -152,7 +159,7 @@ Details: [`services/spec.md`](./services/spec.md)
 ## Out of scope
 
 - Full Prescription / Measurements / Delivery lower panels
-- Receipt printer (Phase 4)
+- Receipt printer hardware (Phase 4); invoice **preview** UI **Done**
 - Header / bottom nav
 
 ## Open questions
@@ -160,7 +167,7 @@ Details: [`services/spec.md`](./services/spec.md)
 - [ ] Exact column width ratios — **resolved:** 12-col grid spans 3 / 5 / 4 (~25% / ~42% / ~33%)
 - [ ] Require customer before add-to-cart? (**Yes** in current app)
 - [ ] VAT from `AppConfigService.vatRate`? (**Yes** — 15%)
-- [ ] **View All** prescriptions — modal vs route?
+- [x] **View All** prescriptions — route to `/home/prescription/history` ([`003`](../003-prescription-create/spec.md))
 - [ ] Real product images vs placeholder SVG?
 
 ## Verification
@@ -171,4 +178,7 @@ npm start
 # Login → Sell tab
 # Create customer via header → customer card shows invoice + mobile
 # Catalog tabs, add to cart, payment totals update
+# Mixed payment: enter cash + card → Balance row updates
+# Pay → toast; Pay & Print → invoice preview
+# Barcode scan in catalog search (mock SKU 8690001000001)
 ```

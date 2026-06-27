@@ -1,9 +1,9 @@
 ---
 component: product-catalog-card
 parent: specs/005-sell-dashboard
-status: in-progress
+status: done
 created: 2026-06-20
-updated: 2026-06-26
+updated: 2026-06-28
 ---
 
 # Component: Product catalog card
@@ -21,56 +21,68 @@ updated: 2026-06-26
 | 3 | Accessories | `accessories` |
 | 4 | Contact Lens | `contact-lens` |
 
-Active tab: blue text + underline.
+Active tab: blue pill styling.
 
 ## Toolbar
 
 | Control | Behavior |
 |---------|----------|
-| Search | Debounced filter (mock list Phase 2) |
-| Barcode icon | Stub (Phase 4 native) |
-| Filter icon | Stub |
+| Search | Filters mock list by name, SKU, or barcode; placeholder per tab |
+| Barcode | **Inside search field** (right icon); opens camera scan |
+| Filter | Stub — status toast |
+
+### Barcode scan (Done — mock catalog)
+
+| Step | Behavior |
+|------|----------|
+| Tap scan icon | `@capacitor/barcode-scanner` (`BarcodeScanService`) |
+| On scan | Set search text; lookup by barcode or SKU |
+| Match in category | Add to cart + success toast |
+| Match other category | Switch tab, add to cart |
+| No match | Filter search + “No product found” toast |
+| Cancel scan | No message |
+
+Mock frame barcodes (examples): `8690001000001` → Ray-Ban RB 2140 (`FRM-0001`).
+
+**Native:** Android `minSdkVersion` 26; iOS `NSCameraUsageDescription` required.
 
 ## Product tile
 
 | Element | Example |
 |---------|---------|
-| Image | Placeholder / line art |
+| Image | Placeholder SVG |
 | Brand + model | Ray-Ban RB 2140 |
 | SKU | FRM-0001 |
 | Price | **650.00 SAR** |
 
-Grid adapts by **viewport** and **card column width** (`container-type: inline-size` on `.catalog-card`):
+Grid uses **container queries** on `.catalog-card` (see parent spec).
 
-| Context | Columns |
-|---------|---------|
-| Phone (viewport) | 2 |
-| Tablet (viewport) | 3 (compact tiles) |
-| Card column ≤ 420px (`@container`) | 2 |
-| Card column ≥ 560px (`@container`) | 3 |
-| Card column ≥ 720px (`@container`) | 4 |
-
-Pagination dots stub.
-
-Tap tile → **add to cart** (blocked if no customer selected).
+Tap tile → **add to cart** (blocked if no customer — status banner).
 
 ## Phase 3 — API
 
 | Service | Endpoint | Use |
 |---------|----------|-----|
-| [`BrandService`](../../services/spec.md) | `Admin/GetBrand?BrandName={query}` | Brand lookup / filter |
-| Catalog (TBD) | Products by category | Replace mock grid |
+| [`BrandService`](../../services/spec.md) | `products/GetBrand` | Brand lookup |
+| Catalog (TBD) | Products by category | Replace mock grid + barcode lookup |
 
 ## Copy
 
-Search placeholder varies by tab (e.g. “Search frames…”).
+| Tab | Search placeholder |
+|-----|-------------------|
+| Frames | Search frames… |
+| Lenses | Search lenses… |
+| Accessories | Search accessories… |
+| Contact Lens | Search contact lens… |
 
 ## User stories
 
 - [x] Four tabs with active styling
 - [x] Product grid with SKU, price in SAR
 - [x] Tap adds to cart when customer selected
-- [x] Search/filter/barcode UI stubs
+- [x] Search filters by name / SKU / barcode
+- [x] Barcode scanner inside search box (Capacitor + mock lookup)
+- [x] Filter icon stub
 - [ ] Live catalog + brand API wired to grid
 
 ## Implementation
@@ -78,7 +90,7 @@ Search placeholder varies by tab (e.g. “Search frames…”).
 | File | Role |
 |------|------|
 | `product-catalog-card/product-catalog-card.component.*` | UI |
-| `models/product.models.ts` | `Product`, `CatalogCategory` |
-| `services/sell.mock-data.ts` | Mock products |
-| `services/brand.service.ts` | `GetBrand` |
-| `services/sell-session.store.ts` | `filteredProducts`, `addProductToCart()` |
+| `models/product.models.ts` | `Product` (+ optional `barcode`) |
+| `services/sell.mock-data.ts` | Mock products, `findProductByBarcode()` |
+| `services/barcode-scan.service.ts` | Capacitor scan wrapper |
+| `services/sell-session.store.ts` | `scanProductBarcode()`, `applyScannedBarcode()` |

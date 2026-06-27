@@ -3,7 +3,7 @@ area: sell-services
 parent: specs/005-sell-dashboard
 status: in-progress
 created: 2026-06-20
-updated: 2026-06-24
+updated: 2026-06-28
 ---
 
 # Sell tab — services & state
@@ -17,33 +17,62 @@ Shared services under `src/app/features/pos/sell/services/`.
 | Signal / method | Purpose |
 |-----------------|---------|
 | `selectedCustomer` | Active customer for sale |
-| `latestPrescription` | Rx summary (mock → `GetOrderLense`) |
+| `latestPrescription` | Rx summary (mock; sync from prescription save) |
+| `prescriptionHistory`, `selectedPrescriptionId` | Per-customer history selection |
 | `catalogCategory`, `catalogSearch` | Catalog filters |
 | `filteredProducts` | Computed product list |
-| `cartItems` | Cart lines |
-| `paymentDraft`, `paymentTotals` | Checkout state |
-| `canPay` | Customer + cart required |
-| `searchAndSelectCustomer()` | Legacy mock search (not used by header) |
-| `selectCustomer(customer)` | Set active customer (header search + create flow) |
-| `selectCreatedCustomer()` | After [`006-create-customer`](../../../006-create-customer/spec.md) |
-| `addProductToCart()` | Catalog → cart |
+| `cartItems`, `cartSubtotal`, `cartItemCount` | Cart lines |
+| `paymentDraft`, `paymentTotals`, `canPay` | Checkout state |
+| `lastInvoice` | Built on **Pay & Print** for invoice preview |
+| `statusMessage`, `addToCartBlockedMessage` | Dashboard banners |
+| `selectCustomer()` / `selectCreatedCustomer()` | Header + create flow |
+| `applySavedPrescription()` | Prescription tab → latest Rx + history |
+| `addProductToCart()` | Catalog → cart (customer required) |
+| `scanProductBarcode()` / `applyScannedBarcode()` | Barcode → search + cart |
+| `setPaymentMethod()`, `setMixedCashAmount()`, `setMixedCardAmount()` | Payment draft |
+| `pay(staffName)` | Validate → mock payment → toast; stay on Sell |
+| `payAndPrint(staffName)` | Validate → build invoice → navigate invoice |
+| `runPaymentRegisterAction()` | Register/report stubs |
 
 **File:** `services/sell-session.store.ts`
 
-## PaymentService
+## PaymentService — **Done** (local math)
 
-- `calculateTotals(subtotal, draft)` — discount, VAT, loyalty, payable
-- VAT rate from `AppConfigService.vatRate`
+| Method | Purpose |
+|--------|---------|
+| `calculateTotals()` | Discount → VAT → loyalty → payable |
+| `syncAmountsForMethod()` | Cash/card full amount; mixed preserves user inputs |
+| `applyMixedCashAmount()` / `applyMixedCardAmount()` | Independent mixed fields |
+| `isPaymentComplete()` / `paymentValidationMessage()` | Pay guard |
+| `mixedAmountPaid()`, `mixedBalanceRemaining()` | Mixed summary helpers |
+| `paymentAmountPaid()`, `paymentBalanceRemaining()` | Invoice totals |
 
-**File:** `services/payment.service.ts`
+VAT from `AppConfigService.vatRate` (default 15%).
+
+**Files:** `services/payment.service.ts`, `models/payment.models.ts`
+
+## BarcodeScanService — **Done** (Capacitor)
+
+| Item | Value |
+|------|--------|
+| Plugin | `@capacitor/barcode-scanner@3.x` |
+| Method | `scanBarcode()` → trimmed string or `null` if cancelled |
+
+**File:** `services/barcode-scan.service.ts`
+
+## Invoice mapper — **Done** (mock)
+
+| Function | Purpose |
+|----------|---------|
+| `buildInvoiceViewModel()` | Maps customer, cart, Rx, payment → invoice fields |
+
+**Files:** `services/invoice.mapper.ts`, `models/invoice.models.ts`
 
 ## BrandService — **Done**
 
 | Item | Value |
 |------|--------|
 | **Endpoint** | `GET products/GetBrand?BrandName={name}` |
-| **Config** | `getBrandPath` in appsettings |
-| **Returns** | `BrandOption[]` (`brandId`, `brandName`) |
 
 **Files:** `services/brand.service.ts`, `models/brand.models.ts`
 
@@ -52,44 +81,36 @@ Shared services under `src/app/features/pos/sell/services/`.
 | Item | Value |
 |------|--------|
 | **Endpoint** | `GET prescriptions/GetOrderLense?SalesId={id}` |
-| **Config** | `getOrderLensePath` in appsettings |
-| **Returns** | `OrderLenseOrder` — lenses[], od, os, additional readings |
-
-**Files:** `services/order-lense.service.ts`, `models/order-lense.models.ts`
 
 **Consumer (planned):** [latest-prescription-summary](../components/latest-prescription-summary/spec.md)
 
 ## Mock data (Phase 1–2)
 
-**File:** `services/sell.mock-data.ts` — products, seed cart (customer search now live via header)
+**File:** `services/sell.mock-data.ts`
+
+- `MOCK_PRODUCTS` with optional `barcode` per SKU
+- `findProductBySku()`, `findProductByBarcode()`, `filterProducts()`
+- Seed cart: frame + lenses (subtotal 1,100 → payable ~1,265 with VAT)
 
 ## CustomerSearchService — **Done** (header)
 
 | Item | Value |
 |------|--------|
 | **Endpoint** | `GET sales/customersearchfilter?mobileNumber={query}` |
-| **Config** | `customerSearchPath` in appsettings |
-| **Consumer** | [`002` app-header](../../../002-common-components/components/app-header/spec.md) → `PosShellComponent` → `SellSessionStore.selectCustomer()` |
-
-**Files:** `features/pos/customer/services/customer-search.service.ts`, `models/customer-search.models.ts`
-
-## Related (outside sell/)
-
-| Service | Location | Role |
-|---------|----------|------|
-| `CustomerSessionService` | `features/pos/customer/services/` | Post-create customer persistence |
-| `CustomerService` | `features/pos/customer/services/` | `InsertSales` |
-| `CustomerSearchService` | `features/pos/customer/services/` | Header customer lookup |
+| **Consumer** | app-header → `SellSessionStore.selectCustomer()` |
 
 ## Phase 3 roadmap
 
-| Service | Endpoint | Status |
-|---------|----------|--------|
+| Service | Endpoint / feature | Status |
+|---------|-------------------|--------|
 | Brand | `products/GetBrand` | **Done** |
-| Order lens | `prescriptions/GetOrderLense` | **Done** (not wired to UI) |
+| Order lens | `prescriptions/GetOrderLense` | **Done** (UI wiring TBD) |
 | Catalog products | TBD | Planned |
-| Customer search | `sales/customersearchfilter` | **Done** (header) |
-| Payment / order complete | TBD | Planned |
+| Customer search | `sales/customersearchfilter` | **Done** |
+| Checkout / payment | TBD | Planned |
+| Daily / cash reports | TBD | Planned |
+| Open / close register | TBD | Planned |
+| Invoice persist + print | TBD | Planned |
 
 ## App settings
 

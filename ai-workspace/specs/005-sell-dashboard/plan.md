@@ -3,7 +3,7 @@ feature: sell-dashboard
 status: draft
 spec: ./spec.md
 project: optical-pos
-updated: 2026-06-26
+updated: 2026-06-28
 depends_on: specs/002-common-components
 ---
 
@@ -18,6 +18,7 @@ depends_on: specs/002-common-components
   - [`components/product-catalog-card/spec.md`](./components/product-catalog-card/spec.md)
   - [`components/cart-card/spec.md`](./components/cart-card/spec.md)
   - [`components/payment-card/spec.md`](./components/payment-card/spec.md)
+  - [`components/invoice-preview/spec.md`](./components/invoice-preview/spec.md)
 - **Services:** [`services/spec.md`](./services/spec.md)
 - Visual reference: [`raw-knowledge/files/POSScreen.png`](../../raw-knowledge/files/POSScreen.png) — **upper section only**
 - Architecture: [`knowledge/architecture/pos-dashboard-components.md`](../../knowledge/architecture/pos-dashboard-components.md)
@@ -33,9 +34,9 @@ Replace the `/home/sell` **`WelcomeComponent`** placeholder with a **tablet-firs
 | Phase | Status | Notes |
 |-------|--------|--------|
 | **1 — Layout & cards (UI shell)** | **Done** | Grid + five cards, static mock data, stub actions |
-| **2 — Interaction & state** | **Done** | Cart, catalog tabs, payment totals, header search → customer |
-| **3 — Sell API integration** | After Phase 2 | Services + OpenAPI + config flags |
-| **4 — Native** | Planned | Barcode scan, Pay & Print |
+| **2 — Interaction & state** | **Done** | Cart, payment (Pay / Pay & Print), mixed balance, invoice preview, barcode scan, header customer |
+| **3 — Sell API integration** | In progress | Catalog checkout, register APIs |
+| **4 — Native** | Partial | Barcode scan **Done**; receipt print + register reports planned |
 
 **App path:** `optical-pos-angular-capacitor-ux/`  
 **Route today:** `/home/sell` → `SellDashboardComponent`  
@@ -57,17 +58,21 @@ optical-pos-angular-capacitor-ux/src/app/
 │       ├── product-catalog-card/
 │       ├── cart-card/
 │       ├── payment-card/
+│       ├── invoice-preview/
 │       ├── models/
 │       │   ├── customer.models.ts
 │       │   ├── product.models.ts
 │       │   ├── cart.models.ts
-│       │   └── payment.models.ts
+│       │   ├── payment.models.ts
+│       │   └── invoice.models.ts
 │       └── services/
-│           ├── sell-session.store.ts      # signals: customer, cart, payment draft
-│           ├── customer.service.ts        # mock Phase 1–2
-│           ├── catalog.service.ts
-│           ├── cart.service.ts
-│           └── payment.service.ts
+│           ├── sell-session.store.ts
+│           ├── sell.mock-data.ts
+│           ├── payment.service.ts
+│           ├── barcode-scan.service.ts
+│           ├── invoice.mapper.ts
+│           ├── brand.service.ts
+│           └── order-lense.service.ts
 ├── shared/ui/                             # optional Phase 1+ primitives
 │   ├── pos-card/                          # white card chrome (title bar + body)
 │   ├── quantity-stepper/
@@ -86,7 +91,11 @@ Update child of `PosShellComponent`:
 {
   path: 'sell',
   component: SellDashboardComponent,
-}
+},
+{
+  path: 'sell/invoice',
+  loadComponent: () => import('./features/pos/sell/invoice-preview/...'),
+},
 ```
 
 Remove or delete `features/pos/welcome/` after migration. Default redirect `/home` → `sell` unchanged.
@@ -209,9 +218,10 @@ Two lines matching reference — frame + lenses — so payment card shows 1,100.
 **Customer card — Last Visit row:** calendar icon + “Last Visit” label grouped on the **left**; visit date (e.g. `18-05-2024`) **right-aligned** on the same full-width row (`justify-content: space-between`).
 
 | `LatestPrescriptionSummaryComponent` | `summary`, `hasCustomer` | `viewAll`, `viewHistory`, `newPrescription` → router |
-| `ProductCatalogCardComponent` | `category`, `products`, `search` | `categoryChange`, `searchChange`, `productSelect`, `scan`, `filter` |
+| `ProductCatalogCardComponent` | `category`, `products`, `search` | `categoryChange`, `searchChange`, `productSelect`, `scanClick`, `filterClick` |
 | `CartCardComponent` | `items` | `qtyChange`, `removeItem`, `clearCart` |
-| `PaymentCardComponent` | `totals`, `draft`, `canPay` | `discountChange`, `loyaltyToggle`, `pointsChange`, `methodChange`, `payAndPrint` |
+| `PaymentCardComponent` | `totals`, `draft`, `canPay` | `discountChange`, `loyaltyToggle`, `methodChange`, `cashAmountChange`, `cardAmountChange`, `pay`, `payAndPrint`, `registerAction` |
+| `InvoicePreviewComponent` | (reads `SellSessionStore.lastInvoice`) | Print stub, Cancel → Sell |
 
 ### Services
 
@@ -244,8 +254,11 @@ When `useMockSell: false`, services call real API (mirror `useMockAuth` pattern)
 | Action | Implementation |
 |--------|----------------|
 | **New Prescription** | `router.navigate(['/home/prescription'])` |
-| **View All** / **View History** | Phase 1: `console.log` / toast stub; Phase 4: history route |
-| **Pay & Print** | Phase 1–2: validate → toast “Payment recorded (mock)”; Phase 3: API; Phase 4: print |
+| **View All** / **View History** | `router.navigate(['/home/prescription/history'])` — see [`003`](../003-prescription-create/plan.md) Phase 4 |
+| **Pay** | Validate → mock payment toast → stay on Sell |
+| **Pay & Print** | Validate → `buildInvoiceViewModel()` → `/home/sell/invoice` |
+| **Barcode scan** | `BarcodeScanService` → `scanProductBarcode()` → cart / search |
+| Register actions | Stubs: daily report, cash report, open/close register |
 | **Clear cart** | `window.confirm` then `cartService.clear()` |
 
 ### Product rules (defaults)
@@ -254,7 +267,8 @@ When `useMockSell: false`, services call real API (mirror `useMockAuth` pattern)
 |------|----------|
 | Add to cart without customer | **Blocked** in Phase 2 — toast “Select a customer first” |
 | VAT rate | `AppConfigService.settings.vatRate` default **15%** |
-| Pay & Print enabled | Customer selected **and** cart non-empty |
+| Pay enabled | Customer + cart + valid payment (`canPay`) |
+| Mixed payment | Independent cash/card; **Balance** must reach 0 |
 | Product images | Placeholder SVG frame icon Phase 1 |
 
 ## Phased delivery
@@ -278,8 +292,10 @@ When `useMockSell: false`, services call real API (mirror `useMockAuth` pattern)
 |------|--------|
 | `SellSessionStore` + `CartService` | Add/remove/qty/clear; reactive totals |
 | Catalog tabs + search filter | Switch category; debounced local filter |
-| Payment draft | Discount input, loyalty toggle/points, method selection |
-| `PaymentService.calculateTotals()` | Subtotal → discount → VAT → loyalty → payable |
+| Payment draft | Discount, loyalty, method, `cashAmount` / `cardAmount` for mixed |
+| `PaymentService` | Totals, mixed balance, validation |
+| Barcode scan | `@capacitor/barcode-scanner` + mock `findProductByBarcode()` |
+| Invoice preview | Fields from `Invoice.jpeg`; route `/home/sell/invoice` |
 | Header search integration | `PosShellComponent` `customerSelected` → `SellSessionStore.selectCustomer()` via `CustomerSearchService` |
 | Empty states | No customer, empty cart, no Rx |
 | Confirm clear cart | Dialog before clear |
@@ -304,9 +320,10 @@ When `useMockSell: false`, services call real API (mirror `useMockAuth` pattern)
 
 | Task | Detail |
 |------|--------|
-| Barcode scan | Capacitor plugin → catalog lookup |
-| Pay & Print | Print service stub → native/Bluetooth |
-| Prescription history | View All / View History routes |
+| Barcode scan | **Done** — `@capacitor/barcode-scanner`, scan icon inside catalog search |
+| Pay & Print | Invoice preview **Done**; hardware print Phase 4 |
+| Register reports | UI stubs **Done**; APIs Phase 3 |
+| Prescription history | View All / View History → `/home/prescription/history` (**Done** mock) |
 | F9 shortcut | Optional keyboard listener for Pay & Print (web/tablet keyboard) |
 | Visual QA | Side-by-side with `POSScreen.png` |
 
@@ -332,7 +349,9 @@ Full entity definitions → optional [`data-model.md`](./data-model.md) (create 
 | `PrescriptionSummary` | `date`, `doctorName`, `od`, `os`, `pd`, `nearPd` |
 | `Product` | `sku`, `name`, `description`, `price`, `category`, `imageUrl?` |
 | `CartLineItem` | `lineId`, `product`, `qty`, `unitPrice`, `discount`, `lineTotal` |
-| `PaymentDraft` | `discountAmount`, `redeemLoyalty`, `loyaltyPoints`, `method` |
+| `PaymentDraft` | `discountAmount`, `redeemLoyalty`, `loyaltyPoints`, `method`, `cashAmount`, `cardAmount` |
+| `PaymentRegisterAction` | `daily-report`, `cash-report`, `open-register`, `close-register` |
+| `InvoiceViewModel` | Header, product lines, Rx rows, totals, amount paid, balance |
 | `PaymentTotals` | `subtotal`, `discount`, `vat`, `total`, `loyaltyDeduction`, `payable` |
 
 ## Test strategy
@@ -345,7 +364,9 @@ Full entity definitions → optional [`data-model.md`](./data-model.md) (create 
 | `CustomerProfileCardComponent` | Shows Saud Ahmed mock fields; empty state |
 | `LatestPrescriptionSummaryComponent` | OD/OS grid; New Prescription navigates |
 | `CartService` | Add item, increment qty, remove, clear, item count |
-| `PaymentService` | VAT 15%, discount, loyalty deduction, payable |
+| `PaymentService` | VAT 15%, discount, loyalty, mixed balance, validation |
+| `BarcodeScanService` | Capacitor scan wrapper |
+| `invoice.mapper` | Build invoice from sell session |
 | `CatalogService` | Filter by category + search string |
 
 ### Manual / visual
@@ -365,9 +386,13 @@ Full entity definitions → optional [`data-model.md`](./data-model.md) (create 
 - [ ] `SellDashboardComponent` at `/home/sell`
 - [ ] Five cards with spec copy and reference mock data
 - [ ] Tablet grid + phone stack
-- [ ] Cart qty changes update payment totals
-- [ ] Catalog tabs filter products
-- [ ] Pay & Print stub with validation
+- [x] Cart qty changes update payment totals
+- [x] Catalog tabs filter products
+- [x] Pay + Pay & Print with validation
+- [x] Mixed payment Amount Paid / Balance
+- [x] Invoice preview after Pay & Print
+- [x] Barcode scan in catalog search
+- [x] Register action stubs on payment card
 - [ ] New Prescription → `/home/prescription`
 - [ ] Unit tests for dashboard, cart, and payment math
 - [ ] Visual sign-off against **upper section** of `POSScreen.png`
@@ -381,9 +406,10 @@ Full entity definitions → optional [`data-model.md`](./data-model.md) (create 
 
 ### Phase 4
 
-- [ ] Barcode scan integrated or documented deferral
-- [ ] Print path after successful payment
-- [ ] Prescription history entry from View All
+- [ ] Live catalog barcode lookup API
+- [ ] Print path after successful payment (hardware)
+- [ ] Register open/close + daily/cash report APIs
+- [x] Prescription history entry from View All → [`003`](../003-prescription-create/spec.md) history page
 
 ## Risks & mitigations
 
