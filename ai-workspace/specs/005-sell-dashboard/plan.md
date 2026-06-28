@@ -205,9 +205,17 @@ Phase 1: pre-select mock customer **Saud Ahmed** so cards match reference screen
 // + Oakley, etc. from reference
 ```
 
-**Seed cart** (optional Phase 1 static display; Phase 2 mutable):
+**Seed cart:** Removed — cart initializes empty (`[]`). Lines added via catalog or prescription save sync.
 
-Two lines matching reference — frame + lenses — so payment card shows 1,100.00 subtotal.
+### Prescription → cart sync (implemented)
+
+When prescription is saved (`applySavedPrescription`):
+
+1. `cartItemsFromPrescription(record)` maps frame/lens lines with `rx-*` line ids
+2. `syncCartFromPrescription` replaces prescription lines; keeps catalog items
+3. `syncPaymentAmountsToPayable()` updates payment card
+
+**File:** `prescription-cart.mapper.ts`
 
 ### Component responsibilities
 

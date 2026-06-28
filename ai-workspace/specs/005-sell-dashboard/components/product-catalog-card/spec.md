@@ -63,7 +63,7 @@ Tap tile → **add to cart** (blocked if no customer — status banner).
 
 | Service | Endpoint | Use |
 |---------|----------|-----|
-| [`BrandService`](../../services/spec.md) | `products/GetBrand` | Brand lookup |
+| [`BrandService`](../../services/spec.md) | `products/GetBrand` | Prescription frame brand autocomplete |
 | Catalog (TBD) | Products by category | Replace mock grid + barcode lookup |
 
 ## Copy

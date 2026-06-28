@@ -141,7 +141,9 @@ Tablet-first **Sell tab** at `/home/sell`: three-column layout with **five cards
 |--------|-------------------|------|
 | Customer create / session | [`006`](../006-create-customer/spec.md), `CustomerSessionService` | Customer |
 | Order lenses / Rx | `Admin/GetOrderLense` | Latest Rx |
-| Brands / catalog | `Admin/GetBrand` | Catalog |
+| Categories | `products/FillCategory` | Prescription form |
+| Brands | `products/GetBrand` / `Admin/GetBrand` | Prescription form |
+| Prescription → cart | `prescription-cart.mapper` | Cart, Payment |
 | Payment / order | TBD | Payment, Cart, Invoice |
 | Register reports | TBD | Payment footer actions |
 

@@ -167,7 +167,7 @@ npm start
 ## Open questions (shared)
 
 - [ ] Exact hex for header navy and POS blue — sample from PNG or brand guide?
-- [ ] Hide bottom nav on keyboard open?
+- [x] Hide bottom nav on keyboard open? **Done** — `html.keyboard-open` in global `styles.css` via `KeyboardViewportService`
 - [ ] Barcode scan wired to Capacitor plugin in POC+?
 
 ## Implementation plan

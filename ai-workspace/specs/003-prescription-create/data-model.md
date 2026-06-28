@@ -31,8 +31,8 @@ Draft entities for Phase 3 API integration. Confirm field names and units with b
 
 | Field | Type | Required | Notes |
 |-------|------|----------|--------|
-| `category` | string | yes | e.g. `Frames - P`, `Frames - S`, `Frames - U` |
-| `brandName` | string | yes | Free text; Phase 3 may use `BrandService` |
+| `category` | string | yes | From `FillCategory` API (`CategoryType=Frame`); fallback mock list |
+| `brandName` | string | yes | `BrandService` autocomplete (`GetBrand`); free text after selection |
 | `modelNo` | string | yes | |
 | `sellingPrice` | number | no | Unit price |
 | `quantity` | number | yes | Min 1; default 1 |
@@ -49,7 +49,7 @@ Draft entities for Phase 3 API integration. Confirm field names and units with b
 
 | Field | Type | Required | Notes |
 |-------|------|----------|--------|
-| `category` | string | yes | e.g. Single Vision, Progressive, Bifocal, Other |
+| `category` | string | yes | From `FillCategory` API (`CategoryType=Lens`); fallback mock list |
 | `orderLens` | string | yes when lenses enabled | e.g. `CR39`, `1.67 grey` |
 | `price` | number | no | Unit price |
 | `quantity` | number | yes | Min 1; default 1 |
@@ -212,7 +212,67 @@ export interface PrescriptionPayload extends PrescriptionFormValue {
 }
 ```
 
-**Helpers:** `calculateFrameLineTotals()`, `calculateLensLineTotal()`, `createDefaultPrescriptionFormValue()`, `FRAME_CATEGORIES`, `LENS_CATEGORIES`.
+**Helpers:** `calculateFrameLineTotals()`, `calculateLensLineTotal()`, `createDefaultPrescriptionFormValue()`, `FRAME_CATEGORIES`, `LENS_CATEGORIES` (mock fallbacks).
+
+## GET products/FillCategory (catalog — implemented)
+
+Query:
+
+| Param | Value |
+|-------|--------|
+| `CategoryType` | `Frame` or `Lens` (configurable via `frameCategoryType` / `lensCategoryType`) |
+
+Response shape (maps to `CategoryOption[]`):
+
+```json
+{
+  "status": "200",
+  "message": "Success",
+  "objresult": {
+    "table": [
+      { "categoryID": 10, "categoryName": "Frames - P" }
+    ]
+  },
+  "qrcodeimg": null
+}
+```
+
+Also supports `objresult` as a direct array. On failure, UI falls back to `FRAME_CATEGORIES` / `LENS_CATEGORIES`.
+
+**Files:** `prescription/services/category.service.ts`, `prescription/models/category.models.ts`
+
+## GET products/GetBrand (brand autocomplete — implemented)
+
+Query: `BrandName={search}`
+
+Response shape (maps to `BrandOption[]`):
+
+```json
+{
+  "status": "200",
+  "message": "Success",
+  "objresult": [
+    { "BrandID": 27, "BrandName": "Jeans Club" },
+    { "BrandID": 75, "BrandName": "JORDAN" }
+  ],
+  "qrcodeimg": null
+}
+```
+
+Also supports legacy `objresult.table` with `brandID` / `brandName`. Mapped to `{ brandId, brandName }`.
+
+**Files:** `sell/services/brand.service.ts`, `sell/models/brand.models.ts`  
+**Consumer:** `PrescriptionFrameLineComponent` (debounced combobox)
+
+## Prescription → Sell cart mapping (implemented)
+
+On `applySavedPrescription(record)`, `syncCartFromPrescription(record)`:
+
+- Maps each billable frame/lens line → `CartLineItem` with `lineId` prefix `rx-{prescriptionId}-…`
+- Replaces existing prescription lines; keeps catalog-added items
+- Recalculates payment payable via `syncPaymentAmountsToPayable()`
+
+**File:** `sell/services/prescription-cart.mapper.ts`
 
 ## UI validation ranges (implemented)
 

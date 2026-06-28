@@ -3,7 +3,7 @@ component: cart-card
 parent: specs/005-sell-dashboard
 status: done
 created: 2026-06-20
-updated: 2026-06-18
+updated: 2026-06-28
 ---
 
 # Component: Cart card
@@ -45,6 +45,8 @@ Reference example:
 
 - Mutations update `SellSessionStore.cartItems` and payment computed totals
 - Add blocked when no customer (`addToCartBlockedMessage`)
+- **Default:** cart is **empty** on Sell tab load (no seed items)
+- **Prescription sync:** saving a prescription replaces `rx-*` cart lines from frame/lens data; catalog lines remain; payment totals update
 
 ## Copy
 
@@ -58,6 +60,8 @@ Reference example:
 - [x] Line items with qty stepper and remove
 - [x] Clear cart with confirmation
 - [x] Totals sync to payment card
+- [x] Prescription save syncs frame/lens lines to cart (`rx-*` ids)
+- [x] Empty cart on initial Sell load
 - [ ] Persist cart to order API (Phase 3)
 
 ## Implementation
@@ -66,4 +70,5 @@ Reference example:
 |------|------|
 | `cart-card/cart-card.component.*` | UI |
 | `models/cart.models.ts` | `CartLineItem`, `lineTotal()` |
-| `services/sell-session.store.ts` | Cart mutations |
+| `services/sell-session.store.ts` | Cart mutations, prescription sync |
+| `services/prescription-cart.mapper.ts` | PrescriptionRecord → cart lines |

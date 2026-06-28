@@ -3,7 +3,7 @@ feature: staff-login
 status: in-progress
 spec: ./spec.md
 project: optical-pos
-updated: 2026-06-18
+updated: 2026-06-28
 ---
 
 # Implementation plan — Staff login
@@ -23,7 +23,8 @@ Deliver a form-only login screen in `optical-pos` that matches the Eyewa referen
 |-------|--------|--------|
 | 1 — UI shell | **Complete** | Login form, tokens, validation, password toggle |
 | 2 — Navigation | **Complete** | `/forgot-password`, `/otp-login`, `/home` stubs; mock auth |
-| **3 — Auth API integration** | **Next** | Replace mock with real `POST /auth/login`; auth guard |
+| **3 — Auth API integration** | **Complete** | Eyewa `VerifyUserLogin`, JWT, `FillStore`, auth guard |
+| **3c — Tablet keyboard layout** | **Complete** | Compact layout when IME open; Android `adjustResize` |
 | 4 — OTP & recovery | Planned | Depends on identity API OTP endpoints |
 
 **App path:** `optical-pos-angular-capacitor-ux/`  
@@ -137,6 +138,22 @@ Until the API exists, use an environment flag `useMockAuth: true` and accept a d
 - Input font-size ≥ 16px on iOS to prevent zoom-on-focus
 - Verify on iOS/Android simulators after web sign-off
 
+### Tablet keyboard (Phase 3c — **done**)
+
+**Problem:** On Android tablets in portrait, opening the IME left a large white gap below the password field and pushed **Sign In** off-screen. See [`raw-knowledge/issues/issues.jpeg`](../../raw-knowledge/issues/issues.jpeg).
+
+**Fix:**
+
+| Layer | Change |
+|-------|--------|
+| **CSS** | `.login-page--compact` + `@media (max-height: 700px)`: top-align page, scrollable, `min-height: auto` on card, hide branding, top-align form panel |
+| **Component** | `LoginComponent` listens to `visualViewport` resize/scroll; sets `compactLayout` when keyboard shrinks viewport by > 120px |
+| **Focus** | `onFieldFocus` → `scrollIntoView({ block: 'center' })` after 300ms |
+| **Android** | `AndroidManifest.xml` → `android:windowSoftInputMode="adjustResize"` on `MainActivity` |
+| **Web** | `index.html` viewport meta already includes `interactive-widget=resizes-content` |
+
+**QA:** Rebuild Android after manifest change (`npm run android:build`). On device: focus password → confirm Sign In visible/scrollable; no regression vs `issues.jpeg`.
+
 ## Components affected
 
 | Area | Path | Change type |
@@ -146,7 +163,8 @@ Until the API exists, use an environment flag `useMockAuth: true` and accept a d
 | Routes | `optical-pos/src/app/app.routes.ts` | Add login + stubs |
 | Global styles | `optical-pos/src/styles.css` | Design tokens, reset, font |
 | Document | `optical-pos/src/index.html` | Inter font, page title |
-| Login feature | `optical-pos/src/app/features/auth/login/*` | **New** |
+| Login feature | `optical-pos/src/app/features/auth/login/*` | **New** — includes compact keyboard layout |
+| Android manifest | `android/app/src/main/AndroidManifest.xml` | `adjustResize` for IME |
 | Auth service | `optical-pos/src/app/features/auth/services/auth.service.ts` | **New** |
 | Unit tests | `login.component.spec.ts` | Form validation, toggle, submit |
 
@@ -251,6 +269,7 @@ Prerequisite: OpenAPI contract for identity service in `ai-workspace/contracts/o
 | Default Angular styles bleed through | No Material imports; scoped component CSS; global reset |
 | OTP/recovery scope creep | Phase 1 ships UI + stubs only; separate specs if flows grow |
 | iOS keyboard/layout issues | Test Capacitor early; 16px inputs; safe-area padding |
+| Tablet keyboard hides Sign In | Compact layout via `visualViewport` + `@media (max-height: 700px)`; Android `adjustResize`; scroll focused input — see [`issues.jpeg`](../../raw-knowledge/issues/issues.jpeg) |
 
 ## Test strategy
 
@@ -267,6 +286,7 @@ Prerequisite: OpenAPI contract for identity service in `ai-workspace/contracts/o
 - [ ] Tab order: identifier → password → remember → forgot → sign in → OTP
 - [ ] Mobile viewport: no horizontal scroll; tap targets ≥ 44px
 - [ ] Capacitor iOS/Android smoke test
+- [ ] Tablet portrait + keyboard: Sign In visible/scrollable; no large gap (Story 10; compare [`issues.jpeg`](../../raw-knowledge/issues/issues.jpeg))
 
 ### E2E (later)
 - Successful login redirects to `/home`

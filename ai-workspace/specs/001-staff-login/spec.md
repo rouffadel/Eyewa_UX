@@ -3,7 +3,7 @@ feature: staff-login
 status: in-progress
 owner: 
 created: 2026-06-18
-updated: 2026-06-24
+updated: 2026-06-28
 source: raw-knowledge/files/EyewaLogin.png
 reference: Eyewa ERP login screen (Fadel)
 ---
@@ -23,6 +23,7 @@ Provide a sign-in screen for optical store staff to access the ERP/POS. The UI m
 | **3 — Auth API integration** | Eyewa `VerifyUserLogin`, JWT session, `FillStore`, auth guard | **Done** |
 | **3b — Token & persistence** | Cookie tokens, `Authorization` header, refresh token, stay logged in until sign out | **Done** |
 | **4 — OTP & recovery** | OTP send/verify, password reset flows | Planned |
+| **3c — Tablet keyboard layout** | Compact scrollable layout when IME open; Android `adjustResize`; global `KeyboardViewportService` | **Done** |
 
 **Current state:** **Sign In** calls the Eyewa demo API by default (`useMockAuth: false`). Flow: `LoginComponent.onSubmit()` → `AuthService.login()` → `LoginService.verifyUserLogin()` → `GET {apiUrl}/{authLoginPath}?LoginName=…&Password=…`. On success, JWT **access** and **refresh** tokens are stored in cookies; session JSON is persisted in **`localStorage`** until manual **Sign out**. All API calls send `Authorization: Bearer {token}` via `authInterceptor`. Expired tokens are refreshed via `POST auth/RefreshToken` (on app launch and on HTTP 401). `AuthService` loads stores from `FillStore`, then routes to `/home`. Mock auth remains when `useMockAuth: true` (`staff@eyewa.com` / `demo1234`).
 
@@ -125,6 +126,35 @@ Implementation must be visually indistinguishable from **`EyewaLogin.png`** (ful
 - Form content vertically centered in right panel; max-width ~440px
 - Watermark **below card**: “Powered by **FADEL**” — grey text, **FADEL** in purple bold
 - Touch-friendly tap targets (min ~44px height on buttons and inputs)
+
+### Compact layout (keyboard / short viewport)
+
+When the on-screen keyboard is open or the visible viewport is short, the login page must **not** keep the tall centered tablet card — that pushes **Sign In** and actions off-screen (see issue reference below).
+
+**App-wide:** `KeyboardViewportService` (initialized in `app.config.ts`) syncs `--app-height` from `window.visualViewport` on every screen and toggles `html.keyboard-open` when the keyboard inset exceeds 120px. Global rules in `styles.css` apply to the POS shell, sell dashboard, create customer, prescription, measurements, and login. See also [`002-common-components`](../002-common-components/spec.md) bottom-nav keyboard behavior.
+
+**Login-specific triggers (either is enough):**
+
+| Trigger | Mechanism |
+|---------|-----------|
+| **Keyboard open** | `KeyboardViewportService` → `html.keyboard-open` + `--app-height` from `visualViewport` |
+| **Short viewport** | CSS `@media (max-height: 700px)` — covers resized WebView after keyboard, landscape phones, etc. |
+
+**Compact behavior:**
+
+| Element | Default (tablet) | Compact |
+|---------|------------------|---------|
+| Page | `justify-content: center`; full viewport height | `justify-content: flex-start`; `overflow-y: auto`; scroll padding for safe areas |
+| Card | `min-height: min(640px, calc(100dvh - 6rem))` | `min-height: auto` |
+| Branding panel | Visible on tablet | **Hidden** (form uses full card width) |
+| Form panel | Vertically centered (`align-items: center`) | Top-aligned (`align-items: flex-start`) |
+| Focused input | — | `scrollIntoView({ block: 'center' })` after 300ms (keyboard animation) |
+
+**Native (Android):** `MainActivity` uses `android:windowSoftInputMode="adjustResize|stateHidden"` and `WindowCompat.setDecorFitsSystemWindows(getWindow(), true)`.
+
+**Android 9–10 WebView quirk:** `visualViewport` and CSS `100vh`/`100dvh` often **do not** shrink when the IME opens. The app uses `window.innerHeight` (via `KeyboardViewportService` + inline bootstrap in `index.html`) and sets `--app-height` in pixels. `html.android-webview` avoids viewport-unit page height.
+
+**Issue reference:** ![Tablet login — keyboard pushes Sign In off-screen (Android 10)](../../raw-knowledge/issues/issues.jpeg)
 
 ### Brand watermark
 
@@ -242,6 +272,22 @@ Store staff need a fast, trustworthy way to open the system at the start of a sh
 - [x] “Powered by **FADEL**” watermark below the card
 - [x] Phone: form-only card; branding panel hidden (phone breakpoint rules)
 - [ ] Side-by-side comparison with `EyewaLogin.png` shows no intentional visual differences (QA sign-off pending)
+
+### Story 10 — Sign in on tablet with on-screen keyboard
+
+**As a** store staff member on a tablet  
+**I want** the full login form to stay reachable when I type my password  
+**So that** I can tap **Sign In** without dismissing the keyboard or guessing where the button went
+
+**Acceptance criteria**
+
+- [x] On tablet portrait with keyboard open, **Sign In**, Remember me, Forgot Password?, OTP, and footer remain visible or scrollable above the keyboard — no large empty gap between password field and keyboard
+- [x] Compact layout hides the left branding panel while the keyboard is open (or viewport height ≤ 700px) to maximize form space
+- [x] Login card does not enforce `min-height: 640px` in compact mode
+- [x] Form panel uses top alignment in compact mode (not vertical centering)
+- [x] Tapping username or password scrolls the focused field toward the center of the visible viewport
+- [x] Android WebView resizes with keyboard (`adjustResize` on `MainActivity`)
+- [ ] Manual QA on target store tablet (e.g. Nokia T20 portrait) signed off against [`issues.jpeg`](../../raw-knowledge/issues/issues.jpeg) regression
 
 ### Story 8 — Show logged-in staff in POS header and profile
 
@@ -507,7 +553,11 @@ Set `useMockAuth` to `true` in dev for offline mock login (`staff@eyewa.com` / `
 |------|------|
 | `src/config/appsettings.json` | API base URL, login path, `useMockAuth` flag |
 | `src/config/appsettings.prod.json` | Production config (real API) |
-| `src/app/features/auth/login/login.component.ts` | Form submit, error display, navigation |
+| `src/app/features/auth/login/login.component.ts` | Form submit, error display, navigation, `visualViewport` compact layout |
+| `src/app/features/auth/login/login.component.css` | Split card, phone/compact breakpoints, `login-page--compact` |
+| `src/app/features/auth/login/login.component.html` | Split card template; `[class.login-page--compact]` binding |
+| `android/app/src/main/AndroidManifest.xml` | `android:windowSoftInputMode="adjustResize"` on `MainActivity` |
+| `src/index.html` | Viewport meta: `interactive-widget=resizes-content` |
 | `src/app/features/auth/services/login.service.ts` | HTTP `GET`, response mapping, `LoginError` |
 | `src/app/features/auth/services/auth.service.ts` | Session read/write, refresh, persistent login, post-login store load |
 | `src/app/features/auth/services/auth-token.storage.ts` | Cookie read/write for access + refresh tokens |
@@ -543,6 +593,17 @@ npm start
 # Sign out → returns to login
 ```
 
+**Tablet keyboard (Story 10):**
+
+```bash
+# Rebuild native shell after AndroidManifest change
+cd optical-pos-angular-capacitor-ux
+npm run android:build
+# On device: open /login → focus Password field
+# Expect: no large white gap; Sign In scrollable/visible above keyboard
+# Compare against ai-workspace/raw-knowledge/issues/issues.jpeg (before fix)
+```
+
 > If header still shows "User", sign out and sign in again (old sessions without `user` object are invalid).
 
 ### Out of scope for Phase 3 / 3b
@@ -555,7 +616,7 @@ npm start
 
 ### Functional
 
-- Split-card layout (branding + form) on tablet; form-only fallback on phone
+- Split-card layout (branding + form) on tablet; form-only fallback on phone; **compact scrollable layout when keyboard open or viewport height ≤ 700px**
 - Username/email + password authentication via Eyewa `VerifyUserLogin` API
 - JWT access + refresh tokens; automatic silent refresh on expiry / 401
 - Stay signed in on mobile/tablet until manual **Sign out** (`localStorage` + persistent cookies)

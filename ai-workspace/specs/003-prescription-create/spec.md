@@ -4,7 +4,6 @@ status: draft
 owner: 
 created: 2026-06-20
 updated: 2026-06-28
-source: raw-knowledge/files/POSScreen.png, raw-knowledge/files/frameprescription.jpeg, raw-knowledge/files/framelensprescription.jpeg
 reference: Eyewa POS — Prescription form (Prescription tab + lower-left panel)
 depends_on: specs/002-common-components
 route: /home/prescription
@@ -19,7 +18,7 @@ Provide a **Prescription** tab in the POS shell where store staff enter a custom
 
 **Date and doctor are not part of this tab** — they are omitted from the POS prescription UI (clinical metadata may be supplied by the backend or other ERP screens if required).
 
-Phase 1–2 deliver the UI, validation, and mock persistence. **Phase 2c — Mock persistence & Sell sync** saves in memory and updates the Sell tab latest Rx summary. **Phase 4 — History (mock)** delivers `/home/prescription/history` from Sell **View All** / **View History**, with selectable entries and **View on Sell Dashboard**. **Phase 3 — Prescription API integration** wires save, load, and print to the backend (aligned with `GetOrderLense` / sale order patterns in [`005-sell-dashboard`](../005-sell-dashboard/spec.md)).
+Phase 1–2 deliver the UI, validation, and mock persistence. **Phase 2c — Mock persistence & Sell sync** saves in memory and updates the Sell tab latest Rx summary and **Sell cart** (frame/lens lines mapped to cart items with payment totals). **Phase 2d — Catalog APIs** loads frame/lens **categories** and frame **brands** from the backend (`FillCategory`, `GetBrand`). **Phase 4 — History (mock)** delivers `/home/prescription/history` from Sell **View All** / **View History**, with selectable entries and **View on Sell Dashboard**. **Phase 3 — Prescription API integration** wires save, load, and print to the backend (aligned with `GetOrderLense` / sale order patterns in [`005-sell-dashboard`](../005-sell-dashboard/spec.md)).
 
 The **read-only latest prescription summary** and **customer profile card** on the Sell tab are owned by [`005-sell-dashboard`](../005-sell-dashboard/spec.md); this spec owns the **full entry form** on the Prescription tab.
 
@@ -44,6 +43,7 @@ The **read-only latest prescription summary** and **customer profile card** on t
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  SELL TAB — RELATED (005)                                                   │
 │  Latest prescription summary ← updated on save; View All → history route     │
+│  Cart + payment ← frame/lens lines synced on save (rx-* line ids)            │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  PRESCRIPTION HISTORY — `/home/prescription/history` (Phase 4 mock)         │
 │  Selectable list per customer → View on Sell Dashboard                      │
@@ -58,12 +58,13 @@ The **read-only latest prescription summary** and **customer profile card** on t
 | **1 — UI shell** | Prescription tab route, Rx grid, buttons (stubs) | **Done** |
 | **2 — Validation & UX** | Numeric rules, reactive form, cancel/reset, dirty guard | **Done** |
 | **2b — Frames & lenses (mock)** | Accordion sections, frame/lens line cards, mock save payload | **Done** |
-| **2c — Mock persistence & Sell sync** | In-memory save; latest Rx on Sell; mapper | **Done** |
+| **2c — Mock persistence & Sell sync** | In-memory save; latest Rx on Sell; cart + payment sync | **Done** |
+| **2d — Catalog APIs** | `CategoryService` + `BrandService` on prescription form | **Done** |
 | **3 — Prescription API integration** | Save/load frames, lenses, Rx; print; server persistence | **Next** |
 | **4 — History (mock)** | History route, selection, View on Sell Dashboard | **Done** (mock) |
 | **4b — History API** | Load list from server; edit from history | Planned |
 
-**Current state:** `/home/prescription` renders `PrescriptionFormComponent` with collapsible **FRAMES** and **LENSES** accordions, customer banner from `SellSessionStore`, mock save via `PrescriptionService`, and stub print. On save, `SellSessionStore.applySavedPrescription()` updates **Latest Prescription** on Sell and appends to per-customer history. **View All** / **View History** on Sell navigate to `/home/prescription/history` with radio-style selection and **View on Sell Dashboard**. Data is **in-memory only** (lost on refresh) until Phase 3 API.
+**Current state:** `/home/prescription` renders `PrescriptionFormComponent` with collapsible **FRAMES** and **LENSES** accordions, customer banner from `SellSessionStore`, mock save via `PrescriptionService`, and stub print. Frame/lens **Category** dropdowns load from `products/FillCategory` (fallback to mock lists). Frame **Brand** uses debounced `GetBrand` autocomplete. On save, `SellSessionStore.applySavedPrescription()` updates **Latest Prescription**, appends per-customer history, and **`syncCartFromPrescription()`** replaces prescription cart lines (`rx-*` ids) while keeping catalog items. **View All** / **View History** on Sell navigate to `/home/prescription/history`. Data is **in-memory only** (lost on refresh) until Phase 3 API.
 
 **Implementation plan:** [`plan.md`](./plan.md)
 
@@ -145,8 +146,8 @@ Mobile-first **cards** per frame line — **not** the wide ERP table in `framepr
 
 | Field | Type | Notes |
 |-------|------|--------|
-| **Category** | Select | `Frames - P`, `Frames - S`, `Frames - U` (mock list) |
-| **Brand** | Text | Required; future: `BrandService` autocomplete |
+| **Category** | Select | Loaded from `GET products/FillCategory?CategoryType=Frame`; fallback: `Frames - P/S/U` |
+| **Brand** | Combobox | Required; debounced `GET GetBrand?BrandName={query}` autocomplete; free text allowed |
 | **Model No** | Text | Required |
 | **Selling Price** | Number | Optional decimal |
 | **Quantity** | Number | Min 1; default 1 |
@@ -166,7 +167,7 @@ Mobile-first **cards** per frame line — **not** the wide ERP table in `framepr
 | Field | Type | Notes |
 |-------|------|--------|
 | **Order Lens** | Toggle | Off by default; enables lens lines |
-| **Category** | Select | Single Vision, Progressive, Bifocal, Other |
+| **Category** | Select | Loaded from `GET products/FillCategory?CategoryType=Lens`; fallback: Single Vision, Progressive, Bifocal, Other |
 | **Order Lens** | Text | Required when section active (e.g. `CR39`, `1.67 grey`) |
 | **Price** | Number | Optional decimal |
 | **Quantity** | Number | Min 1 |
@@ -372,6 +373,7 @@ Button row: Save full-width above; Print and Cancel side by side (tablet). On ph
 - [x] `PrescriptionFormComponent` calls `SellSessionStore.applySavedPrescription(record)` on success
 - [x] Sell **Latest Prescription** card shows mapped OD/OS, PD, Near PD, and save date
 - [x] History list per customer updated on each save (newest first)
+- [x] Frame/lens lines sync to Sell **cart** and **payment** totals via `syncCartFromPrescription()`
 - [ ] Data survives page refresh (requires Phase 3 API — not in mock scope)
 
 ### Story 7 — New prescription
@@ -387,11 +389,28 @@ Button row: Save full-width above; Print and Cancel side by side (tablet). On ph
 
 ---
 
+### Story 6c — Catalog APIs (Phase 2d) ✅
+
+**As a** store staff member  
+**I want** frame/lens categories and frame brands loaded from the ERP  
+**So that** I pick valid catalog values instead of typing everything manually
+
+**Acceptance criteria**
+
+- [x] `CategoryService.getCategories('frame' | 'lens')` calls `GET products/FillCategory?CategoryType=Frame|Lens`
+- [x] Category dropdowns populated on prescription form init; loading state on select
+- [x] API failure or empty response falls back to `FRAME_CATEGORIES` / `LENS_CATEGORIES` mock lists
+- [x] Frame **Brand** field uses `BrandService.getBrands(query)` with debounced search dropdown
+- [x] `GetBrand` response maps `objresult` array with `BrandID` / `BrandName` (also supports legacy `objresult.table` + camelCase)
+- [x] Config: `fillCategoryPath`, `frameCategoryType`, `lensCategoryType`, `getBrandPath` in appsettings
+
+---
+
 ## Phase 3 — Prescription API integration (next)
 
 Wire the prescription form to the optical/clinical backend. Mock/local persistence remains for dev when `useMockPrescription: true` (default in `appsettings.json`; `false` in prod).
 
-> **Partial scaffold:** `PrescriptionService` mock save; `OrderLenseService` and `BrandService` exist in sell feature for Phase 3 load/save. `GET /doctors` scaffold remains in service but is **not used by this tab**.
+> **Partial scaffold:** `PrescriptionService` mock save; `OrderLenseService`, `BrandService`, and `CategoryService` implemented. Category/brand wired to prescription UI. `GET /doctors` scaffold remains in service but is **not used by this tab**.
 
 ### Story 8 — Save prescription via API
 
@@ -437,6 +456,8 @@ Wire the prescription form to the optical/clinical backend. Mock/local persisten
 
 | Method | Path | Purpose |
 |--------|------|---------|
+| `GET` | `products/FillCategory?CategoryType=Frame\|Lens` | Frame/lens category dropdowns |
+| `GET` | `products/GetBrand?BrandName={name}` (or `Admin/GetBrand` in prod) | Frame brand autocomplete |
 | `GET` | `prescriptions/GetOrderLense` | Load lenses + OD/OS for sale ([`005`](../005-sell-dashboard/services/spec.md)) |
 | `POST` | `/prescriptions` or sale order endpoint | Create/update order lines + Rx (confirm with backend) |
 | `GET` | `/prescriptions/{id}/print` | Print payload / PDF |
@@ -544,6 +565,6 @@ See [`data-model.md`](./data-model.md) for request/response shapes.
 
 - [ ] Is **Near PD** stored as mm or additive value? Reference shows `+1.25`—confirm domain meaning
 - [ ] Required vs optional fields for Save (all numeric Rx optional vs SPH required per eye)?
-- [ ] Frame brand: free text vs `BrandService` autocomplete in Phase 3?
+- [x] Frame brand: `BrandService` autocomplete on prescription frame lines (free text still allowed after selection)
 - [ ] Save endpoint: single `POST /prescriptions` vs sale line APIs aligned with `GetOrderLense`?
 - [ ] Edit latest vs always create new on Prescription tab open

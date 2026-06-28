@@ -21,7 +21,7 @@ depends_on: specs/002-common-components
 
 ## Goal
 
-Deliver a **PrescriptionFormComponent** at `/home/prescription` with collapsible **FRAMES** and **LENSES** accordions, OD/OS grid, shared measurements, customer banner from `SellSessionStore`, and Save / Print / Cancel. **Date and doctor are not on this tab.** Mock save updates Sell **Latest Prescription** and per-customer history via `SellSessionStore`. **PrescriptionHistoryComponent** at `/home/prescription/history` supports selection and **View on Sell Dashboard**. **Phase 3 — Prescription API integration** replaces in-memory persistence with server APIs.
+Deliver a **PrescriptionFormComponent** at `/home/prescription` with collapsible **FRAMES** and **LENSES** accordions, OD/OS grid, shared measurements, customer banner from `SellSessionStore`, and Save / Print / Cancel. **Date and doctor are not on this tab.** Mock save updates Sell **Latest Prescription**, per-customer history, and **Sell cart/payment** via `SellSessionStore`. **CategoryService** and **BrandService** load dropdown/autocomplete options from the API. **PrescriptionHistoryComponent** at `/home/prescription/history` supports selection and **View on Sell Dashboard**. **Phase 3 — Prescription API integration** replaces in-memory persistence with server APIs.
 
 ## Current status
 
@@ -30,7 +30,8 @@ Deliver a **PrescriptionFormComponent** at `/home/prescription` with collapsible
 | **1 — UI shell** | **Done** | Form layout, routing, stub print |
 | **2 — Validation & UX** | **Done** | Validators, dirty guard, inline messages, unit tests |
 | **2b — Frames & lenses (mock)** | **Done** | Accordions, frame/lens line components, computed totals |
-| **2c — Mock persistence & Sell sync** | **Done** | `applySavedPrescription`, `toPrescriptionSummary`, latest Rx on Sell |
+| **2c — Mock persistence & Sell sync** | **Done** | `applySavedPrescription`, cart sync, latest Rx on Sell |
+| **2d — Catalog APIs** | **Done** | `CategoryService`, `BrandService` on prescription form |
 | **3 — Prescription API integration** | **Next** | Server save/load; replace in-memory store |
 | **4 — History (mock)** | **Done** | `/home/prescription/history`, selection, View on Sell |
 | **4b — History API** | Planned | Load history list from server |
@@ -67,10 +68,13 @@ optical-pos-angular-capacitor-ux/src/app/
 │       │   └── prescription-lens-line.component.css
 │       ├── models/
 │       │   ├── prescription.models.ts
-│       │   └── prescription.validators.ts
+│       │   ├── prescription.validators.ts
+│       │   └── category.models.ts
 │       └── services/
 │           ├── prescription.service.ts
-│           └── prescription.service.spec.ts
+│           ├── prescription.service.spec.ts
+│           ├── category.service.ts
+│           └── category.service.spec.ts
 ├── shared/ui/
 │   └── prescription-grid/
 │       ├── prescription-grid.component.ts
@@ -83,8 +87,10 @@ optical-pos-angular-capacitor-ux/src/app/
 
 ```
 features/pos/sell/services/
-├── sell-session.store.ts              # latestPrescription, prescriptionHistory, applySavedPrescription
-└── prescription-summary.mapper.ts     # PrescriptionRecord → PrescriptionSummary
+├── sell-session.store.ts              # latestPrescription, prescriptionHistory, applySavedPrescription, syncCartFromPrescription
+├── prescription-summary.mapper.ts     # PrescriptionRecord → PrescriptionSummary
+├── prescription-cart.mapper.ts        # PrescriptionRecord → CartLineItem[] (rx-* line ids)
+└── brand.service.ts                   # GetBrand — used by prescription frame lines
 ```
 
 ### Routing
@@ -179,8 +185,9 @@ Mock save stores in `PrescriptionService.lastSaved` and calls `SellSessionStore.
 |-----------------|---------|
 | `latestPrescription` | Computed `PrescriptionSummary` for selected customer |
 | `prescriptionHistory` | Computed `SavedPrescriptionListItem[]` for selected customer |
-| `applySavedPrescription(record)` | Map record → summary; update latest + prepend history |
-| `selectPrescriptionFromHistory(id)` | Set latest Rx from history selection |
+| `applySavedPrescription(record)` | Map record → summary; update latest + prepend history; call `syncCartFromPrescription` |
+| `syncCartFromPrescription(record)` | Replace `rx-*` cart lines from saved frames/lenses; keep catalog items; recalc payment |
+| `selectPrescriptionFromHistory(id)` | Set latest Rx from history; sync cart when full record available |
 
 Storage: in-memory `Record<customerId, …>` — cleared on refresh.
 
@@ -209,7 +216,11 @@ Storage: in-memory `Record<customerId, …>` — cleared on refresh.
 `src/config/appsettings.json`:
 
 ```json
-"useMockPrescription": true
+"useMockPrescription": true,
+"fillCategoryPath": "products/FillCategory",
+"frameCategoryType": "Frame",
+"lensCategoryType": "Lens",
+"getBrandPath": "products/GetBrand"
 ```
 
 `appsettings.prod.json`:
@@ -276,12 +287,27 @@ When `false`, `PrescriptionService` calls real API (mirror `useMockAuth` pattern
 | Task | Status |
 |------|--------|
 | `toPrescriptionSummary()` mapper | Done |
+| `cartItemsFromPrescription()` + `syncCartFromPrescription()` | Done |
 | `SellSessionStore.applySavedPrescription()` | Done |
 | `latestPrescription` computed from per-customer map | Done |
 | Form calls store after successful save | Done |
 | Unit tests for mapper + form save hook | Done |
 
-**Outcome:** Saved Rx visible on Sell **Latest Prescription** card.
+**Outcome:** Saved Rx visible on Sell **Latest Prescription** card; frame/lens lines in cart and payment.
+
+### Phase 2d — Catalog APIs ✅
+
+| Task | Status |
+|------|--------|
+| `CategoryService` + `category.models.ts` | Done |
+| `GET products/FillCategory?CategoryType=Frame\|Lens` | Done |
+| Frame/lens category dropdowns on prescription form | Done |
+| Mock fallback (`FRAME_CATEGORIES`, `LENS_CATEGORIES`) on API failure | Done |
+| `BrandService` autocomplete on `PrescriptionFrameLineComponent` | Done |
+| `GetBrand` maps `objresult[]` with `BrandID`/`BrandName` | Done |
+| Unit tests: `category.service.spec.ts`, `brand.service.spec.ts` | Done |
+
+**Outcome:** Prescription form uses live category and brand lookups when authenticated.
 
 ### Phase 3 — Prescription API integration (next)
 
@@ -292,7 +318,7 @@ When `false`, `PrescriptionService` calls real API (mirror `useMockAuth` pattern
 | `GET prescriptions/GetOrderLense` | Pre-fill lenses + OD/OS when `salesId` present |
 | Frame lines load | Confirm endpoint with backend (sale lines API) |
 | Customer id from session | Already wired via `SellSessionStore` |
-| Brand autocomplete | Optional: `BrandService` from sell feature |
+| Brand / category APIs | **Done** — `BrandService`, `CategoryService` on prescription form |
 | Print endpoint | PDF URL or defer native bridge |
 | Prod config | `useMockPrescription: false` already in `appsettings.prod.json` |
 | Integration tests | Service tests with mocked `fetch` |
@@ -326,8 +352,10 @@ When `false`, `PrescriptionService` calls real API (mirror `useMockAuth` pattern
 | Routes | `app.routes.ts` | ✅ prescription + history children |
 | Prescription feature | `features/pos/prescription/*` | ✅ Form + history |
 | Prescription grid | `shared/ui/prescription-grid/*` | ✅ Implemented |
-| Sell session | `features/pos/sell/sell-session.store.ts` | ✅ Mock persistence + history |
+| Sell session | `features/pos/sell/sell-session.store.ts` | ✅ Mock persistence + history + cart sync |
 | Sell mapper | `features/pos/sell/services/prescription-summary.mapper.ts` | ✅ Implemented |
+| Sell cart mapper | `features/pos/sell/services/prescription-cart.mapper.ts` | ✅ Implemented |
+| Category service | `features/pos/prescription/services/category.service.ts` | ✅ Implemented |
 | Sell dashboard | `features/pos/sell/sell-dashboard.component.ts` | ✅ View All / View History navigation |
 | Contracts | `ai-workspace/contracts/openapi/` | Phase 3 |
 
@@ -340,7 +368,10 @@ When `false`, `PrescriptionService` calls real API (mirror `useMockAuth` pattern
 | `PrescriptionFormComponent` | Renders headings/buttons; frame/lens accordions; blocks save without customer; frame brand/model required; cancel reset |
 | `PrescriptionHistoryComponent` | Selection, view on sell, back navigation |
 | `toPrescriptionSummary` | Maps record fields to display strings |
+| `cartItemsFromPrescription` | Maps frames/lenses to cart lines with discounts |
 | `PrescriptionFormComponent` | Calls `applySavedPrescription` after save |
+| `CategoryService` | FillCategory frame/lens mapping + mock fallback |
+| `BrandService` | GetBrand array response (`BrandID`/`BrandName`) |
 
 ### Unit (Phase 3+)
 
@@ -369,7 +400,8 @@ When `false`, `PrescriptionService` calls real API (mirror `useMockAuth` pattern
 - [x] OD/OS + shared fields via `PrescriptionGridComponent`
 - [x] Mock save, stub print, cancel reset with dirty confirm
 - [x] Customer required for save; banner from `SellSessionStore`
-- [x] Save updates Sell latest Rx and history (mock)
+- [x] Save updates Sell latest Rx, history, and cart (mock)
+- [x] Category and brand APIs wired on prescription form
 - [x] History route with selection from Sell View All
 - [x] No date or doctor fields
 - [x] Unit tests for form, mapper, history, sell navigation
