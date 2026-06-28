@@ -541,7 +541,9 @@ See [`data-model.md`](./data-model.md) for request/response shapes.
 
 ### Non-functional
 
-- Capacitor-safe keyboard: form scrolls when inputs focused; no content hidden under bottom nav
+- Capacitor-safe keyboard: form scrolls when inputs focused; no content hidden under bottom nav (`html.keyboard-open` hides bottom nav on all native)
+- **Android 9–10:** POS forms rely on `adjustPan` + manual scroll in scroll containers — no auto-scroll on focus (see [`platform-support.md`](../../knowledge/platform-support.md))
+- **Android 11+:** standard `adjustResize` + `100dvh` / flex scroll
 - Validation messages accessible (aria-invalid, labels associated, role="alert" on errors)
 - Decimal locale: accept `.` separator; normalize for API in Phase 3
 

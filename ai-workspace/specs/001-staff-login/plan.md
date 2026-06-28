@@ -24,7 +24,7 @@ Deliver a form-only login screen in `optical-pos` that matches the Eyewa referen
 | 1 — UI shell | **Complete** | Login form, tokens, validation, password toggle |
 | 2 — Navigation | **Complete** | `/forgot-password`, `/otp-login`, `/home` stubs; mock auth |
 | **3 — Auth API integration** | **Complete** | Eyewa `VerifyUserLogin`, JWT, `FillStore`, auth guard |
-| **3c — Tablet keyboard layout** | **Complete** | Compact layout when IME open; Android `adjustResize` |
+| **3c — Tablet keyboard layout** | **Complete** | Compact layout when IME open; Android 9–10 `adjustPan`; Android 11+ `adjustResize` |
 | 4 — OTP & recovery | Planned | Depends on identity API OTP endpoints |
 
 **App path:** `optical-pos-angular-capacitor-ux/`  
@@ -140,19 +140,20 @@ Until the API exists, use an environment flag `useMockAuth: true` and accept a d
 
 ### Tablet keyboard (Phase 3c — **done**)
 
-**Problem:** On Android tablets in portrait, opening the IME left a large white gap below the password field and pushed **Sign In** off-screen. See [`raw-knowledge/issues/issues.jpeg`](../../raw-knowledge/issues/issues.jpeg).
+**Problem:** On Android tablets (especially **Exceed EX8S1**, Android 10), opening the IME left a large white gap and pushed **Sign In** off-screen. See [`raw-knowledge/issues/issues.jpeg`](../../raw-knowledge/issues/issues.jpeg).
 
-**Fix:**
+**Fix (verified on Exceed EX8S1):**
 
-| Layer | Change |
-|-------|--------|
-| **CSS** | `.login-page--compact` + `@media (max-height: 700px)`: top-align page, scrollable, `min-height: auto` on card, hide branding, top-align form panel |
-| **Component** | `LoginComponent` listens to `visualViewport` resize/scroll; sets `compactLayout` when keyboard shrinks viewport by > 120px |
-| **Focus** | `onFieldFocus` → `scrollIntoView({ block: 'center' })` after 300ms |
-| **Android** | `AndroidManifest.xml` → `android:windowSoftInputMode="adjustResize"` on `MainActivity` |
-| **Web** | `index.html` viewport meta already includes `interactive-widget=resizes-content` |
+| Layer | Android 9–10 (API ≤ 29) | Android 11+ / iOS |
+|-------|-------------------------|-------------------|
+| **Native** | `MainActivity`: `SOFT_INPUT_ADJUST_PAN` | `SOFT_INPUT_ADJUST_RESIZE` |
+| **JS** | `KeyboardViewportService`: `android-legacy-kb` + `focusin`/`focusout` → `keyboard-open` | Capacitor `keyboardWillShow`/`Hide` → `keyboard-open` |
+| **Login CSS** | `html.android-legacy-kb.keyboard-open`: `position: fixed; inset: 0`; scroll; hide OTP/footer | `:host-context(html.keyboard-open)` compact rules |
+| **Avoid** | `--app-height`, `visualViewport` math, `scrollIntoView` — caused white flash | — |
 
-**QA:** Rebuild Android after manifest change (`npm run android:build`). On device: focus password → confirm Sign In visible/scrollable; no regression vs `issues.jpeg`.
+**Global:** `html.keyboard-open` hides bottom nav (`styles.css`).
+
+**QA:** `npm run build` → `npx cap sync android` → reinstall APK. Focus password on device; no white gap; Sign In reachable.
 
 ## Components affected
 
@@ -163,8 +164,10 @@ Until the API exists, use an environment flag `useMockAuth: true` and accept a d
 | Routes | `optical-pos/src/app/app.routes.ts` | Add login + stubs |
 | Global styles | `optical-pos/src/styles.css` | Design tokens, reset, font |
 | Document | `optical-pos/src/index.html` | Inter font, page title |
-| Login feature | `optical-pos/src/app/features/auth/login/*` | **New** — includes compact keyboard layout |
-| Android manifest | `android/app/src/main/AndroidManifest.xml` | `adjustResize` for IME |
+| Login feature | `optical-pos/src/app/features/auth/login/*` | Compact keyboard layout (CSS-driven) |
+| Keyboard service | `src/app/services/keyboard-viewport.service.ts` | `keyboard-open`; Android 9–10 focus listeners |
+| MainActivity | `android/.../MainActivity.java` | `adjustPan` (API ≤ 29) / `adjustResize` (API 30+) |
+| Android manifest | `android/app/src/main/AndroidManifest.xml` | Default `adjustResize`; overridden in `MainActivity` per API |
 | Auth service | `optical-pos/src/app/features/auth/services/auth.service.ts` | **New** |
 | Unit tests | `login.component.spec.ts` | Form validation, toggle, submit |
 
@@ -269,7 +272,7 @@ Prerequisite: OpenAPI contract for identity service in `ai-workspace/contracts/o
 | Default Angular styles bleed through | No Material imports; scoped component CSS; global reset |
 | OTP/recovery scope creep | Phase 1 ships UI + stubs only; separate specs if flows grow |
 | iOS keyboard/layout issues | Test Capacitor early; 16px inputs; safe-area padding |
-| Tablet keyboard hides Sign In | Compact layout via `visualViewport` + `@media (max-height: 700px)`; Android `adjustResize`; scroll focused input — see [`issues.jpeg`](../../raw-knowledge/issues/issues.jpeg) |
+| Tablet keyboard hides Sign In | Android 9–10: `adjustPan` + `android-legacy-kb` login CSS; Android 11+: `adjustResize` + Capacitor — see [`issues.jpeg`](../../raw-knowledge/issues/issues.jpeg), [`platform-support.md`](../../knowledge/platform-support.md) |
 
 ## Test strategy
 
@@ -286,7 +289,7 @@ Prerequisite: OpenAPI contract for identity service in `ai-workspace/contracts/o
 - [ ] Tab order: identifier → password → remember → forgot → sign in → OTP
 - [ ] Mobile viewport: no horizontal scroll; tap targets ≥ 44px
 - [ ] Capacitor iOS/Android smoke test
-- [ ] Tablet portrait + keyboard: Sign In visible/scrollable; no large gap (Story 10; compare [`issues.jpeg`](../../raw-knowledge/issues/issues.jpeg))
+- [x] Tablet + keyboard: Sign In visible/scrollable; no large gap (Exceed EX8S1 Android 10 verified)
 
 ### E2E (later)
 - Successful login redirects to `/home`

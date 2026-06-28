@@ -289,7 +289,7 @@ This keeps cards in sync without tight coupling.
 | `@capacitor/barcode-scanner` | Product scan in catalog search (**Done**) |
 | `@capacitor/haptics` | Tap feedback on pay, add to cart |
 | `@capacitor/status-bar` | Match header color on native |
-| `@capacitor/keyboard` | Adjust layout when keyboard opens (prescription forms) |
+| `@capacitor/keyboard` | `keyboard-open` class; Android 11+ via plugin events; Android 9–10 via input focus — see [`platform-support.md`](../platform-support.md) |
 | `@capacitor/app` | Back button handling on Android |
 | Bluetooth / network print plugin (TBD) | Pay & Print |
 | Safe area / splash | Native shell polish |

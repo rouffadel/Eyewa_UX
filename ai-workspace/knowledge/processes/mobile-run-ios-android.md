@@ -325,20 +325,23 @@ Config is copied to the native app on `cap sync` via `angular.json` assets (`src
 
 ## Screen rotation
 
-The app supports **all orientations** (portrait, portrait upside-down, landscape left/right) on iOS and Android.
+The POS app is **landscape-only** on native (store tablet use case). CSS still includes phone/portrait rules for smaller viewports in the browser.
 
 | Platform | Configuration |
 |----------|----------------|
-| **iOS** | `UISupportedInterfaceOrientations` in `ios/App/App/Info.plist` — all four orientations on iPhone and iPad |
-| **Android** | `android:screenOrientation="fullSensor"` on `MainActivity` |
-| **Web shell** | `viewport-fit=cover` in `index.html`; shell CSS uses `env(safe-area-inset-*)` and `@media (orientation: landscape)` |
+| **iOS** | `UISupportedInterfaceOrientations` — landscape left & right only (`ios/App/App/Info.plist`) |
+| **Android** | `android:screenOrientation="sensorLandscape"` + `SCREEN_ORIENTATION_SENSOR_LANDSCAPE` in `MainActivity` |
+| **Web shell** | `viewport-fit=cover` in `index.html`; responsive rules in `src/responsive.css` |
+
+Supported OS versions and devices: [`../platform-support.md`](../platform-support.md).
 
 After changing native orientation settings, run `npx cap sync ios` / `npx cap sync android` and rebuild.
 
-**Verify:** rotate simulator (⌘← / ⌘→ in iOS Simulator) — login, header, side menu, and bottom nav should remain usable without overlap.
+**Verify:** launch in landscape on a tablet simulator — login, header, and bottom nav should remain usable without overlap.
 
 ## Related docs
 
+- **Platform & version support:** [`../platform-support.md`](../platform-support.md)
 - **Run entry point (ask Web / iOS / Android first):** [`run.md`](./run.md)
 - **Publish to stores:** [`mobile-publish-ios-android.md`](./mobile-publish-ios-android.md)
 - **iOS CodeSign xattr fix:** [`ios-codesign-xattr-fix.md`](./ios-codesign-xattr-fix.md)

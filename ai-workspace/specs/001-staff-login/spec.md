@@ -23,7 +23,7 @@ Provide a sign-in screen for optical store staff to access the ERP/POS. The UI m
 | **3 — Auth API integration** | Eyewa `VerifyUserLogin`, JWT session, `FillStore`, auth guard | **Done** |
 | **3b — Token & persistence** | Cookie tokens, `Authorization` header, refresh token, stay logged in until sign out | **Done** |
 | **4 — OTP & recovery** | OTP send/verify, password reset flows | Planned |
-| **3c — Tablet keyboard layout** | Compact scrollable layout when IME open; Android `adjustResize`; global `KeyboardViewportService` | **Done** |
+| **3c — Tablet keyboard layout** | Compact scrollable layout when IME open; Android 9–10 `adjustPan`; `KeyboardViewportService` | **Done** |
 
 **Current state:** **Sign In** calls the Eyewa demo API by default (`useMockAuth: false`). Flow: `LoginComponent.onSubmit()` → `AuthService.login()` → `LoginService.verifyUserLogin()` → `GET {apiUrl}/{authLoginPath}?LoginName=…&Password=…`. On success, JWT **access** and **refresh** tokens are stored in cookies; session JSON is persisted in **`localStorage`** until manual **Sign out**. All API calls send `Authorization: Bearer {token}` via `authInterceptor`. Expired tokens are refreshed via `POST auth/RefreshToken` (on app launch and on HTTP 401). `AuthService` loads stores from `FillStore`, then routes to `/home`. Mock auth remains when `useMockAuth: true` (`staff@eyewa.com` / `demo1234`).
 
@@ -131,30 +131,33 @@ Implementation must be visually indistinguishable from **`EyewaLogin.png`** (ful
 
 When the on-screen keyboard is open or the visible viewport is short, the login page must **not** keep the tall centered tablet card — that pushes **Sign In** and actions off-screen (see issue reference below).
 
-**App-wide:** `KeyboardViewportService` (initialized in `app.config.ts`) syncs `--app-height` from `window.visualViewport` on every screen and toggles `html.keyboard-open` when the keyboard inset exceeds 120px. Global rules in `styles.css` apply to the POS shell, sell dashboard, create customer, prescription, measurements, and login. See also [`002-common-components`](../002-common-components/spec.md) bottom-nav keyboard behavior.
+**App-wide:** `KeyboardViewportService` (initialized in `app.config.ts`) toggles `html.keyboard-open` on native. Global rules in `styles.css` hide the bottom nav when the keyboard is open. See [`002-common-components`](../002-common-components/spec.md) and [`knowledge/platform-support.md`](../../knowledge/platform-support.md).
 
 **Login-specific triggers (either is enough):**
 
 | Trigger | Mechanism |
 |---------|-----------|
-| **Keyboard open** | `KeyboardViewportService` → `html.keyboard-open` + `--app-height` from `visualViewport` |
-| **Short viewport** | CSS `@media (max-height: 700px)` — covers resized WebView after keyboard, landscape phones, etc. |
+| **Keyboard open (Android 11+ / iOS)** | Capacitor `keyboardWillShow` / `keyboardWillHide` → `html.keyboard-open` |
+| **Keyboard open (Android 9–10)** | `android-legacy-kb` + input `focusin` / `focusout` → `html.keyboard-open` (Capacitor events unreliable on budget tablets) |
+| **Short viewport** | CSS `@media (max-height: 700px)` — landscape phones, etc. |
 
 **Compact behavior:**
 
-| Element | Default (tablet) | Compact |
-|---------|------------------|---------|
-| Page | `justify-content: center`; full viewport height | `justify-content: flex-start`; `overflow-y: auto`; scroll padding for safe areas |
-| Card | `min-height: min(640px, calc(100dvh - 6rem))` | `min-height: auto` |
-| Branding panel | Visible on tablet | **Hidden** (form uses full card width) |
-| Form panel | Vertically centered (`align-items: center`) | Top-aligned (`align-items: flex-start`) |
-| Focused input | — | `scrollIntoView({ block: 'center' })` after 300ms (keyboard animation) |
+| Element | Default (tablet) | Compact (`keyboard-open` or short viewport) |
+|---------|------------------|---------------------------------------------|
+| Page | `justify-content: center`; full viewport height | Top-aligned; scrollable (`overflow-y: auto`) |
+| Card | `min-height: min(640px, calc(var(--viewport-height) - 6rem))` | `min-height: auto` |
+| Branding panel | Visible on tablet | **Hidden** |
+| Form panel | Vertically centered | Top-aligned |
+| OTP / divider / footer | Visible | **Hidden on Android 9–10** when keyboard open (maximize form space) |
 
-**Native (Android):** `MainActivity` uses `android:windowSoftInputMode="adjustResize|stateHidden"` and `WindowCompat.setDecorFitsSystemWindows(getWindow(), true)`.
+**Android 9–10 (verified Exceed EX8S1):** `MainActivity` uses **`SOFT_INPUT_ADJUST_PAN`** (API ≤ 29), not `adjustResize`. Login uses `position: fixed; inset: 0` + scroll under `html.android-legacy-kb.keyboard-open`. **Do not** use `--app-height` / `visualViewport` math — caused white screen flash on budget WebViews.
 
-**Android 9–10 WebView quirk:** `visualViewport` and CSS `100vh`/`100dvh` often **do not** shrink when the IME opens. The app uses `window.innerHeight` (via `KeyboardViewportService` + inline bootstrap in `index.html`) and sets `--app-height` in pixels. `html.android-webview` avoids viewport-unit page height.
+**Android 11+:** `MainActivity` uses **`SOFT_INPUT_ADJUST_RESIZE`** + Capacitor keyboard listeners; standard `100dvh` / flex scroll in POS shell.
 
-**Issue reference:** ![Tablet login — keyboard pushes Sign In off-screen (Android 10)](../../raw-knowledge/issues/issues.jpeg)
+**iOS:** `Keyboard.setResizeMode({ mode: 'body' })`; `html.keyboard-open` via Capacitor events.
+
+**Issue reference (before fix):** ![Tablet login — keyboard pushes Sign In off-screen (Android 10)](../../raw-knowledge/issues/issues.jpeg)
 
 ### Brand watermark
 
@@ -281,13 +284,13 @@ Store staff need a fast, trustworthy way to open the system at the start of a sh
 
 **Acceptance criteria**
 
-- [x] On tablet portrait with keyboard open, **Sign In**, Remember me, Forgot Password?, OTP, and footer remain visible or scrollable above the keyboard — no large empty gap between password field and keyboard
-- [x] Compact layout hides the left branding panel while the keyboard is open (or viewport height ≤ 700px) to maximize form space
+- [x] On tablet with keyboard open, **Sign In**, Remember me, and Forgot Password? remain visible or scrollable above the keyboard — no large empty gap (verified Exceed EX8S1 landscape, Android 10)
+- [x] Compact layout hides the left branding panel while the keyboard is open (or viewport height ≤ 700px)
 - [x] Login card does not enforce `min-height: 640px` in compact mode
 - [x] Form panel uses top alignment in compact mode (not vertical centering)
-- [x] Tapping username or password scrolls the focused field toward the center of the visible viewport
-- [x] Android WebView resizes with keyboard (`adjustResize` on `MainActivity`)
-- [ ] Manual QA on target store tablet (e.g. Nokia T20 portrait) signed off against [`issues.jpeg`](../../raw-knowledge/issues/issues.jpeg) regression
+- [x] Android 9–10: `adjustPan` in `MainActivity`; login fixed scroll layout under `android-legacy-kb.keyboard-open`
+- [x] Android 11+: `adjustResize` + Capacitor `keyboard-open` (unchanged from standard path)
+- [x] No `scrollIntoView` on focus (avoided layout jump / white flash on Android 9–10)
 
 ### Story 8 — Show logged-in staff in POS header and profile
 
@@ -553,10 +556,12 @@ Set `useMockAuth` to `true` in dev for offline mock login (`staff@eyewa.com` / `
 |------|------|
 | `src/config/appsettings.json` | API base URL, login path, `useMockAuth` flag |
 | `src/config/appsettings.prod.json` | Production config (real API) |
-| `src/app/features/auth/login/login.component.ts` | Form submit, error display, navigation, `visualViewport` compact layout |
-| `src/app/features/auth/login/login.component.css` | Split card, phone/compact breakpoints, `login-page--compact` |
-| `src/app/features/auth/login/login.component.html` | Split card template; `[class.login-page--compact]` binding |
-| `android/app/src/main/AndroidManifest.xml` | `android:windowSoftInputMode="adjustResize"` on `MainActivity` |
+| `src/app/features/auth/login/login.component.ts` | Form submit, error display, navigation |
+| `src/app/features/auth/login/login.component.css` | Split card; `:host-context(html.keyboard-open)` and `android-legacy-kb` compact rules |
+| `src/app/features/auth/login/login.component.html` | Split card template |
+| `src/app/services/keyboard-viewport.service.ts` | Native keyboard: `keyboard-open` toggle; Android 9–10 focus listeners |
+| `android/app/src/main/java/.../MainActivity.java` | API ≤ 29: `adjustPan`; API 30+: `adjustResize` |
+| `android/app/src/main/AndroidManifest.xml` | `android:windowSoftInputMode="adjustResize|stateHidden"` (overridden per API in `MainActivity`) |
 | `src/index.html` | Viewport meta: `interactive-widget=resizes-content` |
 | `src/app/features/auth/services/login.service.ts` | HTTP `GET`, response mapping, `LoginError` |
 | `src/app/features/auth/services/auth.service.ts` | Session read/write, refresh, persistent login, post-login store load |
@@ -596,12 +601,13 @@ npm start
 **Tablet keyboard (Story 10):**
 
 ```bash
-# Rebuild native shell after AndroidManifest change
 cd optical-pos-angular-capacitor-ux
-npm run android:build
-# On device: open /login → focus Password field
-# Expect: no large white gap; Sign In scrollable/visible above keyboard
-# Compare against ai-workspace/raw-knowledge/issues/issues.jpeg (before fix)
+npm run build
+npx cap sync android
+# Rebuild/reinstall APK on device (native MainActivity changes require reinstall)
+# On Exceed EX8S1 (Android 10) landscape: /login → focus Password
+# Expect: no white gap; Sign In scrollable/visible; OS pans form (adjustPan)
+# Android 11+ device: same flow; expect adjustResize + bottom nav hidden
 ```
 
 > If header still shows "User", sign out and sign in again (old sessions without `user` object are invalid).

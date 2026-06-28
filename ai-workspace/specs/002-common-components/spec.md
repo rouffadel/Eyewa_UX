@@ -3,7 +3,7 @@ feature: common-components
 status: in-progress
 owner: 
 created: 2026-06-18
-updated: 2026-06-26
+updated: 2026-06-28
 source: raw-knowledge/files/POSScreen.png
 reference: Eyewa POS shell — tablet header + bottom navigation
 used_by: poc-landing and future POS features
@@ -135,6 +135,16 @@ Where a card sits inside a narrow dashboard column, use **`container-type: inlin
 - Layout reflow without clipping fixed chrome
 - `viewport-fit=cover` and `env(safe-area-inset-*)` on header and bottom nav
 
+### Keyboard (native)
+
+| Android | Mechanism |
+|---------|-----------|
+| **9–10** | `adjustPan` in `MainActivity`; `KeyboardViewportService` sets `android-legacy-kb` + `keyboard-open` on input focus |
+| **11+** | `adjustResize`; Capacitor `keyboardWillShow`/`Hide` → `keyboard-open` |
+| **All** | `html.keyboard-open` hides bottom nav; `--shell-chrome-bottom: 0` |
+
+Login has additional compact CSS under `html.android-legacy-kb.keyboard-open` ([`001-staff-login`](../001-staff-login/spec.md)). Full matrix: [`knowledge/platform-support.md`](../../knowledge/platform-support.md).
+
 ## Out of scope (all components)
 
 - Notification panel implementation
@@ -167,7 +177,7 @@ npm start
 ## Open questions (shared)
 
 - [ ] Exact hex for header navy and POS blue — sample from PNG or brand guide?
-- [x] Hide bottom nav on keyboard open? **Done** — `html.keyboard-open` in global `styles.css` via `KeyboardViewportService`
+- [x] Hide bottom nav on keyboard open? **Done** — `html.keyboard-open` in `styles.css` via `KeyboardViewportService` (Capacitor events on Android 11+ / iOS; input focus on Android 9–10)
 - [ ] Barcode scan wired to Capacitor plugin in POC+?
 
 ## Implementation plan
