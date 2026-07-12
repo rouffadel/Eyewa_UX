@@ -1,0 +1,210 @@
+.measurements-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 1rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px), (min-width: 600px) and (min-height: 500px) {
+  .measurements-page {
+    max-width: min(960px, 100%);
+    margin-inline: auto;
+    padding: 1.25rem 1rem 1.5rem;
+  }
+}
+
+.measurements-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+
+.measurements-card__header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.measurements-card__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+  color: var(--color-text-heading);
+  grid-column: 1 / -1;
+}
+
+@media (min-width: 768px), (min-width: 600px) and (min-height: 500px) {
+  .measurements-card__title {
+    grid-column: 1;
+    text-align: left;
+  }
+}
+
+.measurements-card__edit {
+  justify-self: end;
+  grid-column: 1 / -1;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-pos-accent);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (min-width: 768px), (min-width: 600px) and (min-height: 500px) {
+  .measurements-card__edit {
+    grid-column: 2;
+  }
+}
+
+.measurements-message {
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--radius-input);
+  font-size: 0.875rem;
+}
+
+.measurements-message--success {
+  color: #166534;
+  background: #ecfdf5;
+}
+
+.measurements-message--error {
+  color: var(--color-error);
+  background: var(--color-error-bg);
+}
+
+.measurements-card__body {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 768px), (min-width: 600px) and (min-height: 500px) {
+  .measurements-card__body {
+    align-items: start;
+  }
+}
+
+@media (min-width: 768px), (min-width: 600px) and (min-height: 500px) {
+  .measurements-card__body {
+    grid-template-columns: minmax(0, 1.4fr) minmax(180px, 0.8fr);
+  }
+}
+
+.measurements-card__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px), (min-width: 600px) and (min-height: 500px) {
+  .measurements-card__fields {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.measurements-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.measurements-field__label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+.measurements-field__input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  background: var(--color-surface);
+  color: var(--color-text-heading);
+  font-size: 16px;
+}
+
+.measurements-field__input:disabled {
+  background: #f8fafc;
+  color: var(--color-text-body);
+}
+
+.measurements-field__select {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--color-text-muted) 50%),
+    linear-gradient(135deg, var(--color-text-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) calc(50% + 2px),
+    calc(100% - 12px) calc(50% + 2px);
+  background-size:
+    6px 6px,
+    6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 2rem;
+}
+
+.measurements-field__input:focus {
+  outline: 2px solid var(--color-pos-accent);
+  outline-offset: 0;
+  border-color: var(--color-pos-accent);
+}
+
+.measurements-field__input--invalid {
+  border-color: var(--color-error);
+}
+
+.measurements-field__wrap {
+  position: relative;
+}
+
+.measurements-field__wrap .measurements-field__input {
+  padding-right: 1.75rem;
+}
+
+.measurements-field__suffix {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  pointer-events: none;
+}
+
+.measurements-actions__save {
+  width: 100%;
+  min-height: var(--button-height);
+  border: none;
+  border-radius: var(--radius-button);
+  background: var(--color-pos-accent);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.measurements-actions__save:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .measurements-page {
+    padding-bottom: 0.5rem;
+  }
+}

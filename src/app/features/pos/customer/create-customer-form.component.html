@@ -1,0 +1,87 @@
+<div class="create-customer-page">
+  <header class="create-customer-page__top-bar">
+    <button type="button" class="create-customer-page__back" aria-label="Back" (click)="goBack()">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M15 6l-6 6 6 6" />
+      </svg>
+      Back
+    </button>
+    <h1 class="create-customer-page__title">Create Customer</h1>
+  </header>
+
+  <form class="create-customer-card" [formGroup]="form" (ngSubmit)="onSave()">
+    @if (successMessage()) {
+      <p class="create-customer-message create-customer-message--success" role="status">
+        {{ successMessage() }}
+      </p>
+    }
+
+    @if (errorMessage()) {
+      <p class="create-customer-message create-customer-message--error" role="alert">
+        {{ errorMessage() }}
+      </p>
+    }
+
+    <div class="create-customer-field-group">
+      <label class="create-customer-field">
+        <span class="create-customer-field__label">Customer Name</span>
+        <input
+          class="create-customer-field__input"
+          [class.create-customer-field__input--invalid]="!!nameErrorMessage()"
+          type="text"
+          formControlName="customerName"
+          autocomplete="name"
+          placeholder="Enter customer name"
+        />
+      </label>
+      @if (nameErrorMessage()) {
+        <p class="create-customer-field__hint create-customer-field__hint--error" role="alert">
+          {{ nameErrorMessage() }}
+        </p>
+      }
+    </div>
+
+    <div class="create-customer-field-group">
+      <label class="create-customer-field">
+        <span class="create-customer-field__label">Mobile No</span>
+        <input
+          class="create-customer-field__input"
+          [class.create-customer-field__input--invalid]="!!mobileErrorMessage()"
+          type="tel"
+          formControlName="customerNo"
+          autocomplete="tel"
+          inputmode="numeric"
+          maxlength="15"
+          placeholder="966512345678, 9876543210"
+          (input)="onMobileInput($event)"
+          (blur)="onMobileBlur()"
+        />
+      </label>
+      @if (mobileErrorMessage()) {
+        <p class="create-customer-field__hint create-customer-field__hint--error" role="alert">
+          {{ mobileErrorMessage() }}
+        </p>
+      } @else {
+        <p class="create-customer-field__hint">Saudi: 966… or 05… · India: 91… or 10-digit mobile</p>
+      }
+    </div>
+
+    <footer class="create-customer-actions">
+      <button
+        type="button"
+        class="create-customer-actions__cancel"
+        [disabled]="isSaving()"
+        (click)="onCancel()"
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        class="create-customer-actions__save"
+        [disabled]="form.invalid || isSaving()"
+      >
+        {{ isSaving() ? 'Saving…' : 'Save' }}
+      </button>
+    </footer>
+  </form>
+</div>

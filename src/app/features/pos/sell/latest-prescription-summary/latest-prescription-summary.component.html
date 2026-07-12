@@ -1,0 +1,90 @@
+<section class="pos-card rx-summary">
+  <div class="rx-summary__header">
+    <h2>LATEST PRESCRIPTION</h2>
+    <button
+      type="button"
+      class="rx-summary__link"
+      [disabled]="!summary()"
+      (click)="viewPrescription.emit()"
+    >
+      View Prescription
+    </button>
+  </div>
+
+  <div class="rx-summary__content">
+    @if (loading()) {
+      <div class="rx-summary__empty">
+        <p>Loading prescription…</p>
+      </div>
+    } @else if (summary(); as rx) {
+      <div class="rx-summary__body">
+        <div class="rx-summary__meta">
+          <span>{{ rx.date }}</span>
+          <span>{{ rx.doctorName }}</span>
+        </div>
+
+        <table class="rx-summary__grid">
+          <thead>
+            <tr>
+              <th></th>
+              <th>OD</th>
+              <th>OS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th>SPH</th>
+              <td>{{ rx.od.sph }}</td>
+              <td>{{ rx.os.sph }}</td>
+            </tr>
+            <tr>
+              <th>CYL</th>
+              <td>{{ rx.od.cyl }}</td>
+              <td>{{ rx.os.cyl }}</td>
+            </tr>
+            <tr>
+              <th>AXIS</th>
+              <td>{{ rx.od.axis }}</td>
+              <td>{{ rx.os.axis }}</td>
+            </tr>
+            @if (rx.od.add || rx.os.add) {
+              <tr>
+                <th>ADD</th>
+                <td>{{ rx.od.add ?? '—' }}</td>
+                <td>{{ rx.os.add ?? '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        <p class="rx-summary__pd">PD: {{ rx.pd }} · Near PD: {{ rx.nearPd }}</p>
+      </div>
+
+      <div class="rx-summary__actions">
+        <button
+          type="button"
+          class="rx-summary__btn rx-summary__btn--primary"
+          (click)="viewPrescription.emit()"
+        >
+          View Prescription
+        </button>
+        <button type="button" class="rx-summary__btn" (click)="newPrescription.emit()">
+          + New Prescription
+        </button>
+        <button type="button" class="rx-summary__btn" (click)="viewHistory.emit()">View History</button>
+      </div>
+    } @else if (hasCustomer()) {
+      <div class="rx-summary__empty">
+        <p>No prescription on file</p>
+        <button type="button" class="rx-summary__btn" disabled>View Prescription</button>
+        <button type="button" class="rx-summary__btn" (click)="newPrescription.emit()">
+          + New Prescription
+        </button>
+      </div>
+    } @else {
+      <div class="rx-summary__empty">
+        <p>Select a customer to view prescription summary</p>
+      </div>
+    }
+  </div>
+</section>

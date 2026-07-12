@@ -1,0 +1,58 @@
+<article class="lens-line" [formGroup]="group()">
+  <header class="lens-line__header">
+    <h3 class="lens-line__title">Lens {{ index() + 1 }}</h3>
+    <button type="button" class="lens-line__remove" aria-label="Remove lens line" (click)="remove.emit()">
+      Remove
+    </button>
+  </header>
+
+  <div class="lens-line__grid">
+    <label class="prescription-field">
+      <span class="prescription-field__label">Category</span>
+      <select class="prescription-field__input prescription-field__select" formControlName="category">
+        @for (category of categories; track category.id) {
+          <option [value]="category.value">{{ category.value }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="prescription-field lens-line__field--wide">
+      <span class="prescription-field__label">Order Lens</span>
+      <input
+        class="prescription-field__input"
+        type="text"
+        formControlName="orderLens"
+        placeholder="e.g. CR39, 1.67 grey"
+      />
+    </label>
+
+    <label class="prescription-field">
+      <span class="prescription-field__label">Price</span>
+      <input
+        class="prescription-field__input"
+        type="number"
+        min="0"
+        step="0.01"
+        inputmode="decimal"
+        formControlName="price"
+      />
+    </label>
+
+    <label class="prescription-field">
+      <span class="prescription-field__label">Quantity</span>
+      <input
+        class="prescription-field__input"
+        type="number"
+        min="1"
+        step="1"
+        inputmode="numeric"
+        formControlName="quantity"
+      />
+    </label>
+
+    <div class="lens-line__total">
+      <span>Total</span>
+      <strong>{{ formatMoney(lineTotalFor(group())) }}</strong>
+    </div>
+  </div>
+</article>

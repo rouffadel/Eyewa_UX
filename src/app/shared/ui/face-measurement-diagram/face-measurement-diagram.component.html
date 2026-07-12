@@ -1,0 +1,24 @@
+<div class="face-diagram" aria-hidden="true">
+  <svg viewBox="0 0 220 180" class="face-diagram__svg">
+    <ellipse cx="110" cy="95" rx="72" ry="88" class="face-diagram__face" />
+    <path
+      d="M48 88 Q110 72 172 88 Q172 108 110 118 Q48 108 48 88"
+      class="face-diagram__glasses"
+    />
+    <circle cx="82" cy="92" r="22" class="face-diagram__lens" />
+    <circle cx="138" cy="92" r="22" class="face-diagram__lens" />
+    <line x1="104" y1="92" x2="116" y2="92" class="face-diagram__bridge" />
+
+    <line x1="38" y1="58" x2="182" y2="58" class="face-diagram__line" />
+    <text x="110" y="50" class="face-diagram__label">{{ frameWidthLabel() }}</text>
+
+    <line x1="168" y1="72" x2="168" y2="112" class="face-diagram__line" />
+    <text x="176" y="94" class="face-diagram__label">{{ lensHeightLabel() }}</text>
+
+    <line x1="82" y1="118" x2="138" y2="118" class="face-diagram__line face-diagram__line--pd" />
+    <text x="110" y="134" class="face-diagram__label face-diagram__label--pd">
+      {{ pdLabel() }}
+    </text>
+  </svg>
+  <p class="face-diagram__caption">Frame width · Lens height · PD</p>
+</div>

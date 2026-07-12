@@ -1,0 +1,39 @@
+.pos-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: var(--viewport-height, 100dvh);
+  background: #f8fafc;
+}
+
+.pos-shell__content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  padding-top: calc(var(--header-height-total) + env(safe-area-inset-top, 0));
+  padding-right: env(safe-area-inset-right, 0);
+  padding-bottom: calc(var(--shell-chrome-bottom) + env(safe-area-inset-bottom, 0));
+  padding-left: env(safe-area-inset-left, 0);
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pos-shell__content > router-outlet {
+  display: contents;
+}
+
+.pos-shell__content > :not(router-outlet) {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.pos-shell__content--full {
+  padding-top: env(safe-area-inset-top, 0);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  justify-content: flex-start;
+  align-items: stretch;
+}

@@ -1,0 +1,1048 @@
+import { computed, inject, Injectable, signal } from '@angular/core';
+import { AuthService } from '../../../auth/services/auth.service';
+import { CustomerSessionService } from '../../customer/services/customer-session.service';
+import { PrescriptionRecord } from '../../prescription/models/prescription.models';
+import {
+  applyCartItemsToPrescriptionRecord,
+  prescriptionLinesToCartItems,
+} from '../../prescription/services/prescription-cart.mapper';
+import { PrescriptionLocalStorageService } from '../../prescription/services/prescription-local-storage.service';
+import { PrescriptionService } from '../../prescription/services/prescription.service';
+import { CartLineItem, lineTotal } from '../models/cart.models';
+import { Customer, PrescriptionSummary, SavedPrescriptionListItem } from '../models/customer.models';
+import { InvoiceViewModel } from '../models/invoice.models';
+import { CatalogCategory, Product } from '../models/product.models';
+import { PaymentDraft, PaymentMethod, PaymentRegisterAction } from '../models/payment.models';
+import { SalesDetailsGridLineItem, SalesDetailsPaymentSummary } from '../models/sales-details-grid.models';
+import { BarcodeScanService } from './barcode-scan.service';
+import { CategoryService } from './category.service';
+import { formatMoney, paymentAmountPaid, paymentBalanceRemaining, PaymentService } from './payment.service';
+import { toPrescriptionSummary } from './prescription-summary.mapper';
+import { SalesDetailsService, SalesDetailsResult } from './sales-details.service';
+import {
+  cartItemsFromSalesDetails,
+  isOrderCartLocked,
+  paymentDraftFromSalesDetails,
+} from './sales-details.mapper';
+import { OrderLenseService } from './order-lense.service';
+import { cartItemsFromOrderLense } from './order-lense.mapper';
+import { OrderLenseOrder } from '../models/order-lense.models';
+import {
+  hasApiSalePrescriptionData,
+  prescriptionRecordFromApiSale,
+} from './api-sale-prescription.mapper';
+import { buildSaveSalesDetailsPayload, hasPrescriptionFramesForSales } from './save-sales.mapper';
+import { buildInvoiceFromSaveSalesResponse } from './save-sales-response.mapper';
+import { SaveSalesService } from './save-sales.service';
+
+@Injectable({ providedIn: 'root' })
+export class SellSessionStore {
+  private readonly payment = inject(PaymentService);
+  private readonly customerSession = inject(CustomerSessionService);
+  private readonly barcodeScan = inject(BarcodeScanService);
+  private readonly salesDetails = inject(SalesDetailsService);
+  private readonly orderLense = inject(OrderLenseService);
+  private readonly prescriptionStorage = inject(PrescriptionLocalStorageService);
+  private readonly prescriptionService = inject(PrescriptionService);
+  private readonly saveSales = inject(SaveSalesService);
+  private readonly categoryService = inject(CategoryService);
+  private readonly auth = inject(AuthService);
+
+  readonly selectedCustomer = signal<Customer | null>(this.customerSession.sellCustomer());
+  readonly prescriptionLoading = signal(false);
+
+  private readonly prescriptionsByCustomer = signal<Record<string, PrescriptionSummary>>({});
+
+  private readonly prescriptionHistoryByCustomer = signal<Record<string, SavedPrescriptionListItem[]>>({});
+
+  private readonly prescriptionRecordByCustomer = signal<Record<string, PrescriptionRecord>>({});
+
+  private readonly orderPaymentSummary = signal<SalesDetailsPaymentSummary | null>(null);
+
+  constructor() {
+    const customer = this.selectedCustomer();
+    if (customer?.salesId != null) {
+      this.loadSalesDetails(customer, { forceApplyFromApi: true, persistToLocalStorage: true });
+    } else if (customer?.id) {
+      this.loadLocalPrescription(customer.id);
+    }
+  }
+
+  readonly latestPrescription = computed(() => {
+    const customer = this.selectedCustomer();
+    if (!customer) {
+      return null;
+    }
+
+    return this.prescriptionsByCustomer()[customer.id] ?? null;
+  });
+
+  readonly hasPrescription = computed(() => this.latestPrescription() !== null);
+
+  readonly prescriptionHistory = computed(() => {
+    const customer = this.selectedCustomer();
+    if (!customer) {
+      return [];
+    }
+
+    return this.prescriptionHistoryByCustomer()[customer.id] ?? [];
+  });
+
+  private readonly selectedPrescriptionIdByCustomer = signal<Record<string, string>>({});
+
+  readonly selectedPrescriptionId = computed(() => {
+    const customer = this.selectedCustomer();
+    if (!customer) {
+      return null;
+    }
+
+    const selectedId = this.selectedPrescriptionIdByCustomer()[customer.id];
+    if (selectedId) {
+      return selectedId;
+    }
+
+    return this.prescriptionHistory()[0]?.id ?? null;
+  });
+
+  readonly catalogCategory = signal<CatalogCategory>('frames');
+  readonly catalogSearch = signal('');
+  readonly catalogProducts = signal<Product[]>([]);
+  readonly cartItems = signal<CartLineItem[]>([]);
+  readonly paymentDraft = signal<PaymentDraft>(this.createInitialPaymentDraft());
+  readonly statusMessage = signal('');
+  readonly addToCartBlockedMessage = signal('');
+  readonly isPaying = signal(false);
+  readonly lastInvoice = signal<InvoiceViewModel | null>(null);
+
+  readonly filteredProducts = computed(() => {
+    const search = this.catalogSearch().trim().toLowerCase();
+    const category = this.catalogCategory();
+    const products = this.catalogProducts().filter((product) => product.category === category);
+
+    if (!search) {
+      return products;
+    }
+
+    return products.filter(
+      (product) =>
+        product.name.toLowerCase().includes(search) ||
+        product.sku.toLowerCase().includes(search) ||
+        product.barcode?.toLowerCase().includes(search),
+    );
+  });
+
+  readonly cartItemCount = computed(() =>
+    this.cartItems().reduce((sum, item) => sum + item.qty, 0),
+  );
+
+  readonly cartSubtotal = computed(() =>
+    this.cartItems().reduce((sum, item) => sum + lineTotal(item), 0),
+  );
+
+  readonly paymentTotals = computed(() =>
+    this.payment.calculateTotals(this.cartSubtotal(), this.paymentDraft()),
+  );
+
+  readonly canPay = computed(() => {
+    if (this.isPaying()) {
+      return false;
+    }
+
+    return this.selectedCustomer() !== null && this.cartItems().length > 0;
+  });
+
+  readonly isCartLocked = computed(() => isOrderCartLocked(this.orderPaymentSummary()));
+
+  readonly isSettlingRemainingBalance = computed(
+    () => this.paymentDraft().settleRemainingBalance && this.orderPaymentSummary() !== null,
+  );
+
+  readonly outstandingBalance = computed(() =>
+    Math.max(0, this.orderPaymentSummary()?.balance ?? 0),
+  );
+
+  readonly amountAlreadyPaid = computed(() => {
+    const payment = this.orderPaymentSummary();
+    if (!payment) {
+      return 0;
+    }
+
+    return Math.max(0, payment.netTotal - payment.balance);
+  });
+
+  selectCustomer(customer: Customer | null): void {
+    const previousId = this.selectedCustomer()?.id;
+    this.selectedCustomer.set(customer);
+    this.resetLoyaltyRedemption();
+
+    if (customer?.id !== previousId) {
+      this.cartItems.set([]);
+      this.paymentDraft.set(this.createInitialPaymentDraft());
+      this.orderPaymentSummary.set(null);
+    }
+
+    if (customer?.id) {
+      if (customer.salesId == null) {
+        this.loadLocalPrescription(customer.id);
+      }
+    } else {
+      this.syncPaymentAmountsToPayable();
+    }
+
+    this.loadSalesDetails(customer, { forceApplyFromApi: true, persistToLocalStorage: true });
+  }
+
+  ensureSalesDetailsLoaded(): void {
+    const customer = this.selectedCustomer();
+    if (!customer?.salesId || this.prescriptionLoading()) {
+      return;
+    }
+
+    if (this.prescriptionHistory().length > 0) {
+      return;
+    }
+
+    this.loadSalesDetails(customer);
+  }
+
+  private loadSalesDetails(
+    customer: Customer | null,
+    options: { forceApplyFromApi?: boolean; persistToLocalStorage?: boolean } = {},
+  ): Promise<void> {
+    const salesId = customer?.salesId;
+    if (!customer || salesId == null) {
+      return Promise.resolve();
+    }
+
+    this.prescriptionLoading.set(true);
+
+    return Promise.all([
+      this.salesDetails.getSalesDetailsGrid(salesId),
+      this.orderLense.getOrderLense(salesId).catch(() => this.emptyOrderLenseOrder(salesId)),
+    ])
+      .then(([salesResult, orderResult]) => {
+        if (this.selectedCustomer()?.id !== customer.id) {
+          return;
+        }
+
+        this.applySalesDetailsResult(customer, salesId, salesResult, orderResult, options);
+      })
+      .catch(() => {
+        // Sales details lookup is best-effort; keep the card in its empty state.
+      })
+      .finally(() => {
+        if (this.selectedCustomer()?.id === customer.id) {
+          this.prescriptionLoading.set(false);
+        }
+      });
+  }
+
+  private applySalesDetailsResult(
+    customer: Customer,
+    salesId: number,
+    result: SalesDetailsResult,
+    orderResult: OrderLenseOrder,
+    options: { forceApplyFromApi?: boolean; persistToLocalStorage?: boolean },
+  ): void {
+    if (result.prescription) {
+      this.applySalesDetailsPrescription(customer.id, salesId, result.prescription);
+    }
+
+    const shouldApplyCart =
+      options.forceApplyFromApi || !this.hasLocalPrescriptionRecord(customer.id);
+
+    if (shouldApplyCart) {
+      this.applyApiSaleCart(result.lineItems, orderResult.lenses);
+    }
+
+    if (result.payment) {
+      this.applySalesDetailsPayment(result.payment);
+    }
+
+    if (result.row?.invoiceNo) {
+      this.selectedCustomer.update((current) =>
+        current?.id === customer.id
+          ? { ...current, invoiceNo: result.row!.invoiceNo }
+          : current,
+      );
+    }
+
+    if (
+      options.persistToLocalStorage &&
+      hasApiSalePrescriptionData(result, orderResult)
+    ) {
+      this.persistApiSaleToLocalStorage(customer, salesId, result, orderResult);
+    }
+  }
+
+  private applyApiSaleCart(
+    frameLines: SalesDetailsGridLineItem[],
+    lensLines: OrderLenseOrder['lenses'],
+  ): void {
+    const frameItems = cartItemsFromSalesDetails(frameLines);
+    const lensItems = cartItemsFromOrderLense(lensLines);
+
+    if (frameItems.length === 0 && lensItems.length === 0) {
+      return;
+    }
+
+    this.cartItems.set([...frameItems, ...lensItems]);
+    this.syncPaymentAmountsToPayable();
+  }
+
+  private emptyOrderLenseOrder(salesId: number): OrderLenseOrder {
+    return {
+      salesId,
+      lenses: [],
+      od: null,
+      os: null,
+      additional: null,
+    };
+  }
+
+  private applySalesDetailsPrescription(
+    customerId: string,
+    salesId: number,
+    summary: PrescriptionSummary,
+  ): void {
+    const prescriptionId = `sales-${salesId}`;
+    const item: SavedPrescriptionListItem = { id: prescriptionId, summary };
+
+    this.prescriptionsByCustomer.update((current) => ({
+      ...current,
+      [customerId]: summary,
+    }));
+
+    this.prescriptionHistoryByCustomer.update((current) => {
+      const existing = current[customerId] ?? [];
+      const withoutDuplicate = existing.filter((entry) => entry.id !== prescriptionId);
+
+      return {
+        ...current,
+        [customerId]: [item, ...withoutDuplicate],
+      };
+    });
+
+    this.selectedPrescriptionIdByCustomer.update((current) => ({
+      ...current,
+      [customerId]: prescriptionId,
+    }));
+  }
+
+  private applySalesDetailsPayment(payment: SalesDetailsPaymentSummary): void {
+    this.orderPaymentSummary.set(payment);
+    const patch = paymentDraftFromSalesDetails(payment);
+
+    this.paymentDraft.update((draft) => ({
+      ...draft,
+      ...patch,
+    }));
+    this.syncPaymentAmountsToPayable();
+  }
+
+  applySavedPrescription(record: PrescriptionRecord): void {
+    const summary = toPrescriptionSummary(record);
+    const item: SavedPrescriptionListItem = { id: record.id, summary };
+
+    this.prescriptionsByCustomer.update((current) => ({
+      ...current,
+      [record.customerId]: summary,
+    }));
+
+    this.prescriptionHistoryByCustomer.update((current) => {
+      const existing = current[record.customerId] ?? [];
+      const withoutDuplicate = existing.filter((entry) => entry.id !== record.id);
+
+      return {
+        ...current,
+        [record.customerId]: [item, ...withoutDuplicate],
+      };
+    });
+
+    this.selectedPrescriptionIdByCustomer.update((current) => ({
+      ...current,
+      [record.customerId]: record.id,
+    }));
+
+    this.prescriptionRecordByCustomer.update((current) => ({
+      ...current,
+      [record.customerId]: record,
+    }));
+
+    this.syncCartFromPrescription(record);
+  }
+
+  loadLocalPrescription(customerId: string): void {
+    const record = this.prescriptionStorage.getLatest(customerId);
+    if (!record) {
+      return;
+    }
+
+    this.applySavedPrescription(record);
+  }
+
+  syncCartFromPrescription(record: PrescriptionRecord): void {
+    if (this.isCartLocked()) {
+      return;
+    }
+
+    this.cartItems.set(prescriptionLinesToCartItems(record));
+    this.syncPaymentAmountsToPayable();
+  }
+
+  selectPrescriptionFromHistory(prescriptionId: string): void {
+    const customer = this.selectedCustomer();
+    if (!customer) {
+      return;
+    }
+
+    const entry = this.prescriptionHistory().find((item) => item.id === prescriptionId);
+    if (!entry) {
+      return;
+    }
+
+    const record = this.resolvePrescriptionRecord(customer.id, prescriptionId);
+
+    this.selectedPrescriptionIdByCustomer.update((current) => ({
+      ...current,
+      [customer.id]: prescriptionId,
+    }));
+
+    this.prescriptionsByCustomer.update((current) => ({
+      ...current,
+      [customer.id]: entry.summary,
+    }));
+
+    if (record) {
+      this.prescriptionRecordByCustomer.update((current) => ({
+        ...current,
+        [customer.id]: record,
+      }));
+      this.syncCartFromPrescription(record);
+    }
+  }
+
+  loadSelectedPrescription(customerId: string): void {
+    const selectedId = this.selectedPrescriptionIdByCustomer()[customerId];
+    if (selectedId) {
+      this.selectPrescriptionFromHistory(selectedId);
+      return;
+    }
+
+    this.loadLocalPrescription(customerId);
+  }
+
+  selectCreatedCustomer(): void {
+    const customer = this.customerSession.sellCustomer();
+    this.selectCustomer(customer);
+  }
+
+  setCatalogCategory(category: CatalogCategory): void {
+    this.catalogCategory.set(category);
+  }
+
+  setCatalogSearch(search: string): void {
+    this.catalogSearch.set(search);
+  }
+
+  async scanProductBarcode(): Promise<void> {
+    this.clearStatusMessages();
+
+    try {
+      const barcode = await this.barcodeScan.scanBarcode();
+      if (!barcode) {
+        return;
+      }
+
+      this.applyScannedBarcode(barcode);
+    } catch {
+      this.statusMessage.set('Barcode scan failed. Check camera permissions and try again.');
+    }
+  }
+
+  applyScannedBarcode(barcode: string): void {
+    if (this.isCartLocked()) {
+      this.addToCartBlockedMessage.set(this.cartLockedMessage());
+      return;
+    }
+
+    this.setCatalogSearch(barcode);
+
+    const normalized = barcode.trim().toLowerCase();
+    const category = this.catalogCategory();
+    let product = this.catalogProducts().find((item) => {
+      if (item.category !== category) {
+        return false;
+      }
+
+      return (
+        item.sku.toLowerCase() === normalized || item.barcode?.toLowerCase() === normalized
+      );
+    });
+
+    if (!product) {
+      product = this.catalogProducts().find(
+        (item) =>
+          item.sku.toLowerCase() === normalized || item.barcode?.toLowerCase() === normalized,
+      );
+    }
+
+    if (!product) {
+      this.statusMessage.set(`No product found for barcode "${barcode}".`);
+      return;
+    }
+
+    if (product.category !== category) {
+      this.setCatalogCategory(product.category);
+    }
+
+    this.addProductToCart(product);
+
+    if (this.addToCartBlockedMessage()) {
+      return;
+    }
+
+    this.statusMessage.set(`${product.name} added to cart.`);
+  }
+
+  addProductToCart(product: Product): void {
+    if (this.isCartLocked()) {
+      this.addToCartBlockedMessage.set(this.cartLockedMessage());
+      return;
+    }
+
+    if (!this.selectedCustomer()) {
+      this.addToCartBlockedMessage.set('Select a customer first.');
+      return;
+    }
+
+    this.addToCartBlockedMessage.set('');
+
+    const existing = this.cartItems().find((item) => item.product.sku === product.sku);
+
+    if (existing) {
+      this.updateQty(existing.lineId, existing.qty + 1);
+      return;
+    }
+
+    const line: CartLineItem = {
+      lineId: `${product.sku}-${Date.now()}`,
+      product,
+      qty: 1,
+      unitPrice: product.price,
+      discount: 0,
+    };
+
+    this.cartItems.update((items) => [...items, line]);
+    this.syncPaymentAmountsToPayable();
+  }
+
+  updateQty(lineId: string, qty: number): void {
+    if (this.isCartLocked()) {
+      return;
+    }
+
+    const nextQty = Math.max(1, qty);
+    this.cartItems.update((items) =>
+      items.map((item) => (item.lineId === lineId ? { ...item, qty: nextQty } : item)),
+    );
+    this.syncPaymentAmountsToPayable();
+    this.persistPrescriptionFromCart();
+  }
+
+  removeItem(lineId: string): void {
+    if (this.isCartLocked()) {
+      return;
+    }
+
+    this.cartItems.update((items) => items.filter((item) => item.lineId !== lineId));
+    this.syncPaymentAmountsToPayable();
+    this.persistPrescriptionFromCart();
+  }
+
+  clearCart(): void {
+    if (this.isCartLocked()) {
+      return;
+    }
+
+    this.cartItems.set([]);
+    this.syncPaymentAmountsToPayable();
+    this.persistPrescriptionFromCart();
+  }
+
+  updatePaymentDraft(patch: Partial<PaymentDraft>): void {
+    this.paymentDraft.update((draft) => ({ ...draft, ...patch }));
+    this.syncPaymentAmountsToPayable();
+  }
+
+  setPaymentMethod(method: PaymentMethod): void {
+    const payable = this.paymentTotals().payable;
+    const amounts = this.payment.syncAmountsForMethod(payable, method, this.paymentDraft(), this.orderPaymentSummary());
+
+    this.paymentDraft.update((draft) => ({
+      ...draft,
+      method,
+      ...amounts,
+    }));
+  }
+
+  setMixedCashAmount(cashAmount: number): void {
+    const amounts = this.payment.applyMixedCashAmount(this.paymentTotals().payable, cashAmount);
+    this.paymentDraft.update((draft) => ({ ...draft, method: 'mixed', ...amounts }));
+  }
+
+  setMixedCardAmount(cardAmount: number): void {
+    const amounts = this.payment.applyMixedCardAmount(this.paymentTotals().payable, cardAmount);
+    this.paymentDraft.update((draft) => ({ ...draft, method: 'mixed', ...amounts }));
+  }
+
+  setPartialPayment(enabled: boolean): void {
+    this.paymentDraft.update((draft) => ({
+      ...draft,
+      payPartial: enabled,
+      partialAmount: enabled ? draft.partialAmount : 0,
+      settleRemainingBalance: false,
+    }));
+    this.syncPaymentAmountsToPayable();
+  }
+
+  setPartialPaymentAmount(amount: number): void {
+    this.paymentDraft.update((draft) => ({
+      ...draft,
+      payPartial: true,
+      partialAmount: Math.max(0, amount),
+      settleRemainingBalance: false,
+    }));
+    this.syncPaymentAmountsToPayable();
+  }
+
+  setLoyaltyRedemption(enabled: boolean): void {
+    const customer = this.selectedCustomer();
+    this.updatePaymentDraft({
+      redeemLoyalty: enabled,
+      loyaltyPoints: enabled && customer ? customer.loyaltyPoints : 0,
+    });
+  }
+
+  resetLoyaltyRedemption(): void {
+    this.updatePaymentDraft({ redeemLoyalty: false, loyaltyPoints: 0 });
+  }
+
+  async pay(staffName: string): Promise<boolean> {
+    this.clearStatusMessages();
+    this.isPaying.set(true);
+
+    try {
+      if (!(await this.tryCompletePayment(staffName))) {
+        return false;
+      }
+
+      const payable = this.paymentTotals().payable;
+      const draft = this.paymentDraft();
+      const invoice = this.lastInvoice();
+      const invoiceLabel = invoice?.invoiceNo
+        ? `Invoice ${invoice.invoiceNo}`
+        : this.paymentBreakdownLabel(payable, draft);
+      this.statusMessage.set(`Payment recorded: ${invoiceLabel}.`);
+      return true;
+    } finally {
+      this.isPaying.set(false);
+    }
+  }
+
+  async payAndPrint(staffName: string): Promise<boolean> {
+    this.clearStatusMessages();
+    this.isPaying.set(true);
+
+    try {
+      if (!(await this.tryCompletePayment(staffName))) {
+        return false;
+      }
+
+      this.statusMessage.set('');
+      return true;
+    } finally {
+      this.isPaying.set(false);
+    }
+  }
+
+  redeemPointsStub(): void {
+    this.statusMessage.set('Redeem points is not connected yet.');
+  }
+
+  runPaymentRegisterAction(action: PaymentRegisterAction): void {
+    const messages: Record<PaymentRegisterAction, string> = {
+      'daily-report': 'Daily report is not connected yet.',
+      'cash-report': 'Cash report is not connected yet.',
+      'open-register': 'Open register is not connected yet.',
+      'close-register': 'Close register is not connected yet.',
+    };
+
+    this.clearStatusMessages();
+    this.statusMessage.set(messages[action]);
+  }
+
+  clearStatusMessages(): void {
+    this.statusMessage.set('');
+    this.addToCartBlockedMessage.set('');
+  }
+
+  private async tryCompletePayment(staffName: string): Promise<boolean> {
+    const payable = this.paymentTotals().payable;
+    const draft = this.paymentDraft();
+
+    if (!this.selectedCustomer() || this.cartItems().length === 0) {
+      this.statusMessage.set('Select a customer and add items to the cart.');
+      return false;
+    }
+
+    const validationMessage = this.payment.paymentValidationMessage(
+      payable,
+      draft,
+      this.orderPaymentSummary(),
+    );
+    if (validationMessage) {
+      this.statusMessage.set(validationMessage);
+      return false;
+    }
+
+    const customer = this.selectedCustomer()!;
+    const prescriptionRecord = await this.resolvePrescriptionRecordForPayment(customer.id);
+
+    if (!prescriptionRecord) {
+      this.statusMessage.set('Save a prescription before paying.');
+      return false;
+    }
+
+    const salesId = customer.salesId ?? prescriptionRecord.salesId;
+    if (salesId == null) {
+      this.statusMessage.set('Create or select a sales customer before paying.');
+      return false;
+    }
+
+    if (!hasPrescriptionFramesForSales(prescriptionRecord)) {
+      this.statusMessage.set('Save a prescription frame before paying.');
+      return false;
+    }
+
+    try {
+      await this.prescriptionService.save({
+        ...prescriptionRecord,
+        customerId: customer.id,
+        salesId,
+      });
+
+      const saveResult = await this.saveSales.saveSalesDetails(
+        buildSaveSalesDetailsPayload({
+          customer,
+          record: prescriptionRecord,
+          storeId: this.resolveStoreId(),
+          salesManId: this.auth.user()?.loginId ?? 0,
+          payable,
+          draft,
+          orderPayment: this.orderPaymentSummary(),
+        }),
+      );
+
+      const invoiceInput = {
+        customer,
+        cartItems: this.cartItems(),
+        paymentTotals: this.paymentTotals(),
+        paymentDraft: draft,
+        prescriptionRecord,
+        latestPrescription: this.latestPrescription(),
+        staffName,
+      };
+
+      this.lastInvoice.set(
+        buildInvoiceFromSaveSalesResponse({
+          saveResult,
+          fallback: invoiceInput,
+        }),
+      );
+
+      if (saveResult.salesDetails?.InvoiceNo) {
+        this.selectedCustomer.update((current) =>
+          current?.id === customer.id
+            ? { ...current, invoiceNo: saveResult.salesDetails!.InvoiceNo }
+            : current,
+        );
+      }
+
+      this.clearSavedPrescription(customer.id);
+      await this.loadSalesDetails(customer, {
+        forceApplyFromApi: true,
+        persistToLocalStorage: true,
+      });
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : 'Unable to complete payment. Please try again.';
+      this.statusMessage.set(message);
+      return false;
+    }
+
+    this.resetLoyaltyRedemption();
+    this.syncPaymentAmountsToPayable();
+    return true;
+  }
+
+  private paymentBreakdownLabel(payable: number, draft: PaymentDraft): string {
+    if (draft.settleRemainingBalance) {
+      const due = Math.max(0, this.orderPaymentSummary()?.balance ?? 0);
+      return `${this.paymentModeLabel(draft)} ${formatMoney(due)} SAR (paid in full)`;
+    }
+
+    if (draft.payPartial) {
+      const paid = paymentAmountPaid(payable, draft);
+      const balance = paymentBalanceRemaining(payable, draft);
+      return `${this.paymentModeLabel(draft)} ${formatMoney(paid)} SAR (balance ${formatMoney(balance)} SAR)`;
+    }
+
+    if (draft.method === 'cash') {
+      return `Cash ${formatMoney(payable)} SAR`;
+    }
+
+    if (draft.method === 'card') {
+      return `Card ${formatMoney(payable)} SAR`;
+    }
+
+    if (draft.method === 'mixed') {
+      return `Mixed — Cash ${formatMoney(draft.cashAmount)} SAR + Card ${formatMoney(draft.cardAmount)} SAR`;
+    }
+
+    return `${formatMoney(payable)} SAR`;
+  }
+
+  private createInitialPaymentDraft(): PaymentDraft {
+    const draft = this.payment.defaultDraft();
+
+    return {
+      ...draft,
+      ...this.payment.syncAmountsForMethod(0, draft.method, draft),
+    };
+  }
+
+  private syncPaymentAmountsToPayable(): void {
+    const payable = this.paymentTotals().payable;
+    const draft = this.paymentDraft();
+
+    if (draft.method === 'more') {
+      return;
+    }
+
+    const amounts = this.payment.syncAmountsForMethod(
+      payable,
+      draft.method,
+      draft,
+      this.orderPaymentSummary(),
+    );
+
+    if (amounts.cashAmount === draft.cashAmount && amounts.cardAmount === draft.cardAmount) {
+      return;
+    }
+
+    this.paymentDraft.update((current) => ({ ...current, ...amounts }));
+  }
+
+  private resolvePrescriptionRecord(
+    customerId: string,
+    prescriptionId: string,
+  ): PrescriptionRecord | null {
+    const cached = this.prescriptionRecordByCustomer()[customerId];
+    if (cached?.id === prescriptionId) {
+      return cached;
+    }
+
+    const fromStorage = this.prescriptionStorage.getById(customerId, prescriptionId);
+    if (fromStorage) {
+      return fromStorage;
+    }
+
+    if (cached && prescriptionId.startsWith('sales-')) {
+      const salesId = Number.parseInt(prescriptionId.slice('sales-'.length), 10);
+      if (Number.isFinite(salesId) && cached.salesId === salesId) {
+        return cached;
+      }
+    }
+
+    return null;
+  }
+
+  private async resolvePrescriptionRecordForPayment(customerId: string): Promise<PrescriptionRecord | null> {
+    const selectedId = this.selectedPrescriptionIdByCustomer()[customerId];
+    if (selectedId) {
+      const selected = this.resolvePrescriptionRecord(customerId, selectedId);
+      if (selected) {
+        return this.enrichPrescriptionRecord(selected);
+      }
+    }
+
+    const cached = this.prescriptionRecordByCustomer()[customerId];
+    if (cached) {
+      return this.enrichPrescriptionRecord(cached);
+    }
+
+    const fromStorage = this.prescriptionStorage.getLatest(customerId);
+    if (!fromStorage) {
+      return null;
+    }
+
+    this.prescriptionRecordByCustomer.update((current) => ({
+      ...current,
+      [customerId]: fromStorage,
+    }));
+
+    return this.enrichPrescriptionRecord(fromStorage);
+  }
+
+  private async enrichPrescriptionRecord(record: PrescriptionRecord): Promise<PrescriptionRecord> {
+    const needsCategoryId = record.frames.some(
+      (line) =>
+        !line.categoryId &&
+        Boolean(line.brandId && line.productId && line.sellingPrice != null),
+    );
+
+    if (!needsCategoryId) {
+      return record;
+    }
+
+    const categories = await this.categoryService.getCategories();
+    const frames = record.frames.map((line) => ({
+      ...line,
+      categoryId:
+        line.categoryId ??
+        categories.find((category) => category.categoryName === line.category)?.categoryId ??
+        null,
+    }));
+
+    return { ...record, frames };
+  }
+
+  private resolveStoreId(): string {
+    const selectedStoreId = this.auth.selectedStore()?.storeId;
+    if (selectedStoreId != null && selectedStoreId > 0) {
+      return String(selectedStoreId);
+    }
+
+    const userStoreId = this.auth.user()?.storeId;
+    if (userStoreId != null && userStoreId > 0) {
+      return String(userStoreId);
+    }
+
+    return '0';
+  }
+
+  private persistPrescriptionFromCart(): void {
+    if (this.isCartLocked()) {
+      return;
+    }
+
+    const customer = this.selectedCustomer();
+    if (!customer?.id) {
+      return;
+    }
+
+    const record =
+      this.prescriptionRecordByCustomer()[customer.id] ??
+      this.prescriptionStorage.getLatest(customer.id);
+
+    if (!record) {
+      return;
+    }
+
+    const updated = applyCartItemsToPrescriptionRecord(record, this.cartItems());
+    const saved = this.prescriptionStorage.saveRecord(updated);
+
+    this.registerPrescriptionRecord(saved);
+  }
+
+  private persistApiSaleToLocalStorage(
+    customer: Customer,
+    salesId: number,
+    salesResult: SalesDetailsResult,
+    orderResult: OrderLenseOrder,
+  ): void {
+    const existing =
+      this.prescriptionRecordByCustomer()[customer.id] ??
+      this.prescriptionStorage.getLatest(customer.id);
+
+    const record = prescriptionRecordFromApiSale({
+      customerId: customer.id,
+      salesId,
+      salesResult,
+      orderResult,
+      existingRecord: existing,
+    });
+
+    const saved = this.prescriptionStorage.saveRecord(record);
+    this.registerPrescriptionRecord(saved);
+  }
+
+  private registerPrescriptionRecord(record: PrescriptionRecord): void {
+    const summary = toPrescriptionSummary(record);
+    const item: SavedPrescriptionListItem = { id: record.id, summary };
+
+    this.prescriptionsByCustomer.update((current) => ({
+      ...current,
+      [record.customerId]: summary,
+    }));
+
+    this.prescriptionHistoryByCustomer.update((current) => {
+      const existing = current[record.customerId] ?? [];
+      const withoutDuplicate = existing.filter((entry) => entry.id !== record.id);
+
+      return {
+        ...current,
+        [record.customerId]: [item, ...withoutDuplicate],
+      };
+    });
+
+    this.selectedPrescriptionIdByCustomer.update((current) => ({
+      ...current,
+      [record.customerId]: record.id,
+    }));
+
+    this.prescriptionRecordByCustomer.update((current) => ({
+      ...current,
+      [record.customerId]: record,
+    }));
+  }
+
+  private clearSavedPrescription(customerId: string): void {
+    this.prescriptionStorage.removeForCustomer(customerId);
+
+    this.prescriptionRecordByCustomer.update((current) => {
+      const next = { ...current };
+      delete next[customerId];
+      return next;
+    });
+
+    this.prescriptionHistoryByCustomer.update((current) => ({
+      ...current,
+      [customerId]: (current[customerId] ?? []).filter((item) => item.id.startsWith('sales-')),
+    }));
+  }
+
+  private hasLocalPrescriptionRecord(customerId: string): boolean {
+    return Boolean(
+      this.prescriptionRecordByCustomer()[customerId] ??
+        this.prescriptionStorage.getLatest(customerId),
+    );
+  }
+
+  private paymentModeLabel(draft: PaymentDraft): string {
+    if (draft.method === 'card') {
+      return 'Card';
+    }
+
+    if (draft.method === 'mixed') {
+      return 'Mixed';
+    }
+
+    return 'Cash';
+  }
+
+  private cartLockedMessage(): string {
+    return 'This order has a payment on record. The cart cannot be changed.';
+  }
+}

@@ -1,0 +1,163 @@
+<article class="frame-line" [formGroup]="group()">
+  <header class="frame-line__header">
+    <h3 class="frame-line__title">Frame {{ index() + 1 }}</h3>
+    @if (canRemove()) {
+      <button type="button" class="frame-line__remove" aria-label="Remove frame" (click)="remove.emit()">
+        Remove
+      </button>
+    }
+  </header>
+
+  <div class="frame-line__grid">
+    <label class="prescription-field frame-line__field--wide">
+      <span class="prescription-field__label">Category</span>
+      <select
+        class="prescription-field__input prescription-field__select"
+        formControlName="category"
+        (change)="onCategoryChange()"
+      >
+        @for (category of categories(); track category) {
+          <option [value]="category">{{ category }}</option>
+        }
+      </select>
+    </label>
+
+    <div class="prescription-field frame-line__field--wide frame-line__brand-wrap">
+      <span class="prescription-field__label">Brand</span>
+      <input
+        class="prescription-field__input"
+        type="text"
+        formControlName="brandName"
+        placeholder="Search brand"
+        autocomplete="off"
+        aria-autocomplete="list"
+        [attr.aria-expanded]="brandSearchOpen()"
+        (input)="onBrandInput($event)"
+        (focus)="onBrandFocus()"
+      />
+
+      @if (brandSearchOpen()) {
+        <div class="frame-line__brand-panel" role="listbox" aria-label="Brand search results">
+          @if (brandSearchLoading()) {
+            <p class="frame-line__brand-status">Searching…</p>
+          } @else if (brandSearchError()) {
+            <p class="frame-line__brand-status frame-line__brand-status--error">
+              {{ brandSearchError() }}
+            </p>
+          } @else {
+            <ul class="frame-line__brand-list">
+              @for (brand of brandResults(); track brand.brandId) {
+                <li>
+                  <button
+                    type="button"
+                    class="frame-line__brand-option"
+                    role="option"
+                    (click)="onBrandSelect(brand)"
+                  >
+                    {{ brand.brandName }}
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="prescription-field frame-line__model-wrap">
+      <span class="prescription-field__label">Model No</span>
+      <input
+        class="prescription-field__input"
+        type="text"
+        formControlName="modelNo"
+        placeholder="Search model"
+        autocomplete="off"
+        aria-autocomplete="list"
+        [attr.aria-expanded]="modelSearchOpen()"
+        (input)="onModelInput($event)"
+        (focus)="onModelFocus()"
+      />
+
+      @if (modelSearchOpen()) {
+        <div class="frame-line__model-panel" role="listbox" aria-label="Model search results">
+          @if (modelSearchLoading()) {
+            <p class="frame-line__model-status">Searching…</p>
+          } @else if (modelSearchError()) {
+            <p class="frame-line__model-status frame-line__model-status--error">
+              {{ modelSearchError() }}
+            </p>
+          } @else {
+            <ul class="frame-line__model-list">
+              @for (product of modelResults(); track product.productId) {
+                <li>
+                  <button
+                    type="button"
+                    class="frame-line__model-option"
+                    role="option"
+                    (click)="onModelSelect(product)"
+                  >
+                    <span>{{ product.productName }}</span>
+                    <span class="frame-line__model-option-meta">{{ formatMoney(product.productValue) }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </div>
+
+    <label class="prescription-field">
+      <span class="prescription-field__label">Selling Price</span>
+      <input
+        class="prescription-field__input"
+        type="number"
+        min="0"
+        step="0.01"
+        inputmode="decimal"
+        formControlName="sellingPrice"
+      />
+    </label>
+
+    <label class="prescription-field">
+      <span class="prescription-field__label">Quantity</span>
+      <input
+        class="prescription-field__input"
+        type="number"
+        min="1"
+        step="1"
+        inputmode="numeric"
+        formControlName="quantity"
+      />
+    </label>
+
+    <label class="prescription-field">
+      <span class="prescription-field__label">
+        Discount (%)
+        @if (maxDiscountCap() !== null) {
+          <span class="prescription-field__hint">Max {{ maxDiscountCap() }}%</span>
+        }
+      </span>
+      <input
+        class="prescription-field__input"
+        type="number"
+        min="0"
+        [max]="discountInputMax()"
+        step="0.01"
+        inputmode="decimal"
+        formControlName="discountPercent"
+      />
+    </label>
+
+    <div class="frame-line__computed">
+      <div class="frame-line__computed-row">
+        <span>Discount</span>
+        <strong>{{ formatMoney(totalsFor(group()).discountAmount) }}</strong>
+      </div>
+      <div class="frame-line__computed-row frame-line__computed-row--total">
+        <span>Total Selling Price</span>
+        <strong>{{ formatMoney(totalsFor(group()).totalSellingPrice) }}</strong>
+      </div>
+    </div>
+  </div>
+</article>

@@ -1,0 +1,23 @@
+<section class="prescription-grid" [formGroup]="group()">
+  <h3 class="prescription-grid__title">{{ title() }}</h3>
+
+  <div class="prescription-grid__fields">
+    @for (field of fields; track field) {
+      <label class="prescription-grid__field">
+        <span class="prescription-grid__label">{{ labelFor(field) }}</span>
+        <select
+          class="prescription-grid__input prescription-grid__select"
+          [class.prescription-grid__input--invalid]="
+            group().get(field)?.invalid && group().get(field)?.touched
+          "
+          [formControlName]="field"
+        >
+          <option [ngValue]="null">Select</option>
+          @for (option of optionsFor(field); track option.value) {
+            <option [ngValue]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </label>
+    }
+  </div>
+</section>

@@ -1,0 +1,74 @@
+/*
+ * Shared responsive layout — landscape-native Android/iOS.
+ *
+ * Phone:  (max-width: 599px), (max-width: 767px) and (max-height: 499px)
+ * Tablet: (min-width: 768px), (min-width: 600px) and (min-height: 500px)
+ *
+ * Repeat literals in @media (CSS cannot use var() in media queries).
+ */
+
+/* Full-height scrollable page inside POS shell or auth routes */
+.pos-scroll-page {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+}
+
+/* Auth stub pages (forgot password, OTP) */
+.auth-stub-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  min-height: var(--viewport-height, 100dvh);
+  padding: max(var(--spacing-lg), env(safe-area-inset-top))
+    max(var(--spacing-lg), env(safe-area-inset-right))
+    max(var(--spacing-lg), env(safe-area-inset-bottom))
+    max(var(--spacing-lg), env(safe-area-inset-left));
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.auth-stub-page h1 {
+  margin: 0;
+  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+  color: var(--color-text-heading);
+}
+
+.auth-stub-page p {
+  margin: 0;
+  max-width: 28rem;
+  color: var(--color-text-body);
+}
+
+.auth-stub-page a {
+  font-weight: 500;
+}
+
+@media (max-width: 599px), (max-width: 767px) and (max-height: 499px) {
+  .auth-stub-page {
+    justify-content: flex-start;
+    padding-top: max(2rem, env(safe-area-inset-top));
+  }
+}
+
+/* Horizontal scroll for data tables on narrow landscape phones */
+.responsive-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 599px), (max-width: 767px) and (max-height: 499px) {
+  .responsive-table-wrap {
+    margin-inline: -0.25rem;
+    padding-inline: 0.25rem;
+  }
+}

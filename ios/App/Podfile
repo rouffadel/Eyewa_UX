@@ -1,0 +1,73 @@
+require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
+
+platform :ios, '15.0'
+use_frameworks!
+
+# workaround to avoid Xcode caching of Pods that requires
+# Product -> Clean Build Folder after new Cordova plugins installed
+# Requires CocoaPods 1.6 or newer
+install! 'cocoapods', :disable_input_output_paths => true
+
+def capacitor_pods
+  pod 'Capacitor', :path => '../../node_modules/@capacitor/ios'
+  pod 'CapacitorCordova', :path => '../../node_modules/@capacitor/ios'
+  pod 'CapacitorBarcodeScanner', :path => '../../node_modules/@capacitor/barcode-scanner'
+end
+
+target 'App' do
+  capacitor_pods
+  # Add your Pods here
+end
+
+STRIP_XATTR_SCRIPT = <<~SCRIPT
+  strip_path() {
+    if [ -e "$1" ]; then
+      xattr -cr "$1" 2>/dev/null || true
+      find "$1" -name '._*' -delete 2>/dev/null || true
+      dot_clean -m "$1" 2>/dev/null || true
+    fi
+  }
+
+  # Pod sources live under node_modules; iCloud Documents adds com.apple.fileprovider xattrs.
+  if [ -n "${PODS_TARGET_SRCROOT}" ]; then
+    strip_path "${PODS_TARGET_SRCROOT}"
+  fi
+
+  for dir in "${TARGET_BUILD_DIR}" "${BUILT_PRODUCTS_DIR}"; do
+    if [ -n "$dir" ] && [ -d "$dir" ]; then
+      strip_path "$dir"
+      find "$dir" -name '*.framework' 2>/dev/null | while read -r fw; do
+        strip_path "$fw"
+      done
+      find "$dir" -name '*.bundle' 2>/dev/null | while read -r bundle; do
+        strip_path "$bundle"
+      done
+    fi
+  done
+
+  if [ -n "${TARGET_BUILD_DIR}" ] && [ -n "${WRAPPER_NAME}" ]; then
+    strip_path "${TARGET_BUILD_DIR}/${WRAPPER_NAME}"
+  fi
+SCRIPT
+
+def ensure_strip_phase(target, name, script, insert_at: nil)
+  phase = target.shell_script_build_phases.find { |p| p.name == name }
+  unless phase
+    phase = target.new_shell_script_build_phase(name)
+    if insert_at
+      target.build_phases.delete(phase)
+      target.build_phases.insert(insert_at, phase)
+    end
+  end
+  phase.shell_script = script
+  phase.always_out_of_date = '1'
+end
+
+post_install do |installer|
+  assertDeploymentTarget(installer)
+
+  installer.pods_project.targets.each do |target|
+    ensure_strip_phase(target, 'Strip xattrs before compile', STRIP_XATTR_SCRIPT, insert_at: 0)
+    ensure_strip_phase(target, 'Strip xattrs before codesign', STRIP_XATTR_SCRIPT)
+  end
+end

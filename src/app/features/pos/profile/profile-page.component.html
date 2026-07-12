@@ -1,0 +1,23 @@
+<div class="profile-page">
+  <header class="profile-page__top-bar">
+    <button type="button" class="profile-page__back" aria-label="Back" (click)="goBack()">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M15 6l-6 6 6 6" />
+      </svg>
+      Back
+    </button>
+    <h1 class="profile-page__title">Profile</h1>
+  </header>
+
+  <section class="profile-page__profile" aria-label="Staff profile">
+    <div class="profile-page__avatar">{{ userInitials() }}</div>
+    <p class="profile-page__name">{{ displayName() }}</p>
+    <p class="profile-page__branch">{{ branchName() }}</p>
+    @if (loginId() != null) {
+      <p class="profile-page__meta">Login ID: {{ loginId() }} · Role: {{ roleId() }}</p>
+    }
+    <p class="profile-page__loyalty">{{ loyaltyPoints() }} PTS</p>
+  </section>
+
+  <button type="button" class="profile-page__sign-out" (click)="logout()">Sign out</button>
+</div>

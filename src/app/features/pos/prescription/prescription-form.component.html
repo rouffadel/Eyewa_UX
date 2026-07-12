@@ -1,0 +1,241 @@
+<section class="prescription-page">
+  <form class="prescription-card" [formGroup]="form" (ngSubmit)="onSave()" novalidate>
+    <header class="prescription-card__header">
+      <h1 class="prescription-card__title">PRESCRIPTION</h1>
+      <button type="button" class="prescription-card__new-link" (click)="onNewPrescription()">
+        + New Prescription
+      </button>
+    </header>
+
+    @if (selectedCustomer(); as customer) {
+      <p class="prescription-customer" role="status">
+        Customer: <strong>{{ customer.displayName }}</strong>
+      </p>
+      @if (savedAtLabel(); as savedAt) {
+        <p class="prescription-saved-at" role="status">
+          Saved on <strong>{{ savedAt }}</strong>
+        </p>
+      }
+    } @else {
+      <p class="prescription-message prescription-message--info" role="status">
+        Select a customer from the header before saving this prescription.
+      </p>
+    }
+
+    <section
+      class="prescription-accordion"
+      [class.prescription-accordion--open]="framesExpanded()"
+      aria-labelledby="prescription-frames-heading"
+    >
+      <div class="prescription-accordion__bar">
+        <button
+          type="button"
+          class="prescription-accordion__trigger"
+          id="prescription-frames-heading"
+          [attr.aria-expanded]="framesExpanded()"
+          aria-controls="prescription-frames-panel"
+          (click)="toggleFramesExpanded()"
+        >
+          <span class="prescription-accordion__title">FRAMES</span>
+          <span class="prescription-accordion__summary">
+            {{ frameLines.length }} {{ frameLines.length === 1 ? 'item' : 'items' }}
+          </span>
+          <svg
+            class="prescription-accordion__chevron"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+        <button type="button" class="prescription-section__add" (click)="addFrameLine()">
+          + Add Frame
+        </button>
+      </div>
+
+      @if (framesExpanded()) {
+        <div id="prescription-frames-panel" class="prescription-accordion__panel">
+          <div class="prescription-section__list">
+            @for (frame of frameLines.controls; track $index) {
+              <app-prescription-frame-line
+                [group]="$any(frame)"
+                [index]="$index"
+                [categories]="frameCategories()"
+                [categoryOptions]="frameCategoryOptions()"
+                [storeId]="storeId()"
+                [canRemove]="frameLines.length > 1"
+                (remove)="removeFrameLine($index)"
+              />
+            }
+          </div>
+        </div>
+      }
+    </section>
+
+    <section
+      class="prescription-accordion"
+      [class.prescription-accordion--open]="lensesExpanded()"
+      aria-labelledby="prescription-lenses-heading"
+    >
+      <div class="prescription-accordion__bar">
+        <button
+          type="button"
+          class="prescription-accordion__trigger"
+          id="prescription-lenses-heading"
+          [attr.aria-expanded]="lensesExpanded()"
+          aria-controls="prescription-lenses-panel"
+          (click)="toggleLensesExpanded()"
+        >
+          <span class="prescription-accordion__title">LENSES</span>
+          <span class="prescription-accordion__summary">
+            {{ lensLines.length }} {{ lensLines.length === 1 ? 'line' : 'lines' }}
+          </span>
+          <svg
+            class="prescription-accordion__chevron"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+      </div>
+
+      @if (lensesExpanded()) {
+        <div id="prescription-lenses-panel" class="prescription-accordion__panel">
+          <div class="prescription-section__list">
+            @for (lens of lensLines.controls; track $index) {
+              <app-prescription-lens-line
+                [group]="$any(lens)"
+                [index]="$index"
+                (remove)="removeLensLine($index)"
+              />
+            }
+          </div>
+
+          <div class="prescription-section__footer">
+            <button type="button" class="prescription-section__add" (click)="addLensLine()">
+              + Add Lens Line
+            </button>
+            <p class="prescription-section__total">
+              Lens Total: <strong>{{ formatMoney(lensesSectionTotal()) }}</strong>
+            </p>
+          </div>
+        </div>
+      }
+    </section>
+
+    <h2 class="prescription-section__title prescription-section__title--rx">EYE PRESCRIPTION</h2>
+
+    @if (successMessage()) {
+      <p class="prescription-message prescription-message--success" role="status">
+        {{ successMessage() }}
+      </p>
+    }
+
+    @if (errorMessage()) {
+      <p class="prescription-message prescription-message--error" role="alert">
+        {{ errorMessage() }}
+      </p>
+    }
+
+    @if (infoMessage()) {
+      <p class="prescription-message prescription-message--info" role="status">
+        {{ infoMessage() }}
+      </p>
+    }
+
+    <div class="prescription-card__body">
+      <div class="prescription-card__eyes">
+        <app-prescription-grid
+          [group]="rightEyeGroup"
+          [dropdowns]="eyeDropdowns()"
+          title="RIGHT EYE (OD)"
+        />
+        <app-prescription-grid
+          [group]="leftEyeGroup"
+          [dropdowns]="eyeDropdowns()"
+          title="LEFT EYE (OS)"
+        />
+      </div>
+
+      <div class="prescription-card__shared">
+        <label class="prescription-field">
+          <span class="prescription-field__label">PD</span>
+          <input
+            class="prescription-field__input"
+            [class.prescription-field__input--invalid]="
+              form.controls.pd.invalid && form.controls.pd.touched
+            "
+            type="number"
+            step="any"
+            inputmode="decimal"
+            formControlName="pd"
+          />
+        </label>
+
+        <label class="prescription-field">
+          <span class="prescription-field__label">Near PD</span>
+          <input
+            class="prescription-field__input"
+            [class.prescription-field__input--invalid]="
+              form.controls.nearPd.invalid && form.controls.nearPd.touched
+            "
+            type="number"
+            step="any"
+            inputmode="decimal"
+            formControlName="nearPd"
+          />
+        </label>
+
+        <label class="prescription-field">
+          <span class="prescription-field__label">VD</span>
+          <input
+            class="prescription-field__input"
+            [class.prescription-field__input--invalid]="
+              form.controls.vd.invalid && form.controls.vd.touched
+            "
+            type="number"
+            step="any"
+            inputmode="decimal"
+            formControlName="vd"
+          />
+        </label>
+
+        <label class="prescription-field">
+          <span class="prescription-field__label">Notes</span>
+          <input
+            class="prescription-field__input"
+            type="text"
+            placeholder="Optional"
+            formControlName="notes"
+          />
+        </label>
+      </div>
+    </div>
+
+    <footer class="prescription-actions">
+      <button
+        type="submit"
+        class="prescription-actions__save"
+        [disabled]="isSaving()"
+      >
+        {{ isSaving() ? 'Saving…' : 'Save Prescription' }}
+      </button>
+
+      <div class="prescription-actions__secondary">
+        <button type="button" class="prescription-actions__btn" (click)="onPrint()">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 4h10v4H7z" />
+            <path d="M6 8h12a2 2 0 0 1 2 2v5H4v-5a2 2 0 0 1 2-2Z" />
+            <path d="M7 15h10v5H7z" />
+          </svg>
+          Print
+        </button>
+
+        <button type="button" class="prescription-actions__btn" (click)="onCancel()">
+          Cancel
+        </button>
+      </div>
+    </footer>
+  </form>
+</section>

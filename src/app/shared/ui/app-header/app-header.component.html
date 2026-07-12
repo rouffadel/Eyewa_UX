@@ -1,0 +1,178 @@
+<header class="app-header">
+  <div class="app-header__bar">
+    <div class="app-header__brand-group">
+      <button
+        type="button"
+        class="app-header__avatar"
+        aria-label="Open profile"
+        (click)="onAvatarClick()"
+      >
+        {{ userInitials() }}
+      </button>
+
+      <div class="app-header__brand">
+        <span class="app-header__brand-name">Eyewa</span>
+        <span class="app-header__brand-erp">ERP</span>
+        <span class="app-header__module">POS</span>
+      </div>
+    </div>
+
+    <div class="app-header__center">
+      <div class="app-header__search-wrap">
+        <label class="app-header__search">
+          <svg class="app-header__search-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="M20 20l-3.5-3.5" />
+          </svg>
+          <input
+            type="search"
+            class="app-header__search-input"
+            placeholder="Search customer by name / mobile / ID"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="onSearchInput($event)"
+            (focus)="onSearchFocus()"
+            autocomplete="off"
+            aria-label="Search customer"
+            [attr.aria-expanded]="searchOpen()"
+            aria-controls="customer-search-results"
+            aria-autocomplete="list"
+          />
+          <button
+            type="button"
+            class="app-header__scan-btn"
+            aria-label="Scan barcode"
+            (click)="onScanClick()"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 7V5a1 1 0 0 1 1-1h2M20 7V5a1 1 0 0 0-1-1h-2M4 17v2a1 1 0 0 0 1 1h2M20 17v2a1 1 0 0 1-1 1h-2M8 12h8" />
+            </svg>
+          </button>
+        </label>
+
+        @if (searchOpen()) {
+          <div
+            id="customer-search-results"
+            class="app-header__search-panel"
+            role="listbox"
+            aria-label="Customer search results"
+          >
+            @if (searchLoading()) {
+              <p class="app-header__search-status">Searching…</p>
+            } @else if (searchError()) {
+              <p class="app-header__search-status app-header__search-status--error">
+                {{ searchError() }}
+              </p>
+            } @else {
+              <ul class="app-header__search-list">
+                @for (customer of searchResults(); track customer.id) {
+                  <li>
+                    <button
+                      type="button"
+                      class="app-header__search-option"
+                      role="option"
+                      (click)="onCustomerResultSelect(customer)"
+                    >
+                      <span class="app-header__search-option-name">{{ customer.displayName }}</span>
+                      <span class="app-header__search-option-meta">
+                        {{ customer.phoneMasked }}
+                        @if (customer.invoiceNo) {
+                          <span> · {{ customer.invoiceNo }}</span>
+                        }
+                      </span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        }
+      </div>
+
+      <button type="button" class="app-header__new-customer" (click)="onNewCustomer()">
+        + New Customer
+      </button>
+    </div>
+
+    <div class="app-header__right">
+      <div class="app-header__loyalty" aria-label="Loyalty points">
+        <span class="app-header__loyalty-label">Loyalty</span>
+        <span class="app-header__loyalty-points">{{ loyaltyPoints() }} PTS</span>
+      </div>
+
+      <button
+        type="button"
+        class="app-header__icon-btn app-header__icon-btn--bell"
+        aria-label="Notifications"
+        (click)="onNotificationsClick()"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M12 3a5 5 0 0 1 5 5v2.5c0 .6.2 1.2.6 1.7l.9 1.1a1 1 0 0 1-.8 1.7H6.3a1 1 0 0 1-.8-1.7l.9-1.1c.4-.5.6-1.1.6-1.7V8a5 5 0 0 1 5-5Z"
+          />
+          <path d="M10 19a2 2 0 0 0 4 0" />
+        </svg>
+        @if (notificationCount() > 0) {
+          <span class="app-header__badge-count">{{ notificationCount() }}</span>
+        }
+      </button>
+
+      <div class="app-header__profile-menu">
+        <button
+          type="button"
+          class="app-header__profile"
+          aria-label="Select store"
+          aria-haspopup="listbox"
+          [attr.aria-expanded]="storeMenuOpen()"
+          (click)="onProfileMenuToggle()"
+        >
+          <span class="app-header__profile-avatar">{{ userInitials() }}</span>
+          <span class="app-header__profile-text">
+            <span class="app-header__profile-name">{{ userName() }}</span>
+            <span class="app-header__profile-branch">{{ userBranch() }}</span>
+          </span>
+          <svg
+            class="app-header__profile-chevron"
+            [class.app-header__profile-chevron--open]="storeMenuOpen()"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+
+        @if (storeMenuOpen()) {
+          <div class="app-header__store-panel" role="listbox" aria-label="Stores">
+            <p class="app-header__store-title">Select store</p>
+
+            @if (storesLoading()) {
+              <p class="app-header__store-status">Loading stores…</p>
+            } @else if (storesError()) {
+              <p class="app-header__store-status app-header__store-status--error">
+                {{ storesError() }}
+              </p>
+            } @else if (stores().length === 0) {
+              <p class="app-header__store-status">No stores available.</p>
+            } @else {
+              <ul class="app-header__store-list">
+                @for (store of stores(); track store.storeId) {
+                  <li>
+                    <button
+                      type="button"
+                      class="app-header__store-option"
+                      role="option"
+                      [attr.aria-selected]="isStoreSelected(store)"
+                      [class.app-header__store-option--selected]="isStoreSelected(store)"
+                      (click)="onStoreSelect(store)"
+                    >
+                      {{ store.storeName }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</header>

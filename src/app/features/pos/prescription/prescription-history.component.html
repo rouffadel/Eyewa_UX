@@ -1,0 +1,104 @@
+<section class="prescription-history-page">
+  <header class="prescription-history__header">
+    <button type="button" class="prescription-history__back" (click)="onBackToSell()">
+      ← Back to Sell
+    </button>
+    <h1 class="prescription-history__title">PRESCRIPTION HISTORY</h1>
+  </header>
+
+  @if (selectedCustomer(); as customer) {
+    <p class="prescription-history__customer">
+      Customer: <strong>{{ customer.displayName }}</strong>
+    </p>
+  } @else {
+    <p class="prescription-history__message">Select a customer from the header to view prescriptions.</p>
+  }
+
+  @if (selectedCustomer()) {
+    @if (loading()) {
+      <div class="prescription-history__empty">
+        <p>Loading prescription history…</p>
+      </div>
+    } @else if (history().length > 0) {
+      <p class="prescription-history__hint">Select a prescription to view on the Sell dashboard.</p>
+
+      <div class="prescription-history__list" role="radiogroup" aria-label="Prescription history">
+        @for (entry of history(); track entry.id) {
+          <button
+            type="button"
+            class="prescription-history__item"
+            [class.prescription-history__item--selected]="selectedId() === entry.id"
+            role="radio"
+            [attr.aria-checked]="selectedId() === entry.id"
+            (click)="onSelect(entry.id)"
+          >
+            <span class="prescription-history__select-indicator" aria-hidden="true"></span>
+
+            <div class="prescription-history__meta">
+              <span>{{ entry.summary.date }}</span>
+              <span>{{ entry.summary.doctorName }}</span>
+            </div>
+
+            <div class="prescription-history__grid-wrap responsive-table-wrap">
+            <table class="prescription-history__grid">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>OD</th>
+                  <th>OS</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th>SPH</th>
+                  <td>{{ entry.summary.od.sph }}</td>
+                  <td>{{ entry.summary.os.sph }}</td>
+                </tr>
+                <tr>
+                  <th>CYL</th>
+                  <td>{{ entry.summary.od.cyl }}</td>
+                  <td>{{ entry.summary.os.cyl }}</td>
+                </tr>
+                <tr>
+                  <th>AXIS</th>
+                  <td>{{ entry.summary.od.axis }}</td>
+                  <td>{{ entry.summary.os.axis }}</td>
+                </tr>
+                @if (entry.summary.od.add || entry.summary.os.add) {
+                  <tr>
+                    <th>ADD</th>
+                    <td>{{ entry.summary.od.add ?? '—' }}</td>
+                    <td>{{ entry.summary.os.add ?? '—' }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+            </div>
+
+            <p class="prescription-history__pd">
+              PD: {{ entry.summary.pd }} · Near PD: {{ entry.summary.nearPd }}
+            </p>
+          </button>
+        }
+      </div>
+
+      <footer class="prescription-history__footer">
+        <button
+          type="button"
+          class="prescription-history__view-btn"
+          [disabled]="!selectedId()"
+          (click)="onViewSelected()"
+        >
+          View on Sell Dashboard
+        </button>
+      </footer>
+    } @else {
+      <div class="prescription-history__empty">
+        <p>No saved prescriptions for this customer yet.</p>
+        <button type="button" class="prescription-history__btn" (click)="onNewPrescription()">
+          + New Prescription
+        </button>
+      </div>
+    }
+  }
+</section>

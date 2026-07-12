@@ -1,0 +1,145 @@
+<section class="invoice-preview-page">
+  @if (invoice(); as data) {
+    <header class="invoice-preview__header">
+      <button type="button" class="invoice-preview__back" (click)="onCancel()">
+        ← Back to Sell
+      </button>
+      <h1 class="invoice-preview__title">INVOICE</h1>
+    </header>
+
+    <article class="invoice-preview pos-card">
+      @if (data.storeName) {
+        <div class="invoice-preview__store">
+          <strong>{{ data.storeName }}</strong>
+          @if (data.storeAddress) {
+            <span>{{ data.storeAddress }}</span>
+          }
+        </div>
+      }
+
+      <div class="invoice-preview__meta">
+        <dl class="invoice-preview__meta-grid">
+          <div class="invoice-preview__meta-item">
+            <dt>Invoice No</dt>
+            <dd>{{ data.invoiceNo }}</dd>
+          </div>
+          <div class="invoice-preview__meta-item">
+            <dt>Invoice Date</dt>
+            <dd>{{ data.invoiceDate }}</dd>
+          </div>
+          <div class="invoice-preview__meta-item">
+            <dt>Customer Name</dt>
+            <dd>{{ data.customerName }}</dd>
+          </div>
+          <div class="invoice-preview__meta-item">
+            <dt>Contact No</dt>
+            <dd>{{ data.contactNo }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="invoice-preview__section">
+        <h2 class="invoice-preview__section-title">Products</h2>
+        <div class="invoice-preview__table-wrap">
+          <table class="invoice-preview__table">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Brand</th>
+                <th>Model No</th>
+                <th>Selling Price</th>
+                <th>Quantity</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (line of data.productLines; track $index) {
+                <tr>
+                  <td>{{ line.category }}</td>
+                  <td>{{ line.brand }}</td>
+                  <td>{{ line.modelNo }}</td>
+                  <td>{{ line.sellingPrice }}</td>
+                  <td>{{ line.quantity }}</td>
+                  <td>{{ line.total }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="invoice-preview__empty-row">No line items</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="invoice-preview__section">
+        <h2 class="invoice-preview__section-title">Prescription</h2>
+        <table class="invoice-preview__grid">
+          <thead>
+            <tr>
+              <th></th>
+              <th>SPH</th>
+              <th>CYL</th>
+              <th>AXIS</th>
+              <th>ADD</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of data.rxRows; track row.label) {
+              <tr>
+                <th>{{ row.label }}</th>
+                <td>{{ row.sph }}</td>
+                <td>{{ row.cyl }}</td>
+                <td>{{ row.axis }}</td>
+                <td>{{ row.add }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="invoice-preview__footer">
+        <div class="invoice-preview__details">
+          <span class="invoice-preview__details-label">Details</span>
+          <p class="invoice-preview__details-text">{{ data.details || '—' }}</p>
+          <p class="invoice-preview__user">User: <strong>{{ data.user }}</strong></p>
+        </div>
+
+        <dl class="invoice-preview__totals">
+          <div class="invoice-preview__total-row">
+            <dt>Total Amount</dt>
+            <dd>{{ data.totalAmount }}</dd>
+          </div>
+          <div class="invoice-preview__total-row">
+            <dt>Amount Paid</dt>
+            <dd>{{ data.amountPaid }}</dd>
+          </div>
+          <div class="invoice-preview__total-row invoice-preview__total-row--balance">
+            <dt>Balance</dt>
+            <dd>{{ data.balance }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <footer class="invoice-preview__actions">
+        <button type="button" class="invoice-preview__btn invoice-preview__btn--secondary" (click)="onCancel()">
+          Cancel
+        </button>
+        <button type="button" class="invoice-preview__btn invoice-preview__btn--primary" (click)="onPrint()">
+          Print
+        </button>
+      </footer>
+    </article>
+
+    @if (statusMessage()) {
+      <p class="invoice-preview__status" role="status">{{ statusMessage() }}</p>
+    }
+  } @else {
+    <div class="invoice-preview__fallback">
+      <p>No invoice available. Complete payment from the Sell dashboard first.</p>
+      <button type="button" class="invoice-preview__btn invoice-preview__btn--primary" (click)="onCancel()">
+        Back to Sell
+      </button>
+    </div>
+  }
+</section>

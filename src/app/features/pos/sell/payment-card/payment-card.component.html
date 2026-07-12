@@ -1,0 +1,268 @@
+<section class="pos-card payment-card">
+  <h2 class="payment-card__title">PAYMENT</h2>
+
+  <div class="payment-card__body">
+    <div class="payment-card__scroll">
+    <dl class="payment-card__rows">
+      <div class="payment-card__row">
+        <dt>Subtotal</dt>
+        <dd>{{ formatMoney(totals().subtotal) }}</dd>
+      </div>
+      <div class="payment-card__row payment-card__row--input">
+        <dt>Discount</dt>
+        <dd>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            [ngModel]="draft().discountAmount"
+            (ngModelChange)="onDiscountInput($event)"
+          />
+        </dd>
+      </div>
+      <div class="payment-card__row">
+        <dt>VAT (15%)</dt>
+        <dd>{{ formatMoney(totals().vat) }}</dd>
+      </div>
+      <div class="payment-card__row payment-card__row--strong">
+        <dt>Total</dt>
+        <dd>{{ formatMoney(totals().total) }}</dd>
+      </div>
+    </dl>
+
+    <div class="payment-card__checkout-block">
+      <div class="payment-card__loyalty">
+        <div class="payment-card__loyalty-row">
+          <label class="payment-card__loyalty-toggle">
+            <span class="payment-card__loyalty-text">Redeem Loyalty Points</span>
+            <input
+              type="checkbox"
+              [ngModel]="draft().redeemLoyalty"
+              (ngModelChange)="loyaltyToggle.emit($event)"
+            />
+            <span class="payment-card__switch" aria-hidden="true"></span>
+          </label>
+          <input
+            class="payment-card__loyalty-points"
+            type="number"
+            min="0"
+            readonly
+            tabindex="-1"
+            aria-readonly="true"
+            [ngModel]="draft().loyaltyPoints"
+          />
+          @if (draft().redeemLoyalty) {
+            <span class="payment-card__deduction">-{{ formatMoney(totals().loyaltyDeduction) }}</span>
+          }
+        </div>
+      </div>
+
+      <div class="payment-card__payable">
+        <span class="payment-card__payable-label">Payable Amount</span>
+        <span class="payment-card__payable-value">{{ formatMoney(totals().payable) }} SAR</span>
+      </div>
+
+      <div class="payment-card__partial">
+        @if (settleFullRemaining()) {
+          <div class="payment-card__mixed-summary payment-card__settlement-summary">
+            <div class="payment-card__method-row">
+              <span class="payment-card__method-label">Previously Paid</span>
+              <span class="payment-card__method-value">{{ formatMoney(amountAlreadyPaid()) }} SAR</span>
+            </div>
+            <div class="payment-card__method-row">
+              <span class="payment-card__method-label">Remaining Balance</span>
+              <span class="payment-card__method-value payment-card__method-value--balance">
+                {{ formatMoney(outstandingBalance()) }} SAR
+              </span>
+            </div>
+            <div class="payment-card__method-row">
+              <span class="payment-card__method-label">Amount Due Now</span>
+              <span class="payment-card__method-value">{{ formatMoney(amountDue()) }} SAR</span>
+            </div>
+          </div>
+        } @else {
+        <label class="payment-card__loyalty-toggle">
+          <span class="payment-card__loyalty-text">Pay Partial</span>
+          <input
+            type="checkbox"
+            [ngModel]="draft().payPartial"
+            (ngModelChange)="partialToggle.emit($event)"
+          />
+          <span class="payment-card__switch" aria-hidden="true"></span>
+        </label>
+
+        @if (draft().payPartial) {
+          <label class="payment-card__method-field payment-card__partial-field">
+            <span class="payment-card__method-label">Payment Amount</span>
+            <input
+              class="payment-card__method-input"
+              type="number"
+              min="0"
+              step="any"
+              inputmode="decimal"
+              [ngModel]="draft().partialAmount"
+              (ngModelChange)="onPartialAmountInput($event)"
+            />
+          </label>
+          <div class="payment-card__mixed-summary">
+            <div class="payment-card__method-row">
+              <span class="payment-card__method-label">Total Paid</span>
+              <span class="payment-card__method-value">{{ formatMoney(paidAmount()) }} SAR</span>
+            </div>
+            <div class="payment-card__method-row">
+              <span class="payment-card__method-label">Remaining Balance</span>
+              <span class="payment-card__method-value payment-card__method-value--balance">
+                {{ formatMoney(balanceAmount()) }} SAR
+              </span>
+            </div>
+          </div>
+        }
+        }
+      </div>
+    </div>
+
+    <div class="payment-card__methods">
+      @for (method of methods; track method.key) {
+        <button
+          type="button"
+          class="payment-card__method"
+          [class.payment-card__method--active]="draft().method === method.key"
+          (click)="methodChange.emit(method.key)"
+        >
+          @switch (method.key) {
+            @case ('cash') {
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="2" y="6" width="20" height="12" rx="2" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            }
+            @case ('card') {
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="2" y="5" width="20" height="14" rx="2" />
+                <path d="M2 10h20" />
+              </svg>
+            }
+            @case ('mixed') {
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 6h12v12H8z" />
+                <path d="M4 10h4v8H4z" />
+              </svg>
+            }
+            @default {
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="5" cy="12" r="1.5" />
+                <circle cx="12" cy="12" r="1.5" />
+                <circle cx="19" cy="12" r="1.5" />
+              </svg>
+            }
+          }
+          {{ method.label }}
+        </button>
+      }
+    </div>
+
+    @switch (draft().method) {
+      @case ('cash') {
+        <div class="payment-card__method-panel">
+          <div class="payment-card__method-row">
+            <span class="payment-card__method-label">Cash</span>
+            <span class="payment-card__method-value">{{ formatMoney(amountDue()) }} SAR</span>
+          </div>
+          <p class="payment-card__method-hint">
+            {{ settleFullRemaining() ? 'Pay remaining balance by cash' : 'Full payment by cash' }}
+          </p>
+        </div>
+      }
+      @case ('card') {
+        <div class="payment-card__method-panel">
+          <div class="payment-card__method-row">
+            <span class="payment-card__method-label">Card</span>
+            <span class="payment-card__method-value">{{ formatMoney(amountDue()) }} SAR</span>
+          </div>
+          <p class="payment-card__method-hint">
+            {{ settleFullRemaining() ? 'Pay remaining balance by card' : 'Full payment by card' }}
+          </p>
+        </div>
+      }
+      @case ('mixed') {
+        <div class="payment-card__method-panel payment-card__method-panel--mixed">
+          <label class="payment-card__method-field">
+            <span class="payment-card__method-label">Cash</span>
+            <input
+              class="payment-card__method-input"
+              type="number"
+              min="0"
+              step="any"
+              inputmode="decimal"
+              [ngModel]="draft().cashAmount"
+              (ngModelChange)="onCashAmountInput($event)"
+            />
+          </label>
+          <label class="payment-card__method-field">
+            <span class="payment-card__method-label">Card</span>
+            <input
+              class="payment-card__method-input"
+              type="number"
+              min="0"
+              step="any"
+              inputmode="decimal"
+              [ngModel]="draft().cardAmount"
+              (ngModelChange)="onCardAmountInput($event)"
+            />
+          </label>
+          <div class="payment-card__mixed-summary">
+            <div class="payment-card__method-row">
+              <span class="payment-card__method-label">Amount Paid</span>
+              <span class="payment-card__method-value">{{ formatMoney(mixedTotal()) }} SAR</span>
+            </div>
+            <div class="payment-card__method-row">
+              <span class="payment-card__method-label">Balance</span>
+              <span
+                class="payment-card__method-value"
+                [class.payment-card__method-value--balance]="mixedBalanceRemaining() > 0.01"
+              >
+                {{ formatMoney(mixedBalanceRemaining()) }} SAR
+              </span>
+            </div>
+          </div>
+          @if (!mixedIsBalanced()) {
+            <p class="payment-card__method-hint payment-card__method-hint--error">
+              Cash and card must total {{ formatMoney(amountDue()) }} SAR before paying.
+            </p>
+          }
+        </div>
+      }
+      @case ('more') {
+        <p class="payment-card__method-hint payment-card__method-hint--error">
+          Select Cash, Card, or Mixed to continue.
+        </p>
+      }
+    }
+
+    </div>
+
+    <div class="payment-card__footer">
+      <div class="payment-card__actions">
+        <button type="button" class="payment-card__pay-secondary" [disabled]="!canPay() || isPaying()" (click)="pay.emit()">
+          {{ isPaying() ? 'PROCESSING...' : payButtonLabel() }}
+        </button>
+        <button type="button" class="payment-card__pay" [disabled]="!canPay() || isPaying()" (click)="payAndPrint.emit()">
+          {{ isPaying() ? 'PROCESSING...' : payAndPrintButtonLabel() }}
+        </button>
+      </div>
+      <span class="payment-card__shortcut">F9 Pay &amp; Print</span>
+
+      <div class="payment-card__register-actions">
+        @for (action of registerActions; track action.key) {
+          <button
+            type="button"
+            class="payment-card__register-btn"
+            (click)="registerAction.emit(action.key)"
+          >
+            {{ action.label }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+</section>

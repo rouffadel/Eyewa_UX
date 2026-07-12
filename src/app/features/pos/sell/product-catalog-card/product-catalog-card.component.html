@@ -1,0 +1,79 @@
+<section class="pos-card catalog-card" [class.catalog-card--locked]="locked()">
+  <div class="catalog-card__header">
+    <div class="catalog-card__tabs" role="tablist">
+      @for (tab of tabs; track tab.key) {
+        <button
+          type="button"
+          role="tab"
+          class="catalog-card__tab"
+          [class.catalog-card__tab--active]="category() === tab.key"
+          [attr.aria-selected]="category() === tab.key"
+          (click)="categoryChange.emit(tab.key)"
+        >
+          {{ tab.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="catalog-card__body">
+    <div class="catalog-card__toolbar">
+      <label class="catalog-card__search">
+        <svg class="catalog-card__search-icon" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" />
+          <path d="M20 20l-3.5-3.5" />
+        </svg>
+        <input
+          type="search"
+          [placeholder]="searchPlaceholder()"
+          [ngModel]="search()"
+          [disabled]="locked()"
+          (ngModelChange)="onSearchInput($event)"
+        />
+        <button
+          type="button"
+          class="catalog-card__scan-btn"
+          aria-label="Scan barcode"
+          [disabled]="locked()"
+          (click)="onScanClick($event)"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7V5a1 1 0 0 1 1-1h2M20 7V5a1 1 0 0 0-1-1h-2M4 17v2a1 1 0 0 0 1 1h2M20 17v2a1 1 0 0 1-1 1h-2M8 12h8" />
+          </svg>
+        </button>
+      </label>
+      <button type="button" class="catalog-card__icon-btn" aria-label="Filter products" (click)="filterClick.emit()">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 6h16M7 12h10M10 18h4" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="catalog-card__grid-wrap">
+      <div class="catalog-card__grid">
+        @for (product of products(); track product.sku) {
+          <button type="button" class="catalog-card__product" [disabled]="locked()" (click)="productSelect.emit(product)">
+            <span class="catalog-card__product-image" aria-hidden="true">
+              <svg viewBox="0 0 64 32">
+                <ellipse cx="18" cy="16" rx="14" ry="10" fill="none" stroke="currentColor" stroke-width="2" />
+                <ellipse cx="46" cy="16" rx="14" ry="10" fill="none" stroke="currentColor" stroke-width="2" />
+                <path d="M32 16h0" stroke="currentColor" stroke-width="2" />
+              </svg>
+            </span>
+            <span class="catalog-card__product-name">{{ product.name }}</span>
+            <span class="catalog-card__product-sku">{{ product.sku }}</span>
+            <span class="catalog-card__product-price">{{ product.price.toFixed(2) }} SAR</span>
+          </button>
+        } @empty {
+          <p class="catalog-card__empty">No products loaded. Search or scan to add items when catalog is connected.</p>
+        }
+      </div>
+    </div>
+
+    <div class="catalog-card__dots" aria-hidden="true">
+      <span class="catalog-card__dot catalog-card__dot--active"></span>
+      <span class="catalog-card__dot"></span>
+      <span class="catalog-card__dot"></span>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,80 @@
+<div class="sell-dashboard">
+  @if (store.statusMessage() || store.addToCartBlockedMessage()) {
+    <div class="sell-dashboard__status" role="status">
+      <span class="sell-dashboard__status-text">
+        {{ store.addToCartBlockedMessage() || store.statusMessage() }}
+      </span>
+      <button
+        type="button"
+        class="sell-dashboard__status-close"
+        aria-label="Dismiss message"
+        (click)="onDismissStatus()"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  }
+
+  <section class="sell-dashboard__panel sell-dashboard__panel--left">
+    <app-customer-profile-card
+      [customer]="store.selectedCustomer()"
+      (redeemPoints)="onRedeemPoints()"
+      (openDetail)="onOpenCustomerDetail()"
+    />
+
+    <app-latest-prescription-summary
+      [summary]="store.latestPrescription()"
+      [hasCustomer]="store.selectedCustomer() !== null"
+      [loading]="store.prescriptionLoading()"
+      (viewPrescription)="onViewPrescription()"
+      (viewHistory)="onViewHistory()"
+      (newPrescription)="onNewPrescription()"
+    />
+  </section>
+
+  <section class="sell-dashboard__panel sell-dashboard__panel--middle">
+    <app-product-catalog-card
+      [category]="store.catalogCategory()"
+      [products]="store.filteredProducts()"
+      [search]="store.catalogSearch()"
+      [locked]="store.isCartLocked()"
+      (categoryChange)="onCategoryChange($event)"
+      (searchChange)="onCatalogSearch($event)"
+      (productSelect)="onProductSelect($event)"
+      (scanClick)="onScan()"
+      (filterClick)="onFilter()"
+    />
+
+    <app-cart-card
+      [items]="store.cartItems()"
+      [locked]="store.isCartLocked()"
+      (qtyChange)="onQtyChange($event)"
+      (removeItem)="onRemoveItem($event)"
+      (clearCart)="onClearCart()"
+    />
+  </section>
+
+  <section class="sell-dashboard__panel sell-dashboard__panel--right">
+    <app-payment-card
+      [totals]="store.paymentTotals()"
+      [draft]="store.paymentDraft()"
+      [canPay]="store.canPay()"
+      [isPaying]="store.isPaying()"
+      [settleFullRemaining]="store.isSettlingRemainingBalance()"
+      [outstandingBalance]="store.outstandingBalance()"
+      [amountAlreadyPaid]="store.amountAlreadyPaid()"
+      (discountChange)="onDiscountChange($event)"
+      (loyaltyToggle)="onLoyaltyToggle($event)"
+      (methodChange)="onMethodChange($event)"
+      (cashAmountChange)="onCashAmountChange($event)"
+      (cardAmountChange)="onCardAmountChange($event)"
+      (partialToggle)="onPartialToggle($event)"
+      (partialAmountChange)="onPartialAmountChange($event)"
+      (pay)="onPay()"
+      (payAndPrint)="onPayAndPrint()"
+      (registerAction)="onRegisterAction($event)"
+    />
+  </section>
+</div>
