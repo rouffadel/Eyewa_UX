@@ -82,6 +82,11 @@ export class SellDashboardComponent {
     this.store.clearStatusMessages();
   }
 
+  protected onPayFullToggle(enabled: boolean): void {
+    this.store.setPayFull(enabled);
+    this.store.clearStatusMessages();
+  }
+
   protected onPartialAmountChange(amount: number): void {
     this.store.setPartialPaymentAmount(amount);
     this.store.clearStatusMessages();
@@ -100,6 +105,14 @@ export class SellDashboardComponent {
         void this.router.navigate(['/home/sell/invoice']);
       }
     });
+  }
+
+  protected onPrintReceipt(): void {
+    const staffName = this.auth.currentSession()?.displayName ?? '—';
+
+    if (this.store.printReceipt(staffName)) {
+      void this.router.navigate(['/home/sell/invoice']);
+    }
   }
 
   protected onNewPrescription(): void {

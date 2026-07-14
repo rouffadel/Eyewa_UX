@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { AppConfigService } from '../../../../services/app-config.service';
 import { DEFAULT_PAYMENT_DRAFT } from '../models/payment.models';
-import { formatMoney, mixedBalanceRemaining, paymentAmountPaid, paymentBalanceRemaining, PaymentService } from './payment.service';
+import { formatMoney, hasNegativeCartValues, hasNegativePaymentDraftValues, mixedBalanceRemaining, paymentAmountPaid, paymentBalanceRemaining, PaymentService, resolveInvoicePartialAmount, resolveInvoicePaymentBreakdown, shouldConfirmNegativePaymentValues } from './payment.service';
 
 describe('PaymentService', () => {
   let service: PaymentService;
@@ -58,6 +58,7 @@ describe('PaymentService', () => {
       cardAmount: 0,
       payPartial: false,
       partialAmount: 0,
+      payFull: true,
       settleRemainingBalance: false,
     });
   });
@@ -178,5 +179,115 @@ describe('PaymentService', () => {
 
   it('should format money with thousands separator', () => {
     expect(formatMoney(1165)).toBe('1,165.00');
+  });
+
+  it('should detect negative cart prices, discounts, and line totals', () => {
+    expect(
+      hasNegativeCartValues([
+        {
+          lineId: 'line-1',
+          product: { sku: '1', name: 'Frame', price: 100, category: 'frames' },
+          qty: 1,
+          unitPrice: -50,
+          discount: 0,
+        },
+      ]),
+    ).toBeTrue();
+
+    expect(
+      hasNegativeCartValues([
+        {
+          lineId: 'line-2',
+          product: { sku: '2', name: 'Frame', price: 100, category: 'frames' },
+          qty: 1,
+          unitPrice: 100,
+          discount: 150,
+        },
+      ]),
+    ).toBeTrue();
+  });
+
+  it('should detect negative payment discount and totals', () => {
+    const totals = service.calculateTotals(100, {
+      ...DEFAULT_PAYMENT_DRAFT,
+      discountAmount: -10,
+    });
+
+    expect(hasNegativePaymentDraftValues({ ...DEFAULT_PAYMENT_DRAFT, discountAmount: -10 }, totals)).toBeTrue();
+  });
+
+  it('should require confirmation when negative values are present', () => {
+    const totals = service.calculateTotals(100, DEFAULT_PAYMENT_DRAFT);
+
+    expect(
+      shouldConfirmNegativePaymentValues(
+        [
+          {
+            lineId: 'line-1',
+            product: { sku: '1', name: 'Frame', price: 100, category: 'frames' },
+            qty: 1,
+            unitPrice: -1,
+            discount: 0,
+          },
+        ],
+        totals,
+        DEFAULT_PAYMENT_DRAFT,
+        null,
+      ),
+    ).toBeTrue();
+
+    expect(shouldConfirmNegativePaymentValues([], totals, DEFAULT_PAYMENT_DRAFT, null)).toBeFalse();
+  });
+
+  it('should split previously paid and paid this time for settlement receipts', () => {
+    expect(
+      resolveInvoicePaymentBreakdown(480, 0, {
+        grossTotal: 480,
+        discount: 0,
+        netTotal: 480,
+        balance: 180,
+        totalTax: 0,
+        paidAmount: 300,
+      }),
+    ).toEqual({
+      previouslyPaid: 300,
+      paidThisTime: 180,
+      totalPaid: 480,
+      balance: 0,
+    });
+  });
+
+  it('should prefer table2 PaidAmount when reprinting a fully paid order', () => {
+    expect(
+      resolveInvoicePaymentBreakdown(380, 0, null, {
+        treatOutstandingAsPreviouslyPaid: true,
+        orderPayment: {
+          grossTotal: 380,
+          discount: 0,
+          netTotal: 380,
+          balance: 0,
+          totalTax: 0,
+          paidAmount: 580,
+        },
+      }),
+    ).toEqual({
+      previouslyPaid: 0,
+      paidThisTime: 580,
+      totalPaid: 580,
+      balance: 0,
+    });
+  });
+
+  it('should expose header partial amount when table2 paid differs', () => {
+    expect(
+      resolveInvoicePartialAmount(null, {
+        grossTotal: 380,
+        discount: 0,
+        netTotal: 380,
+        balance: 0,
+        totalTax: 0,
+        paidAmount: 580,
+      }),
+    ).toBe(380);
   });
 });

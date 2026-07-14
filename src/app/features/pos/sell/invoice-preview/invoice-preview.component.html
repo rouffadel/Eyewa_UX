@@ -107,9 +107,39 @@
 
         <dl class="invoice-preview__totals">
           <div class="invoice-preview__total-row">
-            <dt>Total Amount</dt>
-            <dd>{{ data.totalAmount }}</dd>
+            <dt>Subtotal</dt>
+            <dd>{{ data.subtotal }}</dd>
           </div>
+          <div class="invoice-preview__total-row">
+            <dt>Discount</dt>
+            <dd>{{ data.discount }}</dd>
+          </div>
+          <div class="invoice-preview__total-row">
+            <dt>VAT (15%)</dt>
+            <dd>{{ data.vat }}</dd>
+          </div>
+          <div class="invoice-preview__total-row invoice-preview__total-row--strong">
+            <dt>Total</dt>
+            <dd>{{ data.total }}</dd>
+          </div>
+          @if (data.previouslyPaid) {
+            <div class="invoice-preview__total-row">
+              <dt>Previously Paid</dt>
+              <dd>{{ data.previouslyPaid }}</dd>
+            </div>
+          }
+          @if (data.paidThisTime) {
+            <div class="invoice-preview__total-row">
+              <dt>Paid This Time</dt>
+              <dd>{{ data.paidThisTime }}</dd>
+            </div>
+          }
+          @if (data.partialAmount) {
+            <div class="invoice-preview__total-row">
+              <dt>Partial Amount</dt>
+              <dd>{{ data.partialAmount }}</dd>
+            </div>
+          }
           <div class="invoice-preview__total-row">
             <dt>Amount Paid</dt>
             <dd>{{ data.amountPaid }}</dd>
@@ -120,6 +150,19 @@
           </div>
         </dl>
       </div>
+
+      @if (data.qrcodeImg) {
+        <div class="invoice-preview__qr">
+          <span class="invoice-preview__qr-label">Invoice QR Code</span>
+          <img
+            class="invoice-preview__qr-image"
+            [src]="data.qrcodeImg"
+            alt="Invoice QR code"
+            width="180"
+            height="180"
+          />
+        </div>
+      }
 
       <footer class="invoice-preview__actions">
         <button type="button" class="invoice-preview__btn invoice-preview__btn--secondary" (click)="onCancel()">

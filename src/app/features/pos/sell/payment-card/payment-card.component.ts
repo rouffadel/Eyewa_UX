@@ -20,6 +20,8 @@ export class PaymentCardComponent {
   readonly totals = input.required<PaymentTotals>();
   readonly draft = input.required<PaymentDraft>();
   readonly canPay = input(false);
+  readonly canPrintReceipt = input(false);
+  readonly orderFullyPaid = input(false);
   readonly isPaying = input(false);
   readonly settleFullRemaining = input(false);
   readonly outstandingBalance = input(0);
@@ -31,9 +33,11 @@ export class PaymentCardComponent {
   readonly cashAmountChange = output<number>();
   readonly cardAmountChange = output<number>();
   readonly partialToggle = output<boolean>();
+  readonly payFullToggle = output<boolean>();
   readonly partialAmountChange = output<number>();
   readonly pay = output<void>();
   readonly payAndPrint = output<void>();
+  readonly printReceipt = output<void>();
   readonly registerAction = output<PaymentRegisterAction>();
 
   protected formatMoney = formatMoney;
@@ -73,16 +77,20 @@ export class PaymentCardComponent {
     paymentBalanceRemaining(this.amountDue(), this.draft()),
   );
 
+  protected readonly showSettlementSummary = computed(
+    () => this.draft().payFull && this.outstandingBalance() > 0.01,
+  );
+
   protected readonly amountDue = computed(() =>
-    this.settleFullRemaining() ? this.outstandingBalance() : this.totals().payable,
+    this.showSettlementSummary() ? this.outstandingBalance() : this.totals().payable,
   );
 
   protected readonly payButtonLabel = computed(() =>
-    this.settleFullRemaining() ? 'PAY FULL' : 'PAY',
+    this.showSettlementSummary() ? 'PAY FULL' : 'PAY',
   );
 
   protected readonly payAndPrintButtonLabel = computed(() =>
-    this.settleFullRemaining() ? 'PAY FULL & PRINT' : 'PAY & PRINT',
+    this.showSettlementSummary() ? 'PAY FULL & PRINT' : 'PAY & PRINT',
   );
 
   protected onDiscountInput(value: string | number): void {

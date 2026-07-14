@@ -1,4 +1,4 @@
-import { buildInvoiceViewModel } from './invoice.mapper';
+import { buildInvoiceFromExistingOrder, buildInvoiceViewModel } from './invoice.mapper';
 import { DEFAULT_PAYMENT_DRAFT } from '../models/payment.models';
 import { TEST_CUSTOMER } from './sell.test-fixtures';
 
@@ -44,7 +44,8 @@ describe('buildInvoiceViewModel', () => {
     expect(invoice.contactNo).toBe('0505937411');
     expect(invoice.productLines).toHaveSize(1);
     expect(invoice.productLines[0].brand).toBe('Ray-Ban RB 2140');
-    expect(invoice.totalAmount).toContain('250');
+    expect(invoice.subtotal).toContain('250');
+    expect(invoice.total).toContain('250');
     expect(invoice.amountPaid).toContain('250');
     expect(invoice.balance).toContain('0');
     expect(invoice.user).toBe('Ameer');
@@ -105,5 +106,131 @@ describe('buildInvoiceViewModel', () => {
     expect(invoice.rxRows[1].cyl).toBe('-2.00');
     expect(invoice.rxRows[2].sph).toBe('62.0 mc');
     expect(invoice.details).toBe('Progressive lenses');
+  });
+});
+
+describe('buildInvoiceFromExistingOrder', () => {
+  const paymentTotals = {
+    subtotal: 480,
+    discount: 0,
+    vat: 72,
+    total: 552,
+    loyaltyDeduction: 0,
+    payable: 552,
+  };
+
+  it('should build a zero-balance receipt from loaded sales details', () => {
+    const invoice = buildInvoiceFromExistingOrder({
+      customer: { ...TEST_CUSTOMER, invoiceNo: 'NAB-14072026-28766' },
+      cartItems: [
+        {
+          lineId: 'sales-107390',
+          product: {
+            sku: 'sales-product-15',
+            name: 'Bono BNS1073',
+            price: 480,
+            category: 'frames',
+          },
+          qty: 1,
+          unitPrice: 480,
+          discount: 0,
+          variantLabel: 'Sunglasses - M',
+        },
+      ],
+      orderPayment: {
+        grossTotal: 480,
+        discount: 0,
+        netTotal: 480,
+        balance: 0,
+        totalTax: 0,
+        paidAmount: 480,
+      },
+      paymentTotals,
+      paymentDraft: {
+        ...DEFAULT_PAYMENT_DRAFT,
+        method: 'cash',
+        cashAmount: 480,
+      },
+      prescriptionRecord: null,
+      latestPrescription: null,
+      staffName: 'Ameer',
+      invoiceDate: '2026-07-14',
+      qrcodeImg: 'data:image/png;base64,invoice-qr',
+    });
+
+    expect(invoice.invoiceNo).toBe('NAB-14072026-28766');
+    expect(invoice.invoiceDate).toBe('2026-07-14');
+    expect(invoice.subtotal).toBe('480.00');
+    expect(invoice.vat).toBe('72.00');
+    expect(invoice.total).toBe('552.00');
+    expect(invoice.amountPaid).toBe('480.00');
+    expect(invoice.balance).toBe('0.00');
+    expect(invoice.productLines[0].brand).toBe('Bono BNS1073');
+    expect(invoice.qrcodeImg).toBe('data:image/png;base64,invoice-qr');
+    expect(invoice.previouslyPaid).toBeUndefined();
+  });
+
+  it('should use table2 PaidAmount for amount paid on fully settled receipts', () => {
+    const invoice = buildInvoiceFromExistingOrder({
+      customer: { ...TEST_CUSTOMER, invoiceNo: 'NAB-14072026-28768' },
+      cartItems: [],
+      orderPayment: {
+        grossTotal: 380,
+        discount: 0,
+        netTotal: 380,
+        balance: 0,
+        totalTax: 0,
+        paidAmount: 580,
+      },
+      paymentTotals: {
+        subtotal: 780,
+        discount: 0,
+        vat: 117,
+        total: 897,
+        loyaltyDeduction: 0,
+        payable: 897,
+      },
+      paymentDraft: {
+        ...DEFAULT_PAYMENT_DRAFT,
+        method: 'cash',
+        cashAmount: 897,
+      },
+      prescriptionRecord: null,
+      latestPrescription: null,
+      staffName: 'Ameer',
+    });
+
+    expect(invoice.amountPaid).toBe('580.00');
+    expect(invoice.partialAmount).toBe('380.00');
+    expect(invoice.balance).toBe('0.00');
+  });
+
+  it('should show previously paid amount on partial order receipts', () => {
+    const invoice = buildInvoiceFromExistingOrder({
+      customer: { ...TEST_CUSTOMER, invoiceNo: 'NAB-08072026-28763' },
+      cartItems: [],
+      orderPayment: {
+        grossTotal: 480,
+        discount: 0,
+        netTotal: 480,
+        balance: 180,
+        totalTax: 0,
+        paidAmount: 300,
+      },
+      paymentTotals,
+      paymentDraft: {
+        ...DEFAULT_PAYMENT_DRAFT,
+        method: 'cash',
+        cashAmount: 300,
+      },
+      prescriptionRecord: null,
+      latestPrescription: null,
+      staffName: 'Ameer',
+    });
+
+    expect(invoice.previouslyPaid).toBe('300.00');
+    expect(invoice.amountPaid).toBe('300.00');
+    expect(invoice.balance).toBe('180.00');
+    expect(invoice.paidThisTime).toBeUndefined();
   });
 });

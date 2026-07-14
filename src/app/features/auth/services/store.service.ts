@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { AppConfigService } from '../../../services/app-config.service';
-import { FillStoreResponse, StoreOption } from '../models/store.models';
+import { FillStoreResponse, FillStoreRow, StoreOption } from '../models/store.models';
 
 @Injectable({ providedIn: 'root' })
 export class StoreService {
@@ -46,31 +46,41 @@ export class StoreService {
       .map((row) => ({
         storeId: row.storeId,
         storeName: row.storeName,
+        isDefault: row.isDefault === true,
       }));
   }
 
   private extractRows(
     objresult: FillStoreResponse['objresult'] | undefined,
-  ): Array<{ storeId: number; storeName: string }> {
+  ): Array<{ storeId: number; storeName: string; isDefault: boolean }> {
     if (!objresult) {
       return [];
     }
 
-    if (Array.isArray(objresult)) {
-      return objresult
-        .filter((row) => row?.StoreID != null && row.StoreName)
-        .map((row) => ({
-          storeId: row.StoreID,
-          storeName: row.StoreName,
-        }));
+    const rows = Array.isArray(objresult) ? objresult : (objresult.table ?? []);
+
+    return rows
+      .map((row) => this.mapRow(row))
+      .filter((row): row is { storeId: number; storeName: string; isDefault: boolean } => row != null);
+  }
+
+  private mapRow(
+    row: FillStoreRow,
+  ): { storeId: number; storeName: string; isDefault: boolean } | null {
+    const storeId = Number(
+      row.StoreID ?? row.StoreId ?? row.storeID ?? row.storeId,
+    );
+    const storeName = String(row.StoreName ?? row.storeName ?? '').trim();
+
+    if (!Number.isFinite(storeId) || !storeName) {
+      return null;
     }
 
-    return (objresult.table ?? [])
-      .filter((row) => row?.storeID != null && row.storeName)
-      .map((row) => ({
-        storeId: row.storeID,
-        storeName: row.storeName,
-      }));
+    return {
+      storeId,
+      storeName,
+      isDefault: row.IsDefault === true || row.isDefault === true,
+    };
   }
 
   private toError(error: unknown): Error {

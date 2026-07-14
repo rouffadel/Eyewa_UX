@@ -13,6 +13,7 @@ export interface SaveSalesGridPayload {
 
 export interface SaveSalesDetailsPayload {
   SalesId: number;
+  LoginId: number;
   StoreId: string;
   SalesGrids: SaveSalesGridPayload[];
   GrossTotal: number;

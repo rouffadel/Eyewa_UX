@@ -1,4 +1,8 @@
-import { toPrescriptionSummary, formatPrescriptionSavedAt } from './prescription-summary.mapper';
+import {
+  hasPrescriptionSummaryRxData,
+  toPrescriptionSummary,
+  formatPrescriptionSavedAt,
+} from './prescription-summary.mapper';
 import { PrescriptionRecord } from '../../prescription/models/prescription.models';
 
 describe('toPrescriptionSummary', () => {
@@ -26,6 +30,34 @@ describe('toPrescriptionSummary', () => {
     expect(summary.os.axis).toBe('175');
     expect(summary.pd).toBe('62.0');
     expect(summary.nearPd).toBe('60.0');
+  });
+});
+
+describe('hasPrescriptionSummaryRxData', () => {
+  it('should return false when all rx display values are empty', () => {
+    expect(
+      hasPrescriptionSummaryRxData({
+        date: '14-07-2026',
+        doctorName: '—',
+        od: { sph: '—', cyl: '—', axis: '—' },
+        os: { sph: '—', cyl: '—', axis: '—' },
+        pd: '—',
+        nearPd: '—',
+      }),
+    ).toBeFalse();
+  });
+
+  it('should return true when at least one rx value is present', () => {
+    expect(
+      hasPrescriptionSummaryRxData({
+        date: '14-07-2026',
+        doctorName: '—',
+        od: { sph: '+1.00', cyl: '—', axis: '—' },
+        os: { sph: '—', cyl: '—', axis: '—' },
+        pd: '—',
+        nearPd: '—',
+      }),
+    ).toBeTrue();
   });
 });
 

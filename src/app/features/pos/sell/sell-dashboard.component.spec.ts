@@ -83,7 +83,9 @@ describe('SellDashboardComponent', () => {
     const leftPanel = compiled.querySelector('.sell-dashboard__panel--left');
     expect(leftPanel?.querySelector('app-latest-prescription-summary')).toBeTruthy();
     expect(leftPanel?.textContent).toContain('LATEST PRESCRIPTION');
-    expect(leftPanel?.textContent).toContain('View Prescription');
+    expect(leftPanel?.textContent).toContain('No prescription on file');
+    expect(leftPanel?.textContent).toContain('+ New Prescription');
+    expect(leftPanel?.textContent).not.toContain('SPH');
   });
 
   it('should render three dashboard columns', () => {

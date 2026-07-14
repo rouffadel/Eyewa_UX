@@ -4,6 +4,7 @@ import { CustomerSessionService } from '../../customer/services/customer-session
 import { PrescriptionRecord } from '../../prescription/models/prescription.models';
 import {
   applyCartItemsToPrescriptionRecord,
+  isPrescriptionCartLine,
   prescriptionLinesToCartItems,
 } from '../../prescription/services/prescription-cart.mapper';
 import { PrescriptionLocalStorageService } from '../../prescription/services/prescription-local-storage.service';
@@ -16,24 +17,32 @@ import { PaymentDraft, PaymentMethod, PaymentRegisterAction } from '../models/pa
 import { SalesDetailsGridLineItem, SalesDetailsPaymentSummary } from '../models/sales-details-grid.models';
 import { BarcodeScanService } from './barcode-scan.service';
 import { CategoryService } from './category.service';
-import { formatMoney, paymentAmountPaid, paymentBalanceRemaining, PaymentService } from './payment.service';
-import { toPrescriptionSummary } from './prescription-summary.mapper';
+import { formatMoney, orderAmountAlreadyPaid, paymentAmountPaid, paymentBalanceRemaining, PaymentService, NEGATIVE_PAYMENT_CONFIRM_MESSAGE, shouldConfirmNegativePaymentValues } from './payment.service';
+import { hasPrescriptionSummaryRxData, toPrescriptionSummary } from './prescription-summary.mapper';
 import { SalesDetailsService, SalesDetailsResult } from './sales-details.service';
 import {
   cartItemsFromSalesDetails,
   isOrderCartLocked,
+  isOrderFullyPaid,
+  isSalesCartLine,
   paymentDraftFromSalesDetails,
 } from './sales-details.mapper';
 import { OrderLenseService } from './order-lense.service';
 import { cartItemsFromOrderLense } from './order-lense.mapper';
 import { OrderLenseOrder } from '../models/order-lense.models';
 import {
+  framesFromSalesLineItems,
   hasApiSalePrescriptionData,
   prescriptionRecordFromApiSale,
 } from './api-sale-prescription.mapper';
 import { buildSaveSalesDetailsPayload, hasPrescriptionFramesForSales } from './save-sales.mapper';
 import { buildInvoiceFromSaveSalesResponse } from './save-sales-response.mapper';
+import { buildInvoiceFromExistingOrder } from './invoice.mapper';
 import { SaveSalesService } from './save-sales.service';
+import {
+  hasPrescriptionLensData,
+  hasPrescriptionRxData,
+} from '../../prescription/models/prescription.models';
 
 @Injectable({ providedIn: 'root' })
 export class SellSessionStore {
@@ -57,7 +66,13 @@ export class SellSessionStore {
 
   private readonly prescriptionRecordByCustomer = signal<Record<string, PrescriptionRecord>>({});
 
+  private readonly salesLineItemsByCustomer = signal<Record<string, SalesDetailsGridLineItem[]>>({});
+
   private readonly orderPaymentSummary = signal<SalesDetailsPaymentSummary | null>(null);
+
+  private readonly loadedSalesInvoiceDate = signal<string | null>(null);
+
+  private readonly loadedSalesQrcodeImg = signal<string | null>(null);
 
   constructor() {
     const customer = this.selectedCustomer();
@@ -74,7 +89,12 @@ export class SellSessionStore {
       return null;
     }
 
-    return this.prescriptionsByCustomer()[customer.id] ?? null;
+    const summary = this.prescriptionsByCustomer()[customer.id] ?? null;
+    if (!summary || !hasPrescriptionSummaryRxData(summary)) {
+      return null;
+    }
+
+    return summary;
   });
 
   readonly hasPrescription = computed(() => this.latestPrescription() !== null);
@@ -144,7 +164,17 @@ export class SellSessionStore {
   );
 
   readonly canPay = computed(() => {
-    if (this.isPaying()) {
+    if (this.isPaying() || this.prescriptionLoading() || this.orderFullyPaid()) {
+      return false;
+    }
+
+    return this.selectedCustomer() !== null && this.cartItems().length > 0;
+  });
+
+  readonly orderFullyPaid = computed(() => isOrderFullyPaid(this.orderPaymentSummary()));
+
+  readonly canPrintReceipt = computed(() => {
+    if (this.isPaying() || this.prescriptionLoading() || !this.orderFullyPaid()) {
       return false;
     }
 
@@ -161,16 +191,12 @@ export class SellSessionStore {
     Math.max(0, this.orderPaymentSummary()?.balance ?? 0),
   );
 
-  readonly amountAlreadyPaid = computed(() => {
-    const payment = this.orderPaymentSummary();
-    if (!payment) {
-      return 0;
-    }
+  readonly amountAlreadyPaid = computed(() => orderAmountAlreadyPaid(this.orderPaymentSummary()));
 
-    return Math.max(0, payment.netTotal - payment.balance);
-  });
-
-  selectCustomer(customer: Customer | null): void {
+  selectCustomer(
+    customer: Customer | null,
+    options: { freshSale?: boolean } = {},
+  ): void {
     const previousId = this.selectedCustomer()?.id;
     this.selectedCustomer.set(customer);
     this.resetLoyaltyRedemption();
@@ -179,14 +205,24 @@ export class SellSessionStore {
       this.cartItems.set([]);
       this.paymentDraft.set(this.createInitialPaymentDraft());
       this.orderPaymentSummary.set(null);
+      this.loadedSalesInvoiceDate.set(null);
+      this.loadedSalesQrcodeImg.set(null);
     }
 
-    if (customer?.id) {
-      if (customer.salesId == null) {
-        this.loadLocalPrescription(customer.id);
-      }
-    } else {
+    if (!customer?.id) {
       this.syncPaymentAmountsToPayable();
+      return;
+    }
+
+    if (options.freshSale) {
+      this.clearCustomerPrescriptionState(customer.id);
+      this.prescriptionLoading.set(false);
+      this.syncPaymentAmountsToPayable();
+      return;
+    }
+
+    if (customer.salesId == null) {
+      this.loadLocalPrescription(customer.id);
     }
 
     this.loadSalesDetails(customer, { forceApplyFromApi: true, persistToLocalStorage: true });
@@ -244,7 +280,14 @@ export class SellSessionStore {
     orderResult: OrderLenseOrder,
     options: { forceApplyFromApi?: boolean; persistToLocalStorage?: boolean },
   ): void {
-    if (result.prescription) {
+    if (result.lineItems.length > 0) {
+      this.salesLineItemsByCustomer.update((current) => ({
+        ...current,
+        [customer.id]: result.lineItems,
+      }));
+    }
+
+    if (result.prescription && hasPrescriptionSummaryRxData(result.prescription)) {
       this.applySalesDetailsPrescription(customer.id, salesId, result.prescription);
     }
 
@@ -265,6 +308,16 @@ export class SellSessionStore {
           ? { ...current, invoiceNo: result.row!.invoiceNo }
           : current,
       );
+    }
+
+    if (result.row?.invoiceDate) {
+      this.loadedSalesInvoiceDate.set(result.row.invoiceDate);
+    }
+
+    this.loadedSalesQrcodeImg.set(result.qrcodeImg ?? null);
+
+    if (result.payment && isOrderFullyPaid(result.payment)) {
+      this.syncReceiptInvoice(this.resolveStaffName());
     }
 
     if (
@@ -341,32 +394,48 @@ export class SellSessionStore {
   }
 
   applySavedPrescription(record: PrescriptionRecord): void {
-    const summary = toPrescriptionSummary(record);
-    const item: SavedPrescriptionListItem = { id: record.id, summary };
-
-    this.prescriptionsByCustomer.update((current) => ({
+    this.prescriptionRecordByCustomer.update((current) => ({
       ...current,
-      [record.customerId]: summary,
+      [record.customerId]: record,
     }));
 
-    this.prescriptionHistoryByCustomer.update((current) => {
-      const existing = current[record.customerId] ?? [];
-      const withoutDuplicate = existing.filter((entry) => entry.id !== record.id);
+    if (hasPrescriptionRxData(record)) {
+      const summary = toPrescriptionSummary(record);
+      const item: SavedPrescriptionListItem = { id: record.id, summary };
 
-      return {
+      this.prescriptionsByCustomer.update((current) => ({
         ...current,
-        [record.customerId]: [item, ...withoutDuplicate],
-      };
-    });
+        [record.customerId]: summary,
+      }));
+
+      this.prescriptionHistoryByCustomer.update((current) => {
+        const existing = current[record.customerId] ?? [];
+        const withoutDuplicate = existing.filter((entry) => entry.id !== record.id);
+
+        return {
+          ...current,
+          [record.customerId]: [item, ...withoutDuplicate],
+        };
+      });
+
+      this.selectedPrescriptionIdByCustomer.update((current) => ({
+        ...current,
+        [record.customerId]: record.id,
+      }));
+    }
+
+    this.syncCartFromPrescription(record);
+  }
+
+  applyFramesOnlyToCart(record: PrescriptionRecord): void {
+    this.prescriptionRecordByCustomer.update((current) => ({
+      ...current,
+      [record.customerId]: record,
+    }));
 
     this.selectedPrescriptionIdByCustomer.update((current) => ({
       ...current,
       [record.customerId]: record.id,
-    }));
-
-    this.prescriptionRecordByCustomer.update((current) => ({
-      ...current,
-      [record.customerId]: record,
     }));
 
     this.syncCartFromPrescription(record);
@@ -434,7 +503,7 @@ export class SellSessionStore {
 
   selectCreatedCustomer(): void {
     const customer = this.customerSession.sellCustomer();
-    this.selectCustomer(customer);
+    this.selectCustomer(customer, { freshSale: true });
   }
 
   setCatalogCategory(category: CatalogCategory): void {
@@ -597,19 +666,40 @@ export class SellSessionStore {
   }
 
   setPartialPayment(enabled: boolean): void {
+    const hasOutstanding = this.hasOutstandingOrderBalance();
+
     this.paymentDraft.update((draft) => ({
       ...draft,
       payPartial: enabled,
+      payFull: !enabled,
       partialAmount: enabled ? draft.partialAmount : 0,
-      settleRemainingBalance: false,
+      settleRemainingBalance: !enabled && hasOutstanding,
     }));
     this.syncPaymentAmountsToPayable();
+  }
+
+  setPayFull(enabled: boolean): void {
+    const hasOutstanding = this.hasOutstandingOrderBalance();
+
+    this.paymentDraft.update((draft) => ({
+      ...draft,
+      payFull: enabled,
+      payPartial: !enabled,
+      partialAmount: enabled ? 0 : draft.partialAmount,
+      settleRemainingBalance: enabled && hasOutstanding,
+    }));
+    this.syncPaymentAmountsToPayable();
+  }
+
+  private hasOutstandingOrderBalance(): boolean {
+    return (this.orderPaymentSummary()?.balance ?? 0) > 0;
   }
 
   setPartialPaymentAmount(amount: number): void {
     this.paymentDraft.update((draft) => ({
       ...draft,
       payPartial: true,
+      payFull: false,
       partialAmount: Math.max(0, amount),
       settleRemainingBalance: false,
     }));
@@ -666,6 +756,16 @@ export class SellSessionStore {
     }
   }
 
+  printReceipt(staffName: string): boolean {
+    if (!this.canPrintReceipt()) {
+      return false;
+    }
+
+    this.clearStatusMessages();
+    this.syncReceiptInvoice(staffName);
+    return true;
+  }
+
   redeemPointsStub(): void {
     this.statusMessage.set('Redeem points is not connected yet.');
   }
@@ -710,7 +810,7 @@ export class SellSessionStore {
     const prescriptionRecord = await this.resolvePrescriptionRecordForPayment(customer.id);
 
     if (!prescriptionRecord) {
-      this.statusMessage.set('Save a prescription before paying.');
+      this.statusMessage.set('Save frames on the prescription form before paying.');
       return false;
     }
 
@@ -721,22 +821,39 @@ export class SellSessionStore {
     }
 
     if (!hasPrescriptionFramesForSales(prescriptionRecord)) {
-      this.statusMessage.set('Save a prescription frame before paying.');
+      this.statusMessage.set('Select a product for each frame before paying.');
+      return false;
+    }
+
+    if (
+      shouldConfirmNegativePaymentValues(
+        this.cartItems(),
+        this.paymentTotals(),
+        draft,
+        prescriptionRecord,
+      ) &&
+      !window.confirm(NEGATIVE_PAYMENT_CONFIRM_MESSAGE)
+    ) {
       return false;
     }
 
     try {
-      await this.prescriptionService.save({
-        ...prescriptionRecord,
-        customerId: customer.id,
-        salesId,
-      });
+      if (hasPrescriptionLensData(prescriptionRecord)) {
+        await this.prescriptionService.save({
+          ...prescriptionRecord,
+          customerId: customer.id,
+          salesId,
+        });
+      }
+
+      const orderPaymentBeforeSave = this.orderPaymentSummary();
 
       const saveResult = await this.saveSales.saveSalesDetails(
         buildSaveSalesDetailsPayload({
           customer,
           record: prescriptionRecord,
           storeId: this.resolveStoreId(),
+          loginId: this.auth.user()?.loginId ?? 0,
           salesManId: this.auth.user()?.loginId ?? 0,
           payable,
           draft,
@@ -752,6 +869,7 @@ export class SellSessionStore {
         prescriptionRecord,
         latestPrescription: this.latestPrescription(),
         staffName,
+        orderPaymentBeforeSave,
       };
 
       this.lastInvoice.set(
@@ -813,6 +931,38 @@ export class SellSessionStore {
     return `${formatMoney(payable)} SAR`;
   }
 
+  private resolveStaffName(): string {
+    return this.auth.currentSession()?.displayName ?? '—';
+  }
+
+  private syncReceiptInvoice(staffName: string): void {
+    const customer = this.selectedCustomer();
+    const orderPayment = this.orderPaymentSummary();
+
+    if (!customer || !orderPayment) {
+      return;
+    }
+
+    const prescriptionRecord =
+      this.prescriptionRecordByCustomer()[customer.id] ??
+      this.prescriptionStorage.getLatest(customer.id);
+
+    this.lastInvoice.set(
+      buildInvoiceFromExistingOrder({
+        customer,
+        cartItems: this.cartItems(),
+        orderPayment,
+        paymentTotals: this.paymentTotals(),
+        paymentDraft: this.paymentDraft(),
+        prescriptionRecord,
+        latestPrescription: this.latestPrescription(),
+        staffName,
+        invoiceDate: this.loadedSalesInvoiceDate() ?? undefined,
+        qrcodeImg: this.loadedSalesQrcodeImg(),
+      }),
+    );
+  }
+
   private createInitialPaymentDraft(): PaymentDraft {
     const draft = this.payment.defaultDraft();
 
@@ -869,17 +1019,92 @@ export class SellSessionStore {
   }
 
   private async resolvePrescriptionRecordForPayment(customerId: string): Promise<PrescriptionRecord | null> {
+    const customer = this.selectedCustomer();
+    if (customer?.id === customerId && customer.salesId != null) {
+      const cartIsApiSaleOnly =
+        this.cartItems().some((item) => isSalesCartLine(item.lineId)) &&
+        !this.cartHasPrescriptionLines();
+      const cachedLineItems = this.salesLineItemsByCustomer()[customerId] ?? [];
+
+      if ((this.isCartLocked() || cartIsApiSaleOnly) && cachedLineItems.length === 0) {
+        await this.loadSalesDetails(customer, {
+          forceApplyFromApi: true,
+          persistToLocalStorage: true,
+        });
+      }
+    }
+
+    let record = this.findStoredPrescriptionRecord(customerId);
+
+    if (!record) {
+      const lastSaved = this.prescriptionStorage.getLastSaved();
+      if (lastSaved?.customerId === customerId) {
+        record = lastSaved;
+      }
+    }
+
+    if (!record && customer?.id === customerId) {
+      const lineItems = this.salesLineItemsByCustomer()[customerId] ?? [];
+      if (lineItems.length > 0) {
+        record = this.applySalesLineItemsToRecord(
+          this.createEmptyPrescriptionRecord(customer),
+          lineItems,
+        );
+      } else if (this.cartHasPrescriptionLines()) {
+        record = this.createEmptyPrescriptionRecord(customer);
+      }
+    }
+
+    if (!record) {
+      return null;
+    }
+
+    const lineItems = this.salesLineItemsByCustomer()[customerId] ?? [];
+    const preferApiFrames = lineItems.length > 0 && !this.cartHasPrescriptionLines();
+    const recordWithFrames =
+      preferApiFrames || !hasPrescriptionFramesForSales(record)
+        ? this.applySalesLineItemsToRecord(record, lineItems)
+        : record;
+
+    const synced = this.cartHasPrescriptionLines()
+      ? applyCartItemsToPrescriptionRecord(recordWithFrames, this.cartItems())
+      : recordWithFrames;
+
+    this.prescriptionRecordByCustomer.update((current) => ({
+      ...current,
+      [customerId]: synced,
+    }));
+
+    return this.enrichPrescriptionRecord(synced);
+  }
+
+  private applySalesLineItemsToRecord(
+    record: PrescriptionRecord,
+    lineItems: SalesDetailsGridLineItem[],
+  ): PrescriptionRecord {
+    if (lineItems.length === 0) {
+      return record;
+    }
+
+    return {
+      ...record,
+      frames: framesFromSalesLineItems(lineItems),
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  private findStoredPrescriptionRecord(customerId: string): PrescriptionRecord | null {
     const selectedId = this.selectedPrescriptionIdByCustomer()[customerId];
     if (selectedId) {
       const selected = this.resolvePrescriptionRecord(customerId, selectedId);
       if (selected) {
-        return this.enrichPrescriptionRecord(selected);
+        return selected;
       }
     }
 
     const cached = this.prescriptionRecordByCustomer()[customerId];
     if (cached) {
-      return this.enrichPrescriptionRecord(cached);
+      return cached;
     }
 
     const fromStorage = this.prescriptionStorage.getLatest(customerId);
@@ -892,7 +1117,32 @@ export class SellSessionStore {
       [customerId]: fromStorage,
     }));
 
-    return this.enrichPrescriptionRecord(fromStorage);
+    return fromStorage;
+  }
+
+  private cartHasPrescriptionLines(): boolean {
+    return this.cartItems().some((item) => isPrescriptionCartLine(item.lineId));
+  }
+
+  private createEmptyPrescriptionRecord(customer: Customer): PrescriptionRecord {
+    const now = new Date().toISOString();
+
+    return {
+      id: `rx-cart-${customer.id}-${Date.now()}`,
+      customerId: customer.id,
+      salesId: customer.salesId,
+      orderLensEnabled: false,
+      frames: [],
+      lenses: [],
+      rightEye: { sph: null, cyl: null, axis: null, add: null },
+      leftEye: { sph: null, cyl: null, axis: null, add: null },
+      pd: null,
+      nearPd: null,
+      vd: null,
+      notes: '',
+      createdAt: now,
+      updatedAt: now,
+    };
   }
 
   private async enrichPrescriptionRecord(record: PrescriptionRecord): Promise<PrescriptionRecord> {
@@ -979,6 +1229,15 @@ export class SellSessionStore {
   }
 
   private registerPrescriptionRecord(record: PrescriptionRecord): void {
+    this.prescriptionRecordByCustomer.update((current) => ({
+      ...current,
+      [record.customerId]: record,
+    }));
+
+    if (!hasPrescriptionRxData(record)) {
+      return;
+    }
+
     const summary = toPrescriptionSummary(record);
     const item: SavedPrescriptionListItem = { id: record.id, summary };
 
@@ -1001,11 +1260,32 @@ export class SellSessionStore {
       ...current,
       [record.customerId]: record.id,
     }));
+  }
 
-    this.prescriptionRecordByCustomer.update((current) => ({
-      ...current,
-      [record.customerId]: record,
-    }));
+  private clearCustomerPrescriptionState(customerId: string): void {
+    this.prescriptionsByCustomer.update((current) => {
+      const next = { ...current };
+      delete next[customerId];
+      return next;
+    });
+
+    this.prescriptionHistoryByCustomer.update((current) => {
+      const next = { ...current };
+      delete next[customerId];
+      return next;
+    });
+
+    this.prescriptionRecordByCustomer.update((current) => {
+      const next = { ...current };
+      delete next[customerId];
+      return next;
+    });
+
+    this.selectedPrescriptionIdByCustomer.update((current) => {
+      const next = { ...current };
+      delete next[customerId];
+      return next;
+    });
   }
 
   private clearSavedPrescription(customerId: string): void {

@@ -50,6 +50,7 @@ describe('prescriptionRecordFromApiSale', () => {
         },
       ],
       payment: null,
+      qrcodeImg: null,
     };
 
     const orderResult: OrderLenseOrder = {
@@ -83,6 +84,7 @@ describe('prescriptionRecordFromApiSale', () => {
     expect(record.frames.length).toBe(1);
     expect(record.frames[0].brandName).toBe('B0NO');
     expect(record.frames[0].productId).toBe(12);
+    expect(record.frames[0].salesDetailsId).toBe(107386);
     expect(record.lenses.length).toBe(1);
     expect(record.lenses[0].orderLens).toBe('test');
     expect(record.rightEye.sph).toBe(15.25);

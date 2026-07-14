@@ -23,10 +23,17 @@ export interface InvoiceViewModel {
   productLines: InvoiceProductLine[];
   rxRows: InvoiceRxRow[];
   details: string;
-  totalAmount: string;
+  subtotal: string;
+  discount: string;
+  vat: string;
+  total: string;
+  partialAmount?: string;
+  previouslyPaid?: string;
+  paidThisTime?: string;
   amountPaid: string;
   balance: string;
   user: string;
   storeName?: string;
   storeAddress?: string;
+  qrcodeImg?: string | null;
 }

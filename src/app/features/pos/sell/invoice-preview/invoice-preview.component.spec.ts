@@ -32,7 +32,10 @@ describe('InvoicePreviewComponent', () => {
       { label: 'IPD', sph: '62.0 mc', cyl: '—', axis: '—', add: '—' },
     ],
     details: 'Test note',
-    totalAmount: '250.00',
+    subtotal: '250.00',
+    discount: '0.00',
+    vat: '0.00',
+    total: '250.00',
     amountPaid: '250.00',
     balance: '0.00',
     user: 'Ameer',
@@ -65,9 +68,24 @@ describe('InvoicePreviewComponent', () => {
     expect(compiled.textContent).toContain('INV-001');
     expect(compiled.textContent).toContain('Saud Ahmed');
     expect(compiled.textContent).toContain('SQEYEWEAR');
-    expect(compiled.textContent).toContain('Total Amount');
+    expect(compiled.textContent).toContain('Subtotal');
+    expect(compiled.textContent).toContain('Total');
     expect(compiled.textContent).toContain('Print');
     expect(compiled.textContent).toContain('Cancel');
+  });
+
+  it('should render invoice QR code when available', () => {
+    store.lastInvoice.set({
+      ...mockInvoice,
+      qrcodeImg: 'data:image/png;base64,test-qr',
+    });
+    fixture.detectChanges();
+
+    const image = fixture.nativeElement.querySelector(
+      '.invoice-preview__qr-image',
+    ) as HTMLImageElement | null;
+    expect(image).toBeTruthy();
+    expect(image?.src).toContain('data:image/png;base64,test-qr');
   });
 
   it('should navigate back to sell on cancel', () => {

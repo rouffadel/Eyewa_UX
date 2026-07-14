@@ -46,7 +46,17 @@ export function hasApiSalePrescriptionData(
   salesResult: SalesDetailsResult,
   orderResult: OrderLenseOrder,
 ): boolean {
-  return salesResult.lineItems.length > 0 || orderResult.lenses.length > 0 || salesResult.row !== null;
+  return (
+    salesResult.lineItems.length > 0 ||
+    orderResult.lenses.length > 0 ||
+    salesResult.prescription !== null
+  );
+}
+
+export function framesFromSalesLineItems(
+  lines: SalesDetailsGridLineItem[],
+): PrescriptionFrameLine[] {
+  return mapFrames(lines);
 }
 
 function mapFrames(lines: SalesDetailsGridLineItem[]): PrescriptionFrameLine[] {
@@ -61,6 +71,7 @@ function mapFrames(lines: SalesDetailsGridLineItem[]): PrescriptionFrameLine[] {
     quantity: line.quantity,
     maxDiscount: line.maxDiscount,
     discountPercent: line.discountPercent,
+    salesDetailsId: line.salesDetailsId,
   }));
 }
 

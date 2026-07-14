@@ -21,10 +21,12 @@ export function paymentDraftFromSalesDetails(
   const netTotal = Math.max(0, payment.netTotal);
 
   if (remainingBalance > 0 && remainingBalance < netTotal) {
+    draft.payFull = true;
     draft.settleRemainingBalance = true;
     draft.payPartial = false;
     draft.partialAmount = 0;
   } else {
+    draft.payFull = true;
     draft.settleRemainingBalance = false;
     draft.payPartial = false;
     draft.partialAmount = 0;
@@ -89,4 +91,16 @@ export function isOrderCartLocked(payment: SalesDetailsPaymentSummary | null): b
   }
 
   return balance < netTotal;
+}
+
+/** True when an existing sale has no remaining balance to collect. */
+export function isOrderFullyPaid(payment: SalesDetailsPaymentSummary | null): boolean {
+  if (!payment) {
+    return false;
+  }
+
+  const netTotal = Math.max(0, payment.netTotal);
+  const balance = Math.max(0, payment.balance);
+
+  return netTotal > 0 && balance <= 0.01;
 }

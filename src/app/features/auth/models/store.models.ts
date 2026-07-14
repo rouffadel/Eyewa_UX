@@ -1,21 +1,25 @@
 export interface StoreOption {
   storeId: number;
   storeName: string;
+  isDefault?: boolean;
 }
 
 export interface FillStoreRow {
-  StoreID: number;
-  StoreName: string;
+  StoreID?: number;
+  StoreId?: number;
+  storeID?: number;
+  storeId?: number;
+  StoreName?: string;
+  storeName?: string;
+  IsDefault?: boolean;
+  isDefault?: boolean;
 }
 
 /** Current API shape — `objresult` is a store array. */
 export type FillStoreObjResult =
   | FillStoreRow[]
   | {
-      table: Array<{
-        storeID: number;
-        storeName: string;
-      }>;
+      table: FillStoreRow[];
     };
 
 export interface FillStoreResponse {

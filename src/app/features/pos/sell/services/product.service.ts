@@ -26,6 +26,16 @@ export class ProductService {
       });
   }
 
+  searchProductsByKey(productName: string): Promise<ProductOption[]> {
+    const url = this.buildSearchByKeyUrl(productName);
+
+    return firstValueFrom(this.http.get<GetProductResponse>(url))
+      .then((response) => this.mapResponse(response))
+      .catch((error: unknown) => {
+        throw this.toError(error);
+      });
+  }
+
   private buildUrl(params: ProductSearchParams): string {
     const settings = this.appConfig.settings;
     const apiUrl = settings?.apiUrl?.replace(/\/$/, '');
@@ -43,6 +53,22 @@ export class ProductService {
     });
 
     return `${apiUrl}/${getProductPath}?${query.toString()}`;
+  }
+
+  private buildSearchByKeyUrl(productName: string): string {
+    const settings = this.appConfig.settings;
+    const apiUrl = settings?.apiUrl?.replace(/\/$/, '');
+    const searchPath = settings?.searchProductByKeyPath ?? settings?.getProductPath ?? 'products/GetProduct';
+
+    if (!apiUrl) {
+      throw new Error('Product lookup is not configured.');
+    }
+
+    const query = new URLSearchParams({
+      ProductName: productName.trim(),
+    });
+
+    return `${apiUrl}/${searchPath}?${query.toString()}`;
   }
 
   private mapResponse(response: GetProductResponse): ProductOption[] {
@@ -70,6 +96,7 @@ export class ProductService {
     const productName = row.productName ?? row.ProductName;
     const productValue = this.parseNumber(row.productValue ?? row.ProductValue);
     const categoryId = row.categoryID ?? row.CategoryID;
+    const categoryName = (row.categoryName ?? row.CategoryName)?.trim();
     const brandId = row.brandID ?? row.BrandID;
     const brandName = row.brandName ?? row.BrandName;
     const maxDiscount = this.parseNumber(row.maxDiscount ?? row.MaxDiscount);
@@ -88,6 +115,7 @@ export class ProductService {
       productValue,
       maxDiscount: maxDiscount ?? null,
       categoryId,
+      ...(categoryName ? { categoryName } : {}),
       brandId,
       brandName: brandName.trim(),
     };

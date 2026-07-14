@@ -1,5 +1,6 @@
 import {
   Component,
+  computed,
   DestroyRef,
   HostListener,
   inject,
@@ -24,6 +25,8 @@ import {
   PrescriptionFrameLineTotals,
 } from '../models/prescription.models';
 
+export type PrescriptionFramesTemplate = 'guided' | 'productSearch';
+
 @Component({
   selector: 'app-prescription-frame-line',
   imports: [ReactiveFormsModule],
@@ -43,12 +46,16 @@ export class PrescriptionFrameLineComponent {
   readonly index = input(0);
   readonly canRemove = input(true);
   readonly storeId = input<number | null>(null);
+  readonly framesTemplate = input<PrescriptionFramesTemplate>('guided');
 
   readonly remove = output<void>();
 
   readonly categories = input<readonly string[]>(FRAME_CATEGORIES);
   readonly categoryOptions = input<readonly CategoryOption[]>([]);
   protected readonly formatMoney = formatMoney;
+  protected readonly isProductSearchMode = computed(
+    () => this.framesTemplate() === 'productSearch',
+  );
   protected readonly brandResults = signal<BrandOption[]>([]);
   protected readonly brandSearchOpen = signal(false);
   protected readonly brandSearchLoading = signal(false);
@@ -57,6 +64,8 @@ export class PrescriptionFrameLineComponent {
   protected readonly modelSearchOpen = signal(false);
   protected readonly modelSearchLoading = signal(false);
   protected readonly modelSearchError = signal<string | null>(null);
+  /** UI-only; not part of the save model. */
+  protected readonly salePrice = signal<number | null>(null);
 
   constructor() {
     this.brandSearchSubject
@@ -131,8 +140,24 @@ export class PrescriptionFrameLineComponent {
 
   protected onModelInput(event: Event): void {
     const value = (event.target as HTMLInputElement).value;
-    this.group().patchValue({ productId: null, maxDiscount: null });
-    this.group().get('discountPercent')?.updateValueAndValidity();
+
+    if (this.isProductSearchMode()) {
+      this.group().patchValue({
+        productId: null,
+        categoryId: null,
+        category: '',
+        brandId: null,
+        brandName: '',
+        sellingPrice: null,
+        maxDiscount: null,
+        discountPercent: null,
+      });
+      this.salePrice.set(null);
+    } else {
+      this.group().patchValue({ productId: null, maxDiscount: null });
+      this.group().get('discountPercent')?.updateValueAndValidity();
+    }
+
     this.modelSearchSubject.next(value);
   }
 
@@ -146,17 +171,42 @@ export class PrescriptionFrameLineComponent {
     const sellingPrice = parseNumericInput(product.productValue);
     const maxDiscount = parseNumericInput(product.maxDiscount);
 
-    this.group().patchValue({
-      productId: product.productId,
-      modelNo: product.productName,
-      sellingPrice,
-      maxDiscount,
-      categoryId: product.categoryId,
-    });
+    if (this.isProductSearchMode()) {
+      const matchedCategory = this.resolveCategoryById(product.categoryId);
+
+      this.group().patchValue({
+        productId: product.productId,
+        modelNo: product.productName,
+        sellingPrice,
+        maxDiscount,
+        categoryId: matchedCategory?.categoryId ?? product.categoryId,
+        category: matchedCategory?.categoryName ?? '',
+        brandId: product.brandId,
+        brandName: product.brandName,
+        discountPercent: 0,
+      });
+      this.salePrice.set(sellingPrice);
+    } else {
+      this.group().patchValue({
+        productId: product.productId,
+        modelNo: product.productName,
+        sellingPrice,
+        maxDiscount,
+        categoryId: product.categoryId,
+      });
+    }
+
     this.group().get('sellingPrice')?.updateValueAndValidity();
     this.group().get('discountPercent')?.updateValueAndValidity();
     this.closeModelSearch();
     this.modelSearchRequestId += 1;
+  }
+
+  protected onSalePriceInput(event: Event): void {
+    const raw = (event.target as HTMLInputElement).value;
+    const sale = parseNumericInput(raw);
+    this.salePrice.set(sale);
+    this.applySalePriceDiscount(sale);
   }
 
   protected maxDiscountCap(): number | null {
@@ -177,6 +227,28 @@ export class PrescriptionFrameLineComponent {
     return calculateFrameLineTotals(value.sellingPrice, value.quantity, value.discountPercent);
   }
 
+  private applySalePriceDiscount(sale: number | null): void {
+    const sellingPrice = parseNumericInput(this.group().get('sellingPrice')?.value);
+
+    if (sellingPrice == null || sellingPrice <= 0 || sale == null) {
+      this.group().patchValue({ discountPercent: null });
+      this.group().get('discountPercent')?.updateValueAndValidity();
+      return;
+    }
+
+    const clampedSale = Math.min(Math.max(0, sale), sellingPrice);
+    if (clampedSale !== sale) {
+      this.salePrice.set(clampedSale);
+    }
+
+    const discountPercent = Number(
+      (((sellingPrice - clampedSale) / sellingPrice) * 100).toFixed(2),
+    );
+
+    this.group().patchValue({ discountPercent });
+    this.group().get('discountPercent')?.updateValueAndValidity();
+  }
+
   private closeBrandSearch(): void {
     this.brandSearchOpen.set(false);
     this.brandResults.set([]);
@@ -194,6 +266,14 @@ export class PrescriptionFrameLineComponent {
   private resolveCategoryId(categoryName: string): number | null {
     const match = this.categoryOptions().find((category) => category.categoryName === categoryName);
     return match?.categoryId ?? null;
+  }
+
+  private resolveCategoryById(categoryId: number | null | undefined): CategoryOption | null {
+    if (categoryId == null) {
+      return null;
+    }
+
+    return this.categoryOptions().find((category) => category.categoryId === categoryId) ?? null;
   }
 
   private async runBrandSearch(rawQuery: string): Promise<void> {
@@ -235,6 +315,53 @@ export class PrescriptionFrameLineComponent {
   }
 
   private async runModelSearch(rawQuery: string): Promise<void> {
+    if (this.isProductSearchMode()) {
+      await this.runProductSearchByKey(rawQuery);
+      return;
+    }
+
+    await this.runGuidedModelSearch(rawQuery);
+  }
+
+  private async runProductSearchByKey(rawQuery: string): Promise<void> {
+    const query = rawQuery.trim();
+
+    if (!query) {
+      this.modelSearchRequestId += 1;
+      this.closeModelSearch();
+      return;
+    }
+
+    const requestId = ++this.modelSearchRequestId;
+    this.modelSearchLoading.set(true);
+    this.modelSearchError.set(null);
+    this.modelSearchOpen.set(true);
+
+    try {
+      const results = await this.productService.searchProductsByKey(query);
+
+      if (requestId !== this.modelSearchRequestId) {
+        return;
+      }
+
+      this.modelResults.set(results);
+      this.modelSearchError.set(results.length === 0 ? 'No models found.' : null);
+    } catch (error) {
+      if (requestId !== this.modelSearchRequestId) {
+        return;
+      }
+
+      const message = error instanceof Error ? error.message : 'Unable to search models.';
+      this.modelResults.set([]);
+      this.modelSearchError.set(message);
+    } finally {
+      if (requestId === this.modelSearchRequestId) {
+        this.modelSearchLoading.set(false);
+      }
+    }
+  }
+
+  private async runGuidedModelSearch(rawQuery: string): Promise<void> {
     const query = rawQuery.trim();
 
     if (!query) {

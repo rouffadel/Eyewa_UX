@@ -69,6 +69,7 @@ export class AuthService {
     const updated: AuthSession = {
       ...session,
       selectedStore: store,
+      branchName: store.storeName,
       user: {
         ...session.user,
         storeId: store.storeId,
@@ -244,10 +245,12 @@ export class AuthService {
         return;
       }
 
-      const match =
-        storeId > 0 ? stores.find((store) => store.storeId === storeId) : undefined;
+      const preferred =
+        stores.find((store) => store.isDefault) ??
+        (storeId > 0 ? stores.find((store) => store.storeId === storeId) : undefined) ??
+        stores[0];
 
-      this.selectStore(match ?? stores[0]);
+      this.selectStore(preferred);
     } catch {
       // Store list can be retried from the header dropdown.
     }

@@ -359,6 +359,24 @@
   gap: 0.625rem;
 }
 
+.payment-card__actions--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.payment-card__pay--full {
+  grid-column: 1 / -1;
+}
+
+.payment-card__paid-banner {
+  margin: 0.75rem 0 0;
+  padding: 0.625rem 0.75rem;
+  border-radius: 10px;
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
 .payment-card__pay-secondary {
   min-height: 48px;
   border: 1.5px solid var(--color-border);

@@ -1,7 +1,6 @@
 import { InvoiceRxRow, InvoiceViewModel } from '../models/invoice.models';
 import { SaveSalesDetailsResult, SaveSalesDetailsRow } from '../models/save-sales.models';
-import { buildInvoiceViewModel, BuildInvoiceInput } from './invoice.mapper';
-import { formatMoney } from './payment.service';
+import { buildInvoiceViewModel, BuildInvoiceInput, mapInvoicePaidFields, mapInvoiceSummaryFields } from './invoice.mapper';
 
 interface BuildInvoiceFromSaveSalesInput {
   saveResult: SaveSalesDetailsResult;
@@ -21,7 +20,16 @@ export function buildInvoiceFromSaveSalesResponse(
 
   const netTotal = salesDetails.NetTotal ?? 0;
   const balance = salesDetails.Balance ?? 0;
-  const amountPaid = Math.max(0, netTotal - balance);
+  const paymentFields = mapInvoicePaidFields(
+    netTotal,
+    balance,
+    input.fallback.orderPaymentBeforeSave ?? null,
+    undefined,
+    {
+      paymentDraft: input.fallback.paymentDraft,
+      orderPayment: input.fallback.orderPaymentBeforeSave ?? null,
+    },
+  );
 
   return {
     invoiceNo: salesDetails.InvoiceNo || salesPrint?.InvoiceNo || fallback.invoiceNo,
@@ -31,12 +39,12 @@ export function buildInvoiceFromSaveSalesResponse(
     productLines: fallback.productLines,
     rxRows: buildRxRowsFromSalesDetails(salesDetails, fallback.rxRows),
     details: fallback.details,
-    totalAmount: formatMoney(netTotal),
-    amountPaid: formatMoney(amountPaid),
-    balance: formatMoney(balance),
+    ...mapInvoiceSummaryFields(input.fallback.paymentTotals),
+    ...paymentFields,
     user: fallback.user,
     storeName: salesPrint?.StoreName?.trim() || undefined,
     storeAddress: salesPrint?.Address?.trim() || undefined,
+    qrcodeImg: input.saveResult.raw.qrcodeimg ?? null,
   };
 }
 

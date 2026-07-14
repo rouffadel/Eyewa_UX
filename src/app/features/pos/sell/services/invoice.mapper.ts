@@ -8,7 +8,8 @@ import { CartLineItem, lineTotal } from '../models/cart.models';
 import { Customer, PrescriptionSummary } from '../models/customer.models';
 import { InvoiceProductLine, InvoiceRxRow, InvoiceViewModel } from '../models/invoice.models';
 import { PaymentDraft, PaymentTotals } from '../models/payment.models';
-import { formatMoney, paymentAmountPaid, paymentBalanceRemaining } from './payment.service';
+import { SalesDetailsPaymentSummary } from '../models/sales-details-grid.models';
+import { formatMoney, paymentAmountPaid, paymentBalanceRemaining, resolveInvoicePartialAmount, resolveInvoicePaymentBreakdown } from './payment.service';
 
 export interface BuildInvoiceInput {
   customer: Customer;
@@ -18,13 +19,66 @@ export interface BuildInvoiceInput {
   prescriptionRecord: PrescriptionRecord | null;
   latestPrescription: PrescriptionSummary | null;
   staffName: string;
+  orderPaymentBeforeSave?: SalesDetailsPaymentSummary | null;
+}
+
+export interface BuildInvoiceFromExistingOrderInput {
+  customer: Customer;
+  cartItems: CartLineItem[];
+  orderPayment: SalesDetailsPaymentSummary;
+  paymentTotals: PaymentTotals;
+  paymentDraft: PaymentDraft;
+  prescriptionRecord: PrescriptionRecord | null;
+  latestPrescription: PrescriptionSummary | null;
+  staffName: string;
+  invoiceDate?: string;
+  qrcodeImg?: string | null;
+}
+
+export function buildInvoiceFromExistingOrder(
+  input: BuildInvoiceFromExistingOrderInput,
+): InvoiceViewModel {
+  const netTotal = Math.max(0, input.orderPayment.netTotal);
+  const balance = Math.max(0, input.orderPayment.balance);
+  const paidFields = mapInvoicePaidFields(netTotal, balance, null, undefined, {
+    treatOutstandingAsPreviouslyPaid: true,
+    orderPayment: input.orderPayment,
+    paymentDraft: input.paymentDraft,
+  });
+  const base = buildInvoiceViewModel({
+    customer: input.customer,
+    cartItems: input.cartItems,
+    paymentTotals: input.paymentTotals,
+    paymentDraft: input.paymentDraft,
+    prescriptionRecord: input.prescriptionRecord,
+    latestPrescription: input.latestPrescription,
+    staffName: input.staffName,
+  });
+
+  return {
+    ...base,
+    ...paidFields,
+    invoiceNo: input.customer.invoiceNo?.trim() || base.invoiceNo,
+    invoiceDate: input.invoiceDate?.trim() || base.invoiceDate,
+    qrcodeImg: input.qrcodeImg ?? null,
+  };
 }
 
 export function buildInvoiceViewModel(input: BuildInvoiceInput): InvoiceViewModel {
   const payable = input.paymentTotals.payable;
-  const amountPaid = paymentAmountPaid(payable, input.paymentDraft);
-  const balance = paymentBalanceRemaining(payable, input.paymentDraft);
+  const amountPaid = paymentAmountPaid(payable, input.paymentDraft, input.orderPaymentBeforeSave);
+  const balance = paymentBalanceRemaining(payable, input.paymentDraft, input.orderPaymentBeforeSave);
   const prescription = resolvePrescription(input.prescriptionRecord, input.latestPrescription);
+  const paymentFields = mapInvoicePaidFields(
+    payable,
+    balance,
+    input.orderPaymentBeforeSave ?? null,
+    amountPaid,
+    {
+      paymentDraft: input.paymentDraft,
+      orderPayment: input.orderPaymentBeforeSave ?? null,
+    },
+  );
 
   return {
     invoiceNo: resolveInvoiceNo(input.customer),
@@ -34,12 +88,67 @@ export function buildInvoiceViewModel(input: BuildInvoiceInput): InvoiceViewMode
     productLines: buildProductLines(input.prescriptionRecord, input.cartItems),
     rxRows: buildRxRows(prescription),
     details: input.prescriptionRecord?.notes?.trim() ?? '',
-    totalAmount: formatMoney(payable),
-    amountPaid: formatMoney(amountPaid),
-    balance: formatMoney(balance),
+    ...mapInvoiceSummaryFields(input.paymentTotals),
+    ...paymentFields,
     user: input.staffName,
   };
 }
+
+export function mapInvoiceSummaryFields(
+  totals: PaymentTotals,
+): Pick<InvoiceViewModel, 'subtotal' | 'discount' | 'vat' | 'total'> {
+  return {
+    subtotal: formatMoney(totals.subtotal),
+    discount: formatMoney(totals.discount),
+    vat: formatMoney(totals.vat),
+    total: formatMoney(totals.total),
+  };
+}
+
+export function mapInvoicePaidFields(
+  netTotal: number,
+  balance: number,
+  previousOrderPayment: SalesDetailsPaymentSummary | null = null,
+  totalPaidOverride?: number,
+  options: {
+    treatOutstandingAsPreviouslyPaid?: boolean;
+    orderPayment?: SalesDetailsPaymentSummary | null;
+    paymentDraft?: PaymentDraft | null;
+  } = {},
+): Pick<
+  InvoiceViewModel,
+  'partialAmount' | 'previouslyPaid' | 'paidThisTime' | 'amountPaid' | 'balance'
+> {
+  const breakdown = resolveInvoicePaymentBreakdown(
+    netTotal,
+    balance,
+    previousOrderPayment,
+    options,
+  );
+  const totalPaid = totalPaidOverride ?? breakdown.totalPaid;
+  const partialAmountValue = resolveInvoicePartialAmount(
+    options.paymentDraft ?? null,
+    options.orderPayment ?? previousOrderPayment,
+  );
+
+  return {
+    partialAmount:
+      partialAmountValue != null && partialAmountValue > 0
+        ? formatMoney(partialAmountValue)
+        : undefined,
+    previouslyPaid:
+      breakdown.previouslyPaid > 0 ? formatMoney(breakdown.previouslyPaid) : undefined,
+    paidThisTime:
+      breakdown.previouslyPaid > 0 && breakdown.paidThisTime > 0
+        ? formatMoney(breakdown.paidThisTime)
+        : undefined,
+    amountPaid: formatMoney(totalPaid),
+    balance: formatMoney(breakdown.balance),
+  };
+}
+
+/** @deprecated Use mapInvoicePaidFields */
+export const mapInvoicePaymentFields = mapInvoicePaidFields;
 
 function resolveInvoiceNo(customer: Customer): string {
   if (customer.invoiceNo?.trim()) {

@@ -61,6 +61,8 @@
       [totals]="store.paymentTotals()"
       [draft]="store.paymentDraft()"
       [canPay]="store.canPay()"
+      [canPrintReceipt]="store.canPrintReceipt()"
+      [orderFullyPaid]="store.orderFullyPaid()"
       [isPaying]="store.isPaying()"
       [settleFullRemaining]="store.isSettlingRemainingBalance()"
       [outstandingBalance]="store.outstandingBalance()"
@@ -71,9 +73,11 @@
       (cashAmountChange)="onCashAmountChange($event)"
       (cardAmountChange)="onCardAmountChange($event)"
       (partialToggle)="onPartialToggle($event)"
+      (payFullToggle)="onPayFullToggle($event)"
       (partialAmountChange)="onPartialAmountChange($event)"
       (pay)="onPay()"
       (payAndPrint)="onPayAndPrint()"
+      (printReceipt)="onPrintReceipt()"
       (registerAction)="onRegisterAction($event)"
     />
   </section>

@@ -4,6 +4,23 @@ import {
 } from '../../prescription/models/prescription.models';
 import { PrescriptionEyeValues, PrescriptionSummary } from '../models/customer.models';
 
+export function hasPrescriptionSummaryRxData(summary: PrescriptionSummary): boolean {
+  const values = [
+    summary.od.sph,
+    summary.od.cyl,
+    summary.od.axis,
+    summary.od.add,
+    summary.os.sph,
+    summary.os.cyl,
+    summary.os.axis,
+    summary.os.add,
+    summary.pd,
+    summary.nearPd,
+  ];
+
+  return values.some((value) => !isEmptyRxDisplayValue(value));
+}
+
 export function toPrescriptionSummary(record: PrescriptionRecord): PrescriptionSummary {
   return {
     date: formatDisplayDate(record.createdAt),
@@ -63,4 +80,8 @@ function formatDisplayDate(iso: string): string {
   const month = `${date.getMonth() + 1}`.padStart(2, '0');
   const year = date.getFullYear();
   return `${day}-${month}-${year}`;
+}
+
+function isEmptyRxDisplayValue(value: string | undefined): boolean {
+  return !value || value.trim() === '' || value.trim() === '—';
 }

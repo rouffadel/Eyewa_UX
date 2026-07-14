@@ -202,5 +202,25 @@ describe('SalesDetailsService', () => {
       totalTax: 0,
       paidAmount: null,
     });
+    expect(result.qrcodeImg).toBeNull();
+  });
+
+  it('should map qrcodeimg from grid response', async () => {
+    const promise = service.getSalesDetailsGrid(114125);
+
+    httpMock
+      .expectOne('https://demo.api.eyewacloud.com/api/sales/GetSalesDetailsGrid?SalesId=114125')
+      .flush({
+        status: '200',
+        message: 'Success',
+        objresult: {
+          table: [{ SaleID: 114125, NetTotal: 480, Balance: 0, GrossTotal: 480, Discount: 0, TotalTax: 0 }],
+          table1: [],
+        },
+        qrcodeimg: 'data:image/png;base64,abc123',
+      });
+
+    const result = await promise;
+    expect(result.qrcodeImg).toBe('data:image/png;base64,abc123');
   });
 });

@@ -1,6 +1,7 @@
 import {
   cartItemsFromSalesDetails,
   isOrderCartLocked,
+  isOrderFullyPaid,
   paymentDraftFromSalesDetails,
 } from './sales-details.mapper';
 import { SalesDetailsGridLineItem, SalesDetailsPaymentSummary } from '../models/sales-details-grid.models';
@@ -47,6 +48,7 @@ describe('sales-details.mapper', () => {
 
     expect(paymentDraftFromSalesDetails(payment)).toEqual({
       discountAmount: 0,
+      payFull: true,
       settleRemainingBalance: true,
       payPartial: false,
       partialAmount: 0,
@@ -79,6 +81,32 @@ describe('sales-details.mapper', () => {
     ).toBeFalse();
   });
 
+  it('detects fully paid orders when balance is zero', () => {
+    expect(
+      isOrderFullyPaid({
+        grossTotal: 480,
+        discount: 0,
+        netTotal: 480,
+        balance: 0,
+        totalTax: 0,
+        paidAmount: 480,
+      }),
+    ).toBeTrue();
+  });
+
+  it('does not treat unpaid orders as fully paid', () => {
+    expect(
+      isOrderFullyPaid({
+        grossTotal: 480,
+        discount: 0,
+        netTotal: 480,
+        balance: 180,
+        totalTax: 0,
+        paidAmount: 300,
+      }),
+    ).toBeFalse();
+  });
+
   it('does not enable partial payment when balance is zero', () => {
     const payment: SalesDetailsPaymentSummary = {
       grossTotal: 480,
@@ -91,6 +119,7 @@ describe('sales-details.mapper', () => {
 
     expect(paymentDraftFromSalesDetails(payment)).toEqual({
       discountAmount: 0,
+      payFull: true,
       settleRemainingBalance: false,
       payPartial: false,
       partialAmount: 0,

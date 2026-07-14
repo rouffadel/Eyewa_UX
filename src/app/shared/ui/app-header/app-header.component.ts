@@ -290,17 +290,20 @@ export class AppHeaderComponent implements AfterViewInit {
   }
 
   private ensureSelectedStore(stores: StoreOption[]): void {
-    if (stores.length === 0 || this.authService.selectedStore()) {
+    if (stores.length === 0) {
       return;
     }
 
-    const userStoreId = this.authService.user()?.storeId;
-    const match =
-      userStoreId != null && userStoreId > 0
-        ? stores.find((store) => store.storeId === userStoreId)
-        : undefined;
+    const current = this.authService.selectedStore();
+    if (current && stores.some((store) => store.storeId === current.storeId)) {
+      return;
+    }
 
-    this.authService.selectStore(match ?? stores[0]);
+    const preferred =
+      stores.find((store) => store.isDefault) ??
+      stores[0];
+
+    this.authService.selectStore(preferred);
   }
 
   private formatDisplayName(name: string): string {

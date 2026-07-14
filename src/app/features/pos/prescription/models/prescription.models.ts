@@ -21,6 +21,8 @@ export interface PrescriptionFrameLine {
   quantity: number;
   maxDiscount: number | null;
   discountPercent: number | null;
+  /** Existing sales line id from GetSalesDetailsGrid table1 (SalesDetailsID). */
+  salesDetailsId?: number | null;
 }
 
 export interface PrescriptionFrameLineTotals {
@@ -146,6 +148,28 @@ export function createEmptyLensLine(): PrescriptionLensLine {
     price: null,
     quantity: 1,
   };
+}
+
+export function hasPrescriptionLensData(
+  record: Pick<PrescriptionFormValue, 'lenses'> | Pick<PrescriptionRecord, 'lenses'>,
+): boolean {
+  return record.lenses.some(
+    (line) => Boolean(line.orderLens?.trim()) || line.price != null,
+  );
+}
+
+export function hasPrescriptionRxData(
+  record: Pick<PrescriptionRecord, 'rightEye' | 'leftEye' | 'pd' | 'nearPd'>,
+): boolean {
+  const eyes = [record.rightEye, record.leftEye];
+
+  for (const eye of eyes) {
+    if (eye.sph !== null || eye.cyl !== null || eye.axis !== null || eye.add !== null) {
+      return true;
+    }
+  }
+
+  return record.pd !== null || record.nearPd !== null;
 }
 
 export function createDefaultPrescriptionFormValue(defaultFrameCategory: string = FRAME_CATEGORIES[0]): PrescriptionFormValue {

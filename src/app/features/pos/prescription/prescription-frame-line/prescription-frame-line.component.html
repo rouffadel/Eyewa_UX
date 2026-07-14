@@ -2,9 +2,6 @@
   <header class="frame-line__header">
     <h3 class="frame-line__title">Frame {{ index() + 1 }}</h3>
     @if (canRemove()) {
-    <!-- <button type="button" class="frame-line__remove" aria-label="Remove frame" (click)="remove.emit()">
-      Remove
-    </button> -->
     <button type="button" class="frame-line__remove" aria-label="Remove frame" (click)="remove.emit()">
       <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
         <path
@@ -16,11 +13,154 @@
     }
   </header>
 
-  <div class="frame-line__grid">
+  <div class="frame-line__grid" [class.frame-line__grid--product-search]="isProductSearchMode()">
+    @if (isProductSearchMode()) {
+    <!-- Mode B: model first -->
+    <div class="prescription-field frame-line__field--wide frame-line__model-wrap">
+      <span class="prescription-field__label">Model No</span>
+      <input
+        class="prescription-field__input"
+        type="text"
+        formControlName="modelNo"
+        placeholder="Search model"
+        autocomplete="off"
+        aria-autocomplete="list"
+        [attr.aria-expanded]="modelSearchOpen()"
+        (input)="onModelInput($event)"
+        (focus)="onModelFocus()"
+      />
+
+      @if (modelSearchOpen()) {
+      <div class="frame-line__model-panel" role="listbox" aria-label="Model search results">
+        @if (modelSearchLoading()) {
+        <p class="frame-line__model-status">Searching…</p>
+        } @else if (modelSearchError()) {
+        <p class="frame-line__model-status frame-line__model-status--error">
+          {{ modelSearchError() }}
+        </p>
+        } @else {
+        <ul class="frame-line__model-list">
+          @for (product of modelResults(); track product.productId) {
+          <li>
+            <button
+              type="button"
+              class="frame-line__model-option"
+              role="option"
+              (click)="onModelSelect(product)"
+            >
+              <span class="frame-line__model-option-main">
+                <span>{{ product.productName }}</span>
+                <span class="frame-line__model-option-sub">
+                  {{ product.brandName }}
+                  @if (product.categoryName) {
+                  · {{ product.categoryName }}
+                  }
+                </span>
+              </span>
+              <span class="frame-line__model-option-meta">{{ formatMoney(product.productValue) }}</span>
+            </button>
+          </li>
+          }
+        </ul>
+        }
+      </div>
+      }
+    </div>
+
+    <label class="prescription-field">
+      <span class="prescription-field__label">Category</span>
+      <select
+        class="prescription-field__input prescription-field__select frame-line__locked"
+        formControlName="category"
+        tabindex="-1"
+      >
+        <option value="">—</option>
+        @for (category of categories(); track category) {
+        <option [value]="category">{{ category }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="prescription-field">
+      <span class="prescription-field__label">Brand</span>
+      <input
+        class="prescription-field__input"
+        type="text"
+        formControlName="brandName"
+        readonly
+        tabindex="-1"
+        placeholder="—"
+      />
+    </label>
+
+    <label class="prescription-field">
+      <span class="prescription-field__label">Selling Price</span>
+      <input
+        class="prescription-field__input"
+        type="number"
+        min="0"
+        step="0.01"
+        inputmode="decimal"
+        formControlName="sellingPrice"
+        readonly
+        tabindex="-1"
+      />
+    </label>
+
+    <label class="prescription-field">
+      <span class="prescription-field__label">Sale Price</span>
+      <input
+        class="prescription-field__input"
+        type="number"
+        min="0"
+        step="0.01"
+        inputmode="decimal"
+        [value]="salePrice() ?? ''"
+        (input)="onSalePriceInput($event)"
+        placeholder="0.00"
+      />
+    </label>
+
+    <label class="prescription-field">
+      <span class="prescription-field__label">Quantity</span>
+      <input
+        class="prescription-field__input"
+        type="number"
+        min="1"
+        step="1"
+        inputmode="numeric"
+        formControlName="quantity"
+      />
+    </label>
+
+    <label class="prescription-field">
+      <span class="prescription-field__label">
+        Discount (%)
+        @if (maxDiscountCap() !== null) {
+        <span class="prescription-field__hint">Max {{ maxDiscountCap() }}%</span>
+        }
+      </span>
+      <input
+        class="prescription-field__input"
+        type="number"
+        min="0"
+        [max]="discountInputMax()"
+        step="0.01"
+        inputmode="decimal"
+        formControlName="discountPercent"
+        readonly
+        tabindex="-1"
+      />
+    </label>
+    } @else {
+    <!-- Mode A: guided category → brand → model -->
     <label class="prescription-field frame-line__field--wide">
       <span class="prescription-field__label">Category</span>
-      <select class="prescription-field__input prescription-field__select" formControlName="category"
-        (change)="onCategoryChange()">
+      <select
+        class="prescription-field__input prescription-field__select"
+        formControlName="category"
+        (change)="onCategoryChange()"
+      >
         @for (category of categories(); track category) {
         <option [value]="category">{{ category }}</option>
         }
@@ -29,9 +169,17 @@
 
     <div class="prescription-field frame-line__field--wide frame-line__brand-wrap">
       <span class="prescription-field__label">Brand</span>
-      <input class="prescription-field__input" type="text" formControlName="brandName" placeholder="Search brand"
-        autocomplete="off" aria-autocomplete="list" [attr.aria-expanded]="brandSearchOpen()"
-        (input)="onBrandInput($event)" (focus)="onBrandFocus()" />
+      <input
+        class="prescription-field__input"
+        type="text"
+        formControlName="brandName"
+        placeholder="Search brand"
+        autocomplete="off"
+        aria-autocomplete="list"
+        [attr.aria-expanded]="brandSearchOpen()"
+        (input)="onBrandInput($event)"
+        (focus)="onBrandFocus()"
+      />
 
       @if (brandSearchOpen()) {
       <div class="frame-line__brand-panel" role="listbox" aria-label="Brand search results">
@@ -58,9 +206,17 @@
 
     <div class="prescription-field frame-line__model-wrap">
       <span class="prescription-field__label">Model No</span>
-      <input class="prescription-field__input" type="text" formControlName="modelNo" placeholder="Search model"
-        autocomplete="off" aria-autocomplete="list" [attr.aria-expanded]="modelSearchOpen()"
-        (input)="onModelInput($event)" (focus)="onModelFocus()" />
+      <input
+        class="prescription-field__input"
+        type="text"
+        formControlName="modelNo"
+        placeholder="Search model"
+        autocomplete="off"
+        aria-autocomplete="list"
+        [attr.aria-expanded]="modelSearchOpen()"
+        (input)="onModelInput($event)"
+        (focus)="onModelFocus()"
+      />
 
       @if (modelSearchOpen()) {
       <div class="frame-line__model-panel" role="listbox" aria-label="Model search results">
@@ -88,14 +244,26 @@
 
     <label class="prescription-field">
       <span class="prescription-field__label">Selling Price</span>
-      <input class="prescription-field__input" type="number" min="0" step="0.01" inputmode="decimal"
-        formControlName="sellingPrice" />
+      <input
+        class="prescription-field__input"
+        type="number"
+        min="0"
+        step="0.01"
+        inputmode="decimal"
+        formControlName="sellingPrice"
+      />
     </label>
 
     <label class="prescription-field">
       <span class="prescription-field__label">Quantity</span>
-      <input class="prescription-field__input" type="number" min="1" step="1" inputmode="numeric"
-        formControlName="quantity" />
+      <input
+        class="prescription-field__input"
+        type="number"
+        min="1"
+        step="1"
+        inputmode="numeric"
+        formControlName="quantity"
+      />
     </label>
 
     <label class="prescription-field">
@@ -105,9 +273,17 @@
         <span class="prescription-field__hint">Max {{ maxDiscountCap() }}%</span>
         }
       </span>
-      <input class="prescription-field__input" type="number" min="0" [max]="discountInputMax()" step="0.01"
-        inputmode="decimal" formControlName="discountPercent" />
+      <input
+        class="prescription-field__input"
+        type="number"
+        min="0"
+        [max]="discountInputMax()"
+        step="0.01"
+        inputmode="decimal"
+        formControlName="discountPercent"
+      />
     </label>
+    }
 
     <div class="frame-line__computed">
       <div class="frame-line__computed-row">

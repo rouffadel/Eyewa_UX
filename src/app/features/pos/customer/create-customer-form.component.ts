@@ -196,8 +196,10 @@ export class CreateCustomerFormComponent implements OnInit, AfterViewInit {
 
     try {
       const stores = await this.storeService.fillStores(loginId, 0);
-      if (stores.length > 0) {
-        this.selectedStoreId.set(String(stores[0].storeId));
+      const preferred =
+        stores.find((store) => store.isDefault) ?? stores[0];
+      if (preferred) {
+        this.selectedStoreId.set(String(preferred.storeId));
       }
     } catch {
       // Store is resolved from session when available; save will surface an error if missing.

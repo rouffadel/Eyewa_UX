@@ -22,6 +22,7 @@ export interface ProductOption {
   productValue: number;
   maxDiscount: number | null;
   categoryId: number;
+  categoryName?: string;
   brandId: number;
   brandName: string;
 }
@@ -37,6 +38,8 @@ export interface GetProductRow {
   MaxDiscount?: number;
   categoryID?: number;
   CategoryID?: number;
+  categoryName?: string;
+  CategoryName?: string;
   brandID?: number;
   BrandID?: number;
   brandName?: string;

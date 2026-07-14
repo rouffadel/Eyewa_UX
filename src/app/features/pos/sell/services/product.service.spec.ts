@@ -14,6 +14,7 @@ describe('ProductService', () => {
     settings: {
       apiUrl: 'https://demo.api.eyewacloud.com/api',
       getProductPath: 'products/GetProduct',
+      searchProductByKeyPath: 'products/GetProduct',
     },
   };
 
@@ -132,5 +133,81 @@ describe('ProductService', () => {
         maxDiscount: 75,
       }),
     ]);
+  });
+
+  it('should search products by key via GetProduct with ProductName only', async () => {
+    const promise = service.searchProductsByKey('B');
+
+    const req = httpMock.expectOne(
+      'https://demo.api.eyewacloud.com/api/products/GetProduct?ProductName=B',
+    );
+    expect(req.request.method).toBe('GET');
+
+    req.flush({
+      status: '200',
+      message: 'Success',
+      objresult: [
+        {
+          ProductID: 6782,
+          ProductName: '1234B2',
+          ProductValue: 370,
+          MaxDiscount: 75,
+          CategoryID: 1,
+          CategoryName: 'Frames - P',
+          BrandID: 438,
+          BrandName: 'B2',
+        },
+        {
+          ProductID: 2506,
+          ProductName: '130B',
+          ProductValue: 390,
+          MaxDiscount: 75,
+          CategoryID: 6,
+          CategoryName: 'Sunglasses - M',
+          BrandID: 78,
+          BrandName: 'CARTIER',
+        },
+      ],
+      qrcodeimg: null,
+    });
+
+    await expectAsync(promise).toBeResolvedTo([
+      {
+        productId: 6782,
+        productName: '1234B2',
+        productValue: 370,
+        maxDiscount: 75,
+        categoryId: 1,
+        categoryName: 'Frames - P',
+        brandId: 438,
+        brandName: 'B2',
+      },
+      {
+        productId: 2506,
+        productName: '130B',
+        productValue: 390,
+        maxDiscount: 75,
+        categoryId: 6,
+        categoryName: 'Sunglasses - M',
+        brandId: 78,
+        brandName: 'CARTIER',
+      },
+    ]);
+  });
+
+  it('should trim product name for key search', async () => {
+    const promise = service.searchProductsByKey('  B  ');
+
+    const req = httpMock.expectOne(
+      'https://demo.api.eyewacloud.com/api/products/GetProduct?ProductName=B',
+    );
+    req.flush({
+      status: '200',
+      message: 'Success',
+      objresult: [],
+      qrcodeimg: null,
+    });
+
+    await expectAsync(promise).toBeResolvedTo([]);
   });
 });

@@ -43,17 +43,17 @@ describe('StoreService', () => {
       status: '200',
       message: 'Success',
       objresult: [
-        { StoreID: 1, StoreName: 'Naimat Al Basar' },
-        { StoreID: 2, StoreName: 'City vision' },
-        { StoreID: 3, StoreName: 'Gulf vision' },
+        { StoreID: 7, StoreName: 'NB2020', IsDefault: true },
+        { StoreID: 1, StoreName: 'Naimat Al Basar', IsDefault: false },
+        { StoreID: 2, StoreName: 'City vision', IsDefault: false },
       ],
       qrcodeimg: null,
     });
 
     await expectAsync(promise).toBeResolvedTo([
-      { storeId: 1, storeName: 'Naimat Al Basar' },
-      { storeId: 2, storeName: 'City vision' },
-      { storeId: 3, storeName: 'Gulf vision' },
+      { storeId: 7, storeName: 'NB2020', isDefault: true },
+      { storeId: 1, storeName: 'Naimat Al Basar', isDefault: false },
+      { storeId: 2, storeName: 'City vision', isDefault: false },
     ]);
   });
 
@@ -77,8 +77,8 @@ describe('StoreService', () => {
       });
 
     await expectAsync(promise).toBeResolvedTo([
-      { storeId: 1, storeName: 'Naimat Al Basar' },
-      { storeId: 2, storeName: 'City vision' },
+      { storeId: 1, storeName: 'Naimat Al Basar', isDefault: false },
+      { storeId: 2, storeName: 'City vision', isDefault: false },
     ]);
   });
 });

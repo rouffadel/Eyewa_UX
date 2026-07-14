@@ -21,6 +21,7 @@ export interface SalesDetailsResult {
   prescription: PrescriptionSummary | null;
   lineItems: SalesDetailsGridLineItem[];
   payment: SalesDetailsPaymentSummary | null;
+  qrcodeImg: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -76,6 +77,7 @@ export class SalesDetailsService {
         : null,
       lineItems: extractSalesDetailsLineItems(response.objresult),
       payment: extractSalesDetailsPayment(response.objresult),
+      qrcodeImg: response.qrcodeimg ?? null,
     };
   }
 

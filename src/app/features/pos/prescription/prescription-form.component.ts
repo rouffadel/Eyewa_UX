@@ -1,4 +1,5 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import {
   FormArray,
   FormBuilder,
@@ -7,6 +8,7 @@ import {
 } from '@angular/forms';
 import { PrescriptionGridComponent } from '../../../shared/ui/prescription-grid/prescription-grid.component';
 import { AuthService } from '../../auth/services/auth.service';
+import { AppConfigService } from '../../../services/app-config.service';
 import { CategoryOption } from '../sell/models/category.models';
 import { formatMoney } from '../sell/services/payment.service';
 import { CategoryService } from '../sell/services/category.service';
@@ -23,8 +25,12 @@ import {
   PrescriptionFrameLine,
   PrescriptionLensLine,
   PrescriptionRecord,
+  hasPrescriptionLensData,
 } from './models/prescription.models';
-import { PrescriptionFrameLineComponent } from './prescription-frame-line/prescription-frame-line.component';
+import {
+  PrescriptionFrameLineComponent,
+  PrescriptionFramesTemplate,
+} from './prescription-frame-line/prescription-frame-line.component';
 import { PrescriptionLensLineComponent } from './prescription-lens-line/prescription-lens-line.component';
 import { PrescriptionLocalStorageService } from './services/prescription-local-storage.service';
 import { PrescriptionService } from './services/prescription.service';
@@ -54,6 +60,8 @@ export class PrescriptionFormComponent implements OnInit {
   private readonly categoryService = inject(CategoryService);
   private readonly authService = inject(AuthService);
   private readonly sellStore = inject(SellSessionStore);
+  private readonly appConfig = inject(AppConfigService);
+  private readonly router = inject(Router);
 
   protected readonly isSaving = signal(false);
   protected readonly successMessage = signal('');
@@ -73,6 +81,11 @@ export class PrescriptionFormComponent implements OnInit {
     const userStoreId = this.authService.user()?.storeId;
     return userStoreId != null && userStoreId > 0 ? userStoreId : null;
   });
+  protected readonly framesTemplate = computed<PrescriptionFramesTemplate>(() =>
+    this.appConfig.settings?.prescriptionFramesTemplate === 'productSearch'
+      ? 'productSearch'
+      : 'guided',
+  );
   protected readonly formatMoney = formatMoney;
   protected readonly framesExpanded = signal(true);
   protected readonly lensesExpanded = signal(true);
@@ -244,16 +257,25 @@ export class PrescriptionFormComponent implements OnInit {
     this.isSaving.set(true);
 
     try {
+      const payload = this.toPayload();
+      const isFramesOnly = payload.frames.length > 0 && !hasPrescriptionLensData(payload);
       const record = this.prescriptionStorage.save({
-        ...this.toPayload(),
+        ...payload,
         customerId: selectedCustomer.id,
         salesId: selectedCustomer.salesId,
       });
 
-      this.sellStore.applySavedPrescription(record);
+      if (isFramesOnly) {
+        this.sellStore.applyFramesOnlyToCart(record);
+        this.successMessage.set('Frames added to cart');
+      } else {
+        this.sellStore.applySavedPrescription(record);
+        this.successMessage.set('Prescription saved');
+      }
+
       this.loadedRecord.set(record);
-      this.successMessage.set('Prescription saved');
       this.form.markAsPristine();
+      void this.router.navigate(['/home/sell']);
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : 'Unable to save prescription. Please try again.';
@@ -320,7 +342,9 @@ export class PrescriptionFormComponent implements OnInit {
 
   private toPayload(): PrescriptionFormValue {
     const raw = this.form.getRawValue();
-    const lenses = this.lensLines.controls.map((group) => this.normalizeLens(group.getRawValue()));
+    const lenses = this.lensLines.controls
+      .map((group) => this.normalizeLens(group.getRawValue()))
+      .filter((line) => this.hasLensLineData(line));
     const frames = this.frameLines.controls
       .map((group) => this.normalizeFrame(group.getRawValue()))
       .filter((line) => this.hasFrameLineData(line));
@@ -374,11 +398,20 @@ export class PrescriptionFormComponent implements OnInit {
   }
 
   private validateBeforeSave(): string | null {
-    if (this.lensLines.length === 0) {
-      return 'Add at least one lens line.';
+    const frameGroupsWithData = this.frameLines.controls.filter((group) =>
+      this.hasFrameLineData(group.getRawValue() as PrescriptionFrameLine),
+    );
+    const hasFrameData = frameGroupsWithData.length > 0;
+
+    const lensGroupsWithData = this.lensLines.controls.filter((group) =>
+      this.hasLensLineData(group.getRawValue() as PrescriptionLensLine),
+    );
+
+    if (!hasFrameData && lensGroupsWithData.length === 0) {
+      return 'Add at least one frame or lens before saving.';
     }
 
-    for (const group of this.lensLines.controls) {
+    for (const group of lensGroupsWithData) {
       const line = group.getRawValue() as PrescriptionLensLine;
       const lineNo = this.lensLines.controls.indexOf(group) + 1;
 
@@ -395,38 +428,32 @@ export class PrescriptionFormComponent implements OnInit {
       }
     }
 
-    const rightEye = this.rightEyeGroup.getRawValue() as EyePrescription;
-    const leftEye = this.leftEyeGroup.getRawValue() as EyePrescription;
+    // Frames-only orders do not require lens or Rx fields.
+    if (!hasFrameData) {
+      const rightEye = this.rightEyeGroup.getRawValue() as EyePrescription;
+      const leftEye = this.leftEyeGroup.getRawValue() as EyePrescription;
 
-    const odError = this.validateEyeValues(rightEye, 'right eye (OD)');
-    if (odError) {
-      return odError;
-    }
-
-    const osError = this.validateEyeValues(leftEye, 'left eye (OS)');
-    if (osError) {
-      return osError;
-    }
-
-    if (this.form.controls.pd.value == null) {
-      return 'Enter PD.';
-    }
-
-    if (this.form.controls.nearPd.value == null) {
-      return 'Enter Near PD.';
-    }
-
-    for (const group of this.frameLines.controls) {
-      const line = group.getRawValue() as PrescriptionFrameLine;
-      const hasFrameData =
-        Boolean(line.brandName?.trim()) ||
-        Boolean(line.modelNo?.trim()) ||
-        line.sellingPrice != null ||
-        line.discountPercent != null;
-
-      if (!hasFrameData) {
-        continue;
+      const odError = this.validateEyeValues(rightEye, 'right eye (OD)');
+      if (odError) {
+        return odError;
       }
+
+      const osError = this.validateEyeValues(leftEye, 'left eye (OS)');
+      if (osError) {
+        return osError;
+      }
+
+      if (this.form.controls.pd.value == null) {
+        return 'Enter PD.';
+      }
+
+      if (this.form.controls.nearPd.value == null) {
+        return 'Enter Near PD.';
+      }
+    }
+
+    for (const group of frameGroupsWithData) {
+      const line = group.getRawValue() as PrescriptionFrameLine;
 
       if (!line.brandName?.trim()) {
         return 'Enter a brand for each frame line with data.';
@@ -548,6 +575,10 @@ export class PrescriptionFormComponent implements OnInit {
       line.sellingPrice != null ||
       line.discountPercent != null
     );
+  }
+
+  private hasLensLineData(line: PrescriptionLensLine): boolean {
+    return Boolean(line.orderLens?.trim()) || line.price != null;
   }
 
   private validateEyeValues(eye: EyePrescription, label: string): string | null {

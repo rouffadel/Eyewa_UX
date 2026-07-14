@@ -9,13 +9,14 @@ import {
   SaveSalesDetailsPayload,
   SaveSalesGridPayload,
 } from '../models/save-sales.models';
-import { paymentAmountPaid } from './payment.service';
 import { SalesDetailsPaymentSummary } from '../models/sales-details-grid.models';
+import { paymentAmountPaid } from './payment.service';
 
 interface BuildSaveSalesPayloadOptions {
   customer: Customer;
   record: PrescriptionRecord;
   storeId: string;
+  loginId: number;
   salesManId: number;
   payable: number;
   draft: PaymentDraft;
@@ -26,6 +27,7 @@ export function buildSaveSalesDetailsPayload({
   customer,
   record,
   storeId,
+  loginId,
   salesManId,
   payable,
   draft,
@@ -42,7 +44,7 @@ export function buildSaveSalesDetailsPayload({
     .map((line) => toSalesGrid(line, salesId));
 
   if (grids.length === 0) {
-    throw new Error('Save a prescription frame before paying.');
+    throw new Error('Select a product for each frame before paying.');
   }
 
   const grossTotal = roundMoney(
@@ -50,24 +52,59 @@ export function buildSaveSalesDetailsPayload({
   );
   const discount = roundMoney(grids.reduce((sum, line) => sum + line.Discount, 0));
   const netTotal = roundMoney(grids.reduce((sum, line) => sum + Number(line.SellingPrice), 0));
-  const paidAmount = roundMoney(paymentAmountPaid(payable, draft, orderPayment));
-  const balance = roundMoney(Math.max(0, netTotal - paidAmount));
+  const paymentAmounts = resolveSaveSalesPaymentAmounts(netTotal, draft, orderPayment, payable);
 
   return {
     SalesId: salesId,
+    LoginId: loginId,
     StoreId: storeId,
     SalesGrids: grids,
     GrossTotal: grossTotal,
     Discount: discount,
     Tax: '0',
     NetTotal: formatAmount(netTotal),
-    Balance: formatAmount(balance),
-    PaidAmount: paidAmount,
-    AdvancePaidAmount: 0,
+    Balance: formatAmount(paymentAmounts.balance),
+    PaidAmount: paymentAmounts.paidAmount,
+    AdvancePaidAmount: paymentAmounts.advancePaidAmount,
     PaymentMode: paymentModeLabel(draft),
     CustomerName: customer.displayName,
     CustomerNo: customer.phone ?? customer.phoneMasked,
     SalesManId: salesManId,
+  };
+}
+
+function resolveSaveSalesPaymentAmounts(
+  netTotal: number,
+  draft: PaymentDraft,
+  orderPayment: SalesDetailsPaymentSummary | null,
+  payable: number,
+): { paidAmount: number; advancePaidAmount: number; balance: number } {
+  const roundedNetTotal = roundMoney(netTotal);
+
+  if (draft.settleRemainingBalance && orderPayment) {
+    return {
+      paidAmount: roundedNetTotal,
+      advancePaidAmount: roundedNetTotal,
+      balance: 0,
+    };
+  }
+
+  if (draft.payPartial) {
+    const paidAmount = roundMoney(
+      Math.min(roundedNetTotal, paymentAmountPaid(payable, draft, orderPayment)),
+    );
+
+    return {
+      paidAmount,
+      advancePaidAmount: paidAmount,
+      balance: roundMoney(Math.max(0, roundedNetTotal - paidAmount)),
+    };
+  }
+
+  return {
+    paidAmount: roundedNetTotal,
+    advancePaidAmount: roundedNetTotal,
+    balance: 0,
   };
 }
 
@@ -77,7 +114,7 @@ function toSalesGrid(line: PrescriptionFrameLine, salesId: number): SaveSalesGri
   const totals = calculateFrameLineTotals(productValue, quantity, line.discountPercent);
 
   return {
-    SalesDetailId: salesId,
+    SalesDetailId: line.salesDetailsId ?? salesId,
     CategoryId: line.categoryId!,
     BrandId: line.brandId!,
     ProductId: line.productId!,

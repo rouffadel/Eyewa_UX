@@ -15,8 +15,8 @@ describe('AppHeaderComponent', () => {
   beforeEach(async () => {
     storeService = jasmine.createSpyObj<StoreService>('StoreService', ['fillStores']);
     storeService.fillStores.and.resolveTo([
-      { storeId: 1, storeName: 'Naimat Al Basar' },
-      { storeId: 2, storeName: 'City vision' },
+      { storeId: 1, storeName: 'Naimat Al Basar', isDefault: false },
+      { storeId: 7, storeName: 'NB2020', isDefault: true },
     ]);
 
     customerSearchService = jasmine.createSpyObj<CustomerSearchService>('CustomerSearchService', [
@@ -121,8 +121,9 @@ describe('AppHeaderComponent', () => {
     expect(compiled.querySelector('.app-header__store-panel')).toBeTruthy();
     expect(storeService.fillStores).toHaveBeenCalledWith(1, 0);
     expect(selectStoreSpy).toHaveBeenCalledWith({
-      storeId: 1,
-      storeName: 'Naimat Al Basar',
+      storeId: 7,
+      storeName: 'NB2020',
+      isDefault: true,
     });
   });
 

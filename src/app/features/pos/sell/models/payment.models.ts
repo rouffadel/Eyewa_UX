@@ -15,6 +15,8 @@ export interface PaymentDraft {
   cardAmount: number;
   payPartial: boolean;
   partialAmount: number;
+  /** Pay the full payable amount (default). Mutually exclusive with payPartial. */
+  payFull: boolean;
   /** Pay off the remaining balance on an existing partially-paid order. */
   settleRemainingBalance: boolean;
 }
@@ -37,5 +39,6 @@ export const DEFAULT_PAYMENT_DRAFT: PaymentDraft = {
   cardAmount: 0,
   payPartial: false,
   partialAmount: 0,
+  payFull: true,
   settleRemainingBalance: false,
 };

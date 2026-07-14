@@ -1,6 +1,10 @@
 import { Injectable } from '@angular/core';
 import { AppConfigService } from '../../../../services/app-config.service';
 import {
+  PrescriptionRecord,
+} from '../../prescription/models/prescription.models';
+import { CartLineItem, lineTotal } from '../models/cart.models';
+import {
   DEFAULT_PAYMENT_DRAFT,
   PaymentDraft,
   PaymentMethod,
@@ -9,6 +13,9 @@ import {
 import { SalesDetailsPaymentSummary } from '../models/sales-details-grid.models';
 
 const AMOUNT_EPSILON = 0.01;
+
+export const NEGATIVE_PAYMENT_CONFIRM_MESSAGE =
+  'This order has negative prices or discounts. Do you still want to pay?';
 
 @Injectable({ providedIn: 'root' })
 export class PaymentService {
@@ -266,9 +273,100 @@ export function orderAmountAlreadyPaid(orderPayment: SalesDetailsPaymentSummary 
     return 0;
   }
 
+  const apiPaid = orderPayment.paidAmount;
+  if (apiPaid != null && !Number.isNaN(apiPaid)) {
+    return Math.max(0, apiPaid);
+  }
+
   const netTotal = Math.max(0, orderPayment.netTotal);
   const balance = Math.max(0, orderPayment.balance);
   return Math.max(0, netTotal - balance);
+}
+
+export function orderTotalPaidFromSummary(
+  netTotal: number,
+  balance: number,
+  orderPayment?: SalesDetailsPaymentSummary | null,
+): number {
+  const derived = Math.max(0, Math.max(0, netTotal) - Math.max(0, balance));
+  const apiPaid = orderPayment?.paidAmount;
+  if (apiPaid != null && !Number.isNaN(apiPaid)) {
+    return Math.max(derived, Math.max(0, apiPaid));
+  }
+
+  return derived;
+}
+
+export function resolveInvoicePartialAmount(
+  paymentDraft: PaymentDraft | null | undefined,
+  orderPayment: SalesDetailsPaymentSummary | null | undefined,
+): number | undefined {
+  if (paymentDraft?.payPartial && paymentDraft.partialAmount > 0) {
+    return paymentDraft.partialAmount;
+  }
+
+  if (!orderPayment) {
+    return undefined;
+  }
+
+  const netTotal = Math.max(0, orderPayment.netTotal);
+  const balance = Math.max(0, orderPayment.balance);
+  const headerPaid = Math.max(0, netTotal - balance);
+  const apiPaid = orderPayment.paidAmount;
+
+  if (apiPaid != null && !Number.isNaN(apiPaid) && Math.abs(apiPaid - headerPaid) > 0.01) {
+    return headerPaid;
+  }
+
+  return undefined;
+}
+
+export interface InvoicePaymentBreakdown {
+  previouslyPaid: number;
+  paidThisTime: number;
+  totalPaid: number;
+  balance: number;
+}
+
+export function resolveInvoicePaymentBreakdown(
+  netTotal: number,
+  balance: number,
+  previousOrderPayment: SalesDetailsPaymentSummary | null = null,
+  options: {
+    treatOutstandingAsPreviouslyPaid?: boolean;
+    orderPayment?: SalesDetailsPaymentSummary | null;
+  } = {},
+): InvoicePaymentBreakdown {
+  const normalizedNetTotal = Math.max(0, netTotal);
+  const normalizedBalance = Math.max(0, balance);
+  const currentOrder = options.orderPayment ?? null;
+  const totalPaid = orderTotalPaidFromSummary(
+    normalizedNetTotal,
+    normalizedBalance,
+    currentOrder,
+  );
+
+  let previouslyPaid = 0;
+  if (previousOrderPayment) {
+    previouslyPaid = orderAmountAlreadyPaid(previousOrderPayment);
+  } else if (options.treatOutstandingAsPreviouslyPaid && normalizedBalance > 0) {
+    const orderForPreviouslyPaid: SalesDetailsPaymentSummary = currentOrder ?? {
+      grossTotal: normalizedNetTotal,
+      discount: 0,
+      netTotal: normalizedNetTotal,
+      balance: normalizedBalance,
+      totalTax: 0,
+      paidAmount: null,
+    };
+    previouslyPaid = orderAmountAlreadyPaid(orderForPreviouslyPaid);
+  }
+
+  return {
+    previouslyPaid,
+    paidThisTime: Math.max(0, totalPaid - previouslyPaid),
+    totalPaid,
+    balance: normalizedBalance,
+  };
 }
 
 export function mixedAmountPaid(draft: PaymentDraft): number {
@@ -323,4 +421,54 @@ export function parsePaymentAmount(value: string | number): number {
 
   const parsed = Number.parseFloat(String(value));
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+export function hasNegativeCartValues(cartItems: CartLineItem[]): boolean {
+  return cartItems.some(
+    (item) => item.unitPrice < 0 || item.discount < 0 || lineTotal(item) < 0,
+  );
+}
+
+export function hasNegativePaymentDraftValues(
+  draft: PaymentDraft,
+  totals: PaymentTotals,
+): boolean {
+  return (
+    draft.discountAmount < 0 ||
+    totals.subtotal < 0 ||
+    totals.total < 0 ||
+    totals.payable < 0
+  );
+}
+
+export function hasNegativePrescriptionValues(record: PrescriptionRecord): boolean {
+  const negativeFrames = record.frames.some((line) => {
+    if (line.sellingPrice != null && line.sellingPrice < 0) {
+      return true;
+    }
+
+    if (line.discountPercent != null && line.discountPercent < 0) {
+      return true;
+    }
+
+    const quantity = Math.max(1, line.quantity ?? 1);
+    return line.sellingPrice != null && line.sellingPrice * quantity < 0;
+  });
+
+  const negativeLenses = record.lenses.some((line) => line.price != null && line.price < 0);
+
+  return negativeFrames || negativeLenses;
+}
+
+export function shouldConfirmNegativePaymentValues(
+  cartItems: CartLineItem[],
+  totals: PaymentTotals,
+  draft: PaymentDraft,
+  prescriptionRecord: PrescriptionRecord | null,
+): boolean {
+  return (
+    hasNegativeCartValues(cartItems) ||
+    hasNegativePaymentDraftValues(draft, totals) ||
+    (prescriptionRecord != null && hasNegativePrescriptionValues(prescriptionRecord))
+  );
 }

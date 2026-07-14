@@ -269,3 +269,33 @@
   color: var(--color-text-muted);
   white-space: nowrap;
 }
+
+.frame-line__model-option-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.frame-line__model-option-sub {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.prescription-field__input[readonly],
+.frame-line__locked {
+  background: #f1f5f9;
+  color: var(--color-text-body);
+  cursor: default;
+  pointer-events: none;
+}
+
+@media (min-width: 768px), (min-width: 600px) and (min-height: 500px) {
+  .frame-line__grid--product-search {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .frame-line__grid--product-search .frame-line__field--wide {
+    grid-column: 1 / -1;
+  }
+}
