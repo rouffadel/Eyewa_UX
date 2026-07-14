@@ -70,9 +70,8 @@ describe('SellDashboardComponent', () => {
     expect(compiled.textContent).toContain('CART');
     expect(compiled.textContent).toContain('PAYMENT');
     expect(compiled.textContent).toContain('PAY');
-    expect(compiled.textContent).toContain('PAY & PRINT');
-    expect(compiled.textContent).toContain('Daily report');
-    expect(compiled.textContent).toContain('Open register');
+    expect(compiled.textContent).not.toContain('PAY & PRINT');
+    expect(compiled.textContent).not.toContain('Daily report');
   });
 
   it('should render latest prescription summary in left panel', async () => {

@@ -26,10 +26,10 @@ export class BottomNavComponent {
       ariaLabel: 'Prescription',
     },
     {
-      tab: 'measurements',
-      label: 'Measurements',
-      shortLabel: 'Measure',
-      ariaLabel: 'Measurements',
+      tab: 'reports',
+      label: 'Reports',
+      shortLabel: 'Reports',
+      ariaLabel: 'Reports',
     },
     {
       tab: 'delivery',

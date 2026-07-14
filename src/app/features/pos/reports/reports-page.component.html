@@ -1,0 +1,38 @@
+<section class="reports-page pos-scroll-page">
+  <header class="reports-page__header">
+    <h1 class="reports-page__title">REPORTS</h1>
+    <p class="reports-page__subtitle">Payments, register actions, and sales reports</p>
+  </header>
+
+  @if (store.statusMessage()) {
+    <div class="reports-page__status" role="status">
+      <span>{{ store.statusMessage() }}</span>
+      <button
+        type="button"
+        class="reports-page__status-close"
+        aria-label="Dismiss message"
+        (click)="onDismissStatus()"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M18 6 6 18M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  }
+
+  <div class="reports-page__actions">
+    @for (action of actions; track action.key) {
+      <button
+        type="button"
+        class="reports-page__btn"
+        [class.reports-page__btn--primary]="action.primary"
+        [disabled]="isActionDisabled(action)"
+        (click)="onAction(action)"
+      >
+        {{ actionLabel(action) }}
+      </button>
+    }
+  </div>
+
+  <p class="reports-page__shortcut">F9 Pay &amp; Print</p>
+</section>

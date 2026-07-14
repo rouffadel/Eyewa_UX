@@ -7,7 +7,7 @@ import { ProductCatalogCardComponent } from './product-catalog-card/product-cata
 import { CartCardComponent } from './cart-card/cart-card.component';
 import { PaymentCardComponent } from './payment-card/payment-card.component';
 import { CatalogCategory } from './models/product.models';
-import { PaymentMethod, PaymentRegisterAction } from './models/payment.models';
+import { PaymentMethod } from './models/payment.models';
 import { Product } from './models/product.models';
 import { SellSessionStore } from './services/sell-session.store';
 
@@ -97,16 +97,6 @@ export class SellDashboardComponent {
     void this.store.pay(staffName);
   }
 
-  protected onPayAndPrint(): void {
-    const staffName = this.auth.currentSession()?.displayName ?? '—';
-
-    void this.store.payAndPrint(staffName).then((paid) => {
-      if (paid) {
-        void this.router.navigate(['/home/sell/invoice']);
-      }
-    });
-  }
-
   protected onPrintReceipt(): void {
     const staffName = this.auth.currentSession()?.displayName ?? '—';
 
@@ -141,10 +131,6 @@ export class SellDashboardComponent {
 
   protected onFilter(): void {
     this.store.statusMessage.set('Product filters are not connected yet.');
-  }
-
-  protected onRegisterAction(action: PaymentRegisterAction): void {
-    this.store.runPaymentRegisterAction(action);
   }
 
   protected onDismissStatus(): void {

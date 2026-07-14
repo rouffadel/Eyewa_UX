@@ -4,7 +4,7 @@ import { ForgotPasswordComponent } from './features/auth/forgot-password/forgot-
 import { LoginComponent } from './features/auth/login/login.component';
 import { OtpLoginComponent } from './features/auth/otp-login/otp-login.component';
 import { CreateCustomerFormComponent } from './features/pos/customer/create-customer-form.component';
-import { MeasurementsFormComponent } from './features/pos/measurements/measurements-form.component';
+import { ReportsPageComponent } from './features/pos/reports/reports-page.component';
 import { PrescriptionFormComponent } from './features/pos/prescription/prescription-form.component';
 import { PosTabPlaceholderComponent } from './features/pos/pos-tab-placeholder/pos-tab-placeholder.component';
 import { ProfilePageComponent } from './features/pos/profile/profile-page.component';
@@ -44,8 +44,15 @@ export const routes: Routes = [
         ],
       },
       {
+        path: 'reports',
+        component: ReportsPageComponent,
+      },
+      {
         path: 'measurements',
-        component: MeasurementsFormComponent,
+        loadComponent: () =>
+          import('./features/pos/measurements/measurements-form.component').then(
+            (m) => m.MeasurementsFormComponent,
+          ),
       },
       {
         path: 'delivery',

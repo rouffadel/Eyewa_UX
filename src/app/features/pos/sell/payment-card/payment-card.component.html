@@ -263,7 +263,7 @@
     </div>
 
     <div class="payment-card__footer">
-      <div class="payment-card__actions" [class.payment-card__actions--single]="orderFullyPaid()">
+      <div class="payment-card__actions payment-card__actions--single">
         @if (orderFullyPaid()) {
           <button
             type="button"
@@ -274,26 +274,13 @@
             PRINT RECEIPT
           </button>
         } @else {
-          <button type="button" class="payment-card__pay-secondary" [disabled]="!canPay() || isPaying()" (click)="pay.emit()">
-            {{ isPaying() ? 'PROCESSING...' : payButtonLabel() }}
-          </button>
-          <button type="button" class="payment-card__pay" [disabled]="!canPay() || isPaying()" (click)="payAndPrint.emit()">
-            {{ isPaying() ? 'PROCESSING...' : payAndPrintButtonLabel() }}
-          </button>
-        }
-      </div>
-      <span class="payment-card__shortcut">
-        {{ orderFullyPaid() ? 'Receipt ready to print' : 'F9 Pay &amp; Print' }}
-      </span>
-
-      <div class="payment-card__register-actions">
-        @for (action of registerActions; track action.key) {
           <button
             type="button"
-            class="payment-card__register-btn"
-            (click)="registerAction.emit(action.key)"
+            class="payment-card__pay payment-card__pay--full"
+            [disabled]="!canPay() || isPaying()"
+            (click)="pay.emit()"
           >
-            {{ action.label }}
+            {{ isPaying() ? 'PROCESSING...' : payButtonLabel() }}
           </button>
         }
       </div>

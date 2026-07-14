@@ -1,6 +1,6 @@
 import { Component, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { PaymentDraft, PaymentMethod, PaymentRegisterAction, PaymentTotals } from '../models/payment.models';
+import { PaymentDraft, PaymentMethod, PaymentTotals } from '../models/payment.models';
 import {
   formatMoney,
   mixedBalanceRemaining,
@@ -36,18 +36,9 @@ export class PaymentCardComponent {
   readonly payFullToggle = output<boolean>();
   readonly partialAmountChange = output<number>();
   readonly pay = output<void>();
-  readonly payAndPrint = output<void>();
   readonly printReceipt = output<void>();
-  readonly registerAction = output<PaymentRegisterAction>();
 
   protected formatMoney = formatMoney;
-
-  protected readonly registerActions: { key: PaymentRegisterAction; label: string }[] = [
-    { key: 'daily-report', label: 'Daily report' },
-    { key: 'cash-report', label: 'Cash report' },
-    { key: 'open-register', label: 'Open register' },
-    { key: 'close-register', label: 'Close register' },
-  ];
 
   protected readonly methods: { key: PaymentMethod; label: string }[] = [
     { key: 'cash', label: 'Cash' },
@@ -87,10 +78,6 @@ export class PaymentCardComponent {
 
   protected readonly payButtonLabel = computed(() =>
     this.showSettlementSummary() ? 'PAY FULL' : 'PAY',
-  );
-
-  protected readonly payAndPrintButtonLabel = computed(() =>
-    this.showSettlementSummary() ? 'PAY FULL & PRINT' : 'PAY & PRINT',
   );
 
   protected onDiscountInput(value: string | number): void {
