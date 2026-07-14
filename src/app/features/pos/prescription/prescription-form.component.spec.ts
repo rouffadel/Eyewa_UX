@@ -70,10 +70,22 @@ describe('PrescriptionFormComponent', () => {
     prescriptionDropdownService = jasmine.createSpyObj('PrescriptionDropdownService', ['getDropdowns']);
     prescriptionDropdownService.getDropdowns.and.returnValue(
       Promise.resolve({
-        sph: [{ label: '+1.25', value: 1.25 }],
-        cyl: [{ label: '-0.75', value: -0.75 }],
-        axis: [{ label: '180', value: 180 }],
-        add: [{ label: '2.50', value: 2.5 }],
+        sph: [
+          { label: '0.00', value: 0 },
+          { label: '+1.25', value: 1.25 },
+        ],
+        cyl: [
+          { label: '0.00', value: 0 },
+          { label: '-0.75', value: -0.75 },
+        ],
+        axis: [
+          { label: '0.00', value: 0 },
+          { label: '180', value: 180 },
+        ],
+        add: [
+          { label: '0.00', value: 0 },
+          { label: '2.50', value: 2.5 },
+        ],
       }),
     );
     categoryService = jasmine.createSpyObj('CategoryService', ['getCategories']);
@@ -166,6 +178,21 @@ describe('PrescriptionFormComponent', () => {
     expect(compiled.textContent).toContain('+ Add Frame');
     expect(compiled.textContent).toContain('LENSES');
     expect(compiled.textContent).toContain('+ Add Lens Line');
+  });
+
+  it('should default eye dropdown values to 0.00', () => {
+    expect(component['rightEyeGroup'].value).toEqual({
+      sph: 0,
+      cyl: 0,
+      axis: 0,
+      add: 0,
+    });
+    expect(component['leftEyeGroup'].value).toEqual({
+      sph: 0,
+      cyl: 0,
+      axis: 0,
+      add: 0,
+    });
   });
 
   it('should block save when a started lens line is incomplete', () => {

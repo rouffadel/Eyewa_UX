@@ -18,7 +18,9 @@ import {
   createDefaultPrescriptionFormValue,
   createEmptyFrameLine,
   createEmptyLensLine,
+  createEmptyEyePrescription,
   EyePrescription,
+  normalizeEyePrescription,
   FRAME_CATEGORIES,
   parseNumericInput,
   PrescriptionFormValue,
@@ -308,11 +310,13 @@ export class PrescriptionFormComponent implements OnInit {
   }
 
   private createEyeGroup(): FormGroup {
+    const defaults = createEmptyEyePrescription();
+
     return this.fb.group({
-      sph: [null as number | null],
-      cyl: [null as number | null],
-      axis: [null as number | null],
-      add: [null as number | null],
+      sph: [defaults.sph],
+      cyl: [defaults.cyl],
+      axis: [defaults.axis],
+      add: [defaults.add],
     });
   }
 
@@ -389,12 +393,7 @@ export class PrescriptionFormComponent implements OnInit {
   }
 
   private normalizeEye(value: Partial<EyePrescription>): EyePrescription {
-    return {
-      sph: parseNumericInput(value.sph),
-      cyl: parseNumericInput(value.cyl),
-      axis: parseNumericInput(value.axis),
-      add: parseNumericInput(value.add),
-    };
+    return normalizeEyePrescription(value);
   }
 
   private validateBeforeSave(): string | null {
@@ -533,8 +532,8 @@ export class PrescriptionFormComponent implements OnInit {
   private applyRecord(record: PrescriptionRecord): void {
     this.form.reset({
       orderLensEnabled: record.orderLensEnabled,
-      rightEye: record.rightEye,
-      leftEye: record.leftEye,
+      rightEye: normalizeEyePrescription(record.rightEye),
+      leftEye: normalizeEyePrescription(record.leftEye),
       pd: record.pd,
       nearPd: record.nearPd,
       vd: record.vd,

@@ -85,8 +85,24 @@ export function parseNumericInput(value: string | number | null | undefined): nu
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+export const DEFAULT_EYE_VALUE = 0;
+
 export function createEmptyEyePrescription(): EyePrescription {
-  return { sph: null, cyl: null, axis: null, add: null };
+  return {
+    sph: DEFAULT_EYE_VALUE,
+    cyl: DEFAULT_EYE_VALUE,
+    axis: DEFAULT_EYE_VALUE,
+    add: DEFAULT_EYE_VALUE,
+  };
+}
+
+export function normalizeEyePrescription(eye: Partial<EyePrescription>): EyePrescription {
+  return {
+    sph: parseNumericInput(eye.sph) ?? DEFAULT_EYE_VALUE,
+    cyl: parseNumericInput(eye.cyl) ?? DEFAULT_EYE_VALUE,
+    axis: parseNumericInput(eye.axis) ?? DEFAULT_EYE_VALUE,
+    add: parseNumericInput(eye.add) ?? DEFAULT_EYE_VALUE,
+  };
 }
 
 export interface PrescriptionLensCategoryOption {
@@ -161,15 +177,28 @@ export function hasPrescriptionLensData(
 export function hasPrescriptionRxData(
   record: Pick<PrescriptionRecord, 'rightEye' | 'leftEye' | 'pd' | 'nearPd'>,
 ): boolean {
+  if (record.pd !== null || record.nearPd !== null) {
+    return true;
+  }
+
   const eyes = [record.rightEye, record.leftEye];
 
   for (const eye of eyes) {
-    if (eye.sph !== null || eye.cyl !== null || eye.axis !== null || eye.add !== null) {
+    if (eyeHasRxData(eye)) {
       return true;
     }
   }
 
-  return record.pd !== null || record.nearPd !== null;
+  return false;
+}
+
+function eyeHasRxData(eye: EyePrescription): boolean {
+  return (
+    (eye.sph !== null && eye.sph !== 0) ||
+    (eye.cyl !== null && eye.cyl !== 0) ||
+    (eye.axis !== null && eye.axis !== 0) ||
+    (eye.add !== null && eye.add !== 0)
+  );
 }
 
 export function createDefaultPrescriptionFormValue(defaultFrameCategory: string = FRAME_CATEGORIES[0]): PrescriptionFormValue {

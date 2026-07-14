@@ -40,6 +40,7 @@ import { buildInvoiceFromSaveSalesResponse } from './save-sales-response.mapper'
 import { buildInvoiceFromExistingOrder } from './invoice.mapper';
 import { SaveSalesService } from './save-sales.service';
 import {
+  createEmptyEyePrescription,
   hasPrescriptionLensData,
   hasPrescriptionRxData,
 } from '../../prescription/models/prescription.models';
@@ -1134,8 +1135,8 @@ export class SellSessionStore {
       orderLensEnabled: false,
       frames: [],
       lenses: [],
-      rightEye: { sph: null, cyl: null, axis: null, add: null },
-      leftEye: { sph: null, cyl: null, axis: null, add: null },
+      rightEye: createEmptyEyePrescription(),
+      leftEye: createEmptyEyePrescription(),
       pd: null,
       nearPd: null,
       vd: null,
