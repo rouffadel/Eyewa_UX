@@ -97,6 +97,15 @@ export class SellDashboardComponent {
     void this.store.pay(staffName);
   }
 
+  protected onPayAndPrint(): void {
+    const staffName = this.auth.currentSession()?.displayName ?? '—';
+    void this.store.payAndPrint(staffName).then((paid) => {
+      if (paid) {
+        void this.router.navigate(['/home/sell/invoice']);
+      }
+    });
+  }
+
   protected onPrintReceipt(): void {
     const staffName = this.auth.currentSession()?.displayName ?? '—';
 

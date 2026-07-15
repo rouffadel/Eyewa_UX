@@ -282,6 +282,15 @@
           >
             {{ isPaying() ? 'PROCESSING...' : payButtonLabel() }}
           </button>
+          <button
+            type="button"
+            class="payment-card__pay-secondary payment-card__pay--full"
+            [disabled]="!canPay() || isPaying()"
+            (click)="payAndPrint.emit()"
+            style="margin-top: 0.5rem;"
+          >
+            PAY FULL
+          </button>
         }
       </div>
     </div>

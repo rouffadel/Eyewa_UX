@@ -21,7 +21,7 @@ export class ReportsPageComponent {
   protected readonly store = inject(SellSessionStore);
 
   protected readonly actions: ReportAction[] = [
-    { key: 'pay-and-print', label: 'PAY & PRINT', primary: true },
+   // { key: 'pay-and-print', label: 'PAY & PRINT', primary: true },
     { key: 'daily-report', label: 'Daily report' },
     { key: 'cash-report', label: 'Cash report' },
     { key: 'open-register', label: 'Open register' },

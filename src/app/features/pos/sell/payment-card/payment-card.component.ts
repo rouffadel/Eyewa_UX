@@ -36,6 +36,7 @@ export class PaymentCardComponent {
   readonly payFullToggle = output<boolean>();
   readonly partialAmountChange = output<number>();
   readonly pay = output<void>();
+  readonly payAndPrint = output<void>();
   readonly printReceipt = output<void>();
 
   protected formatMoney = formatMoney;
