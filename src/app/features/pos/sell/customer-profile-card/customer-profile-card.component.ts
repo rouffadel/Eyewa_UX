@@ -12,7 +12,20 @@ export class CustomerProfileCardComponent {
   showLoyaltySection = false;
 
   readonly customer = input<Customer | null>(null);
+  readonly refreshing = input(false);
 
   readonly redeemPoints = output<void>();
   readonly openDetail = output<void>();
+  readonly refresh = output<void>();
+
+  protected onRefreshClick(event: Event): void {
+    event.stopPropagation();
+    event.preventDefault();
+
+    if (this.refreshing()) {
+      return;
+    }
+
+    this.refresh.emit();
+  }
 }

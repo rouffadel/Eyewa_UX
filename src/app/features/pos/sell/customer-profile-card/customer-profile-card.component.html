@@ -1,15 +1,34 @@
 <section class="pos-card customer-card">
   @if (customer(); as c) {
-    <button type="button" class="customer-card__header" (click)="openDetail.emit()">
-      <span class="customer-card__avatar">{{ c.initials }}</span>
-      <span class="customer-card__identity">
-        <span class="customer-card__name">{{ c.displayName }}</span>
-        <span class="customer-card__id">{{ c.invoiceNo ?? c.id }}</span>
-      </span>
-      <svg class="customer-card__chevron" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M9 6l6 6-6 6" />
-      </svg>
-    </button>
+    <div class="customer-card__header">
+      <button type="button" class="customer-card__header-main" (click)="openDetail.emit()">
+        <span class="customer-card__avatar">{{ c.initials }}</span>
+        <span class="customer-card__identity">
+          <span class="customer-card__name">{{ c.displayName }}</span>
+          <span class="customer-card__id">{{ c.invoiceNo ?? c.id }}</span>
+        </span>
+        <svg class="customer-card__chevron" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M9 6l6 6-6 6" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="customer-card__refresh"
+        [disabled]="refreshing()"
+        [attr.aria-label]="refreshing() ? 'Refreshing customer' : 'Refresh customer'"
+        [attr.aria-busy]="refreshing()"
+        (click)="onRefreshClick($event)"
+      >
+        <svg
+          class="customer-card__refresh-icon"
+          [class.customer-card__refresh-icon--spin]="refreshing()"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v5h-5" />
+        </svg>
+      </button>
+    </div>
 
     <div class="customer-card__body">
       <div class="customer-card__phone">

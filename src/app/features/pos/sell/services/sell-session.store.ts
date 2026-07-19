@@ -205,6 +205,8 @@ export class SellSessionStore {
 
   readonly amountAlreadyPaid = computed(() => orderAmountAlreadyPaid(this.orderPaymentSummary()));
 
+  readonly customerRefreshing = signal(false);
+
   selectCustomer(
     customer: Customer | null,
     options: { freshSale?: boolean } = {},
@@ -244,6 +246,43 @@ export class SellSessionStore {
 
     this.loadSalesDetails(customer, { forceApplyFromApi: true, persistToLocalStorage: true });
     void this.loadSalesInsurance(customer);
+  }
+
+  /**
+   * Re-runs the same APIs as customer selection for the current customer
+   * (sales details, order lenses, insurance) without clearing the cart.
+   */
+  async refreshSelectedCustomer(): Promise<void> {
+    const customer = this.selectedCustomer();
+    if (!customer?.id || this.customerRefreshing()) {
+      return;
+    }
+
+    this.customerRefreshing.set(true);
+    this.clearStatusMessages();
+
+    try {
+      if (customer.salesId == null) {
+        this.loadLocalPrescription(customer.id);
+        this.salesInsurance.set(null);
+        this.syncPaymentAmountsToPayable();
+        return;
+      }
+
+      await Promise.all([
+        this.loadSalesDetails(customer, {
+          forceApplyFromApi: true,
+          persistToLocalStorage: true,
+        }),
+        this.loadSalesInsurance(customer),
+      ]);
+
+      this.statusMessage.set('Customer data refreshed');
+    } catch {
+      this.statusMessage.set('Unable to refresh customer data. Please try again.');
+    } finally {
+      this.customerRefreshing.set(false);
+    }
   }
 
   ensureSalesDetailsLoaded(): void {

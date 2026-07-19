@@ -20,8 +20,10 @@
   <section class="sell-dashboard__panel sell-dashboard__panel--left">
     <app-customer-profile-card
       [customer]="store.selectedCustomer()"
+      [refreshing]="store.customerRefreshing()"
       (redeemPoints)="onRedeemPoints()"
       (openDetail)="onOpenCustomerDetail()"
+      (refresh)="onRefreshCustomer()"
     />
 
     <app-latest-prescription-summary

@@ -79,9 +79,34 @@ describe('CustomerProfileCardComponent', () => {
 
     const spy = spyOn(fixture.componentInstance.openDetail, 'emit');
     (fixture.nativeElement as HTMLElement)
-      .querySelector<HTMLButtonElement>('.customer-card__header')
+      .querySelector<HTMLButtonElement>('.customer-card__header-main')
       ?.click();
 
     expect(spy).toHaveBeenCalled();
+  });
+
+  it('should emit refresh when refresh button is clicked', () => {
+    fixture.componentRef.setInput('customer', sampleCustomer);
+    fixture.detectChanges();
+
+    const spy = spyOn(fixture.componentInstance.refresh, 'emit');
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('.customer-card__refresh')
+      ?.click();
+
+    expect(spy).toHaveBeenCalled();
+  });
+
+  it('should not emit refresh while refreshing', () => {
+    fixture.componentRef.setInput('customer', sampleCustomer);
+    fixture.componentRef.setInput('refreshing', true);
+    fixture.detectChanges();
+
+    const spy = spyOn(fixture.componentInstance.refresh, 'emit');
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('.customer-card__refresh')
+      ?.click();
+
+    expect(spy).not.toHaveBeenCalled();
   });
 });

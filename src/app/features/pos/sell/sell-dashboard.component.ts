@@ -134,6 +134,10 @@ export class SellDashboardComponent {
     this.store.statusMessage.set('Customer detail view is not connected yet.');
   }
 
+  protected onRefreshCustomer(): void {
+    void this.store.refreshSelectedCustomer();
+  }
+
   protected onScan(): void {
     void this.store.scanProductBarcode();
   }
