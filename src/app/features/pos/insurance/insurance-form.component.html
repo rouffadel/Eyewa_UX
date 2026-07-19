@@ -1,0 +1,114 @@
+<section class="insurance-page pos-scroll-page">
+  <form class="insurance-card" [formGroup]="form" (ngSubmit)="onSave()" novalidate>
+    <header class="insurance-card__header">
+      <h1 class="insurance-card__title">INSURANCE</h1>
+    </header>
+
+    <div class="insurance-card__meta" aria-live="polite">
+      @if (selectedCustomer(); as customer) {
+        <p class="insurance-customer" role="status">
+          Customer: <strong>{{ customer.displayName }}</strong>
+          @if (customer.salesId != null) {
+            <span class="insurance-customer__sales-id"> · Sales #{{ customer.salesId }}</span>
+          }
+        </p>
+      } @else {
+        <p class="insurance-customer insurance-customer--muted" role="status">
+          Select a customer from the header before saving insurance.
+        </p>
+      }
+    </div>
+
+    <div
+      class="insurance-card__status"
+      [class.insurance-card__status--visible]="statusText()"
+      role="status"
+      [attr.aria-hidden]="!statusText()"
+    >
+      @if (statusText(); as text) {
+        <p
+          class="insurance-message"
+          [class.insurance-message--info]="statusTone() === 'info'"
+          [class.insurance-message--success]="statusTone() === 'success'"
+          [class.insurance-message--error]="statusTone() === 'error'"
+          [attr.role]="statusTone() === 'error' ? 'alert' : 'status'"
+        >
+          {{ text }}
+        </p>
+      }
+    </div>
+
+    <div class="insurance-card__body">
+      <label class="insurance-field">
+        <span class="insurance-field__label">Insurance Company</span>
+        <select
+          class="insurance-field__input insurance-field__select"
+          [class.insurance-field__input--invalid]="
+            form.controls.insuranceCompanyId.invalid && form.controls.insuranceCompanyId.touched
+          "
+          formControlName="insuranceCompanyId"
+        >
+          <option [ngValue]="null">Select</option>
+          @for (company of insuranceCompanies(); track company.id) {
+            <option [ngValue]="company.id">{{ company.name }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="insurance-field">
+        <span class="insurance-field__label">Policy Number</span>
+        <input
+          class="insurance-field__input"
+          [class.insurance-field__input--invalid]="
+            form.controls.policyNumber.invalid && form.controls.policyNumber.touched
+          "
+          type="text"
+          formControlName="policyNumber"
+          autocomplete="off"
+          placeholder="e.g. POL-987654321"
+        />
+      </label>
+
+      <label class="insurance-field">
+        <span class="insurance-field__label">Discount (%)</span>
+        <input
+          class="insurance-field__input"
+          [class.insurance-field__input--invalid]="
+            form.controls.discountPercentage.invalid && form.controls.discountPercentage.touched
+          "
+          type="number"
+          step="0.01"
+          min="0"
+          inputmode="decimal"
+          formControlName="discountPercentage"
+          placeholder="e.g. 15.50"
+        />
+      </label>
+
+      <label class="insurance-field">
+        <span class="insurance-field__label">Validity End Date</span>
+        <input
+          class="insurance-field__input"
+          [class.insurance-field__input--invalid]="
+            form.controls.validityEndDate.invalid && form.controls.validityEndDate.touched
+          "
+          type="date"
+          formControlName="validityEndDate"
+        />
+      </label>
+    </div>
+
+    <footer class="insurance-card__actions">
+      <button type="button" class="insurance-btn insurance-btn--secondary" (click)="onReset()">
+        Reset
+      </button>
+      <button
+        type="submit"
+        class="insurance-btn insurance-btn--primary"
+        [disabled]="isSaving()"
+      >
+        {{ isSaving() ? 'Saving…' : 'Save Insurance' }}
+      </button>
+    </footer>
+  </form>
+</section>

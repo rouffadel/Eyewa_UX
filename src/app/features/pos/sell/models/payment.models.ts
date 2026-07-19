@@ -27,6 +27,8 @@ export interface PaymentTotals {
   vat: number;
   total: number;
   loyaltyDeduction: number;
+  insuranceAmount: number;
+  insurancePercentage: number;
   payable: number;
 }
 

@@ -21,7 +21,11 @@ export const NEGATIVE_PAYMENT_CONFIRM_MESSAGE =
 export class PaymentService {
   constructor(private readonly appConfig: AppConfigService) {}
 
-  calculateTotals(subtotal: number, draft: PaymentDraft): PaymentTotals {
+  calculateTotals(
+    subtotal: number,
+    draft: PaymentDraft,
+    insuranceDiscountPercentage: number | null = null,
+  ): PaymentTotals {
     const discount = Math.max(0, draft.discountAmount);
     const afterDiscount = Math.max(0, subtotal - discount);
     const vatRate = this.appConfig.settings?.vatRate ?? 0.15;
@@ -31,7 +35,16 @@ export class PaymentService {
       draft.redeemLoyalty && draft.loyaltyPoints > 0
         ? Math.min(draft.loyaltyPoints, total)
         : 0;
-    const payable = Math.max(0, total - loyaltyDeduction);
+    const afterLoyalty = Math.max(0, total - loyaltyDeduction);
+    const insurancePercentage =
+      insuranceDiscountPercentage != null && Number.isFinite(insuranceDiscountPercentage)
+        ? Math.max(0, insuranceDiscountPercentage)
+        : 0;
+    const insuranceAmount =
+      insurancePercentage > 0
+        ? Math.round(((afterLoyalty * insurancePercentage) / 100) * 100) / 100
+        : 0;
+    const payable = Math.max(0, afterLoyalty - insuranceAmount);
 
     return {
       subtotal,
@@ -39,6 +52,8 @@ export class PaymentService {
       vat,
       total,
       loyaltyDeduction,
+      insuranceAmount,
+      insurancePercentage,
       payable,
     };
   }

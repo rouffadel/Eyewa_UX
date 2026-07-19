@@ -80,6 +80,7 @@ describe('buildSaveSalesDetailsPayload', () => {
       PaidAmount: 500,
       AdvancePaidAmount: 500,
       PaymentMode: 'Cash',
+      InsuranceAmount: '',
       CustomerName: 'Mobark',
       CustomerNo: '0546388847',
       SalesManId: 0,
@@ -286,5 +287,108 @@ describe('buildSaveSalesDetailsPayload', () => {
     expect(payload.AdvancePaidAmount).toBe(480);
     expect(payload.Balance).toBe('0.00');
     expect(payload.NetTotal).toBe('480.00');
+  });
+
+  it('should include InsuranceAmount when insurance coverage is applied', () => {
+    const payload = buildSaveSalesDetailsPayload({
+      customer: {
+        id: '114130',
+        displayName: 'Test',
+        initials: 'TE',
+        phoneMasked: '0500000000',
+        phone: '0500000000',
+        loyaltyPoints: 0,
+        lastVisit: '19-07-2026',
+        salesId: 114130,
+      },
+      record: {
+        id: 'rx-ins',
+        customerId: '114130',
+        salesId: 114130,
+        orderLensEnabled: false,
+        frames: [
+          {
+            category: 'Frames - S',
+            categoryId: 6,
+            brandId: 8,
+            brandName: 'BRAND',
+            productId: 15,
+            modelNo: 'MODEL',
+            sellingPrice: 100,
+            quantity: 1,
+            maxDiscount: null,
+            discountPercent: 0,
+          },
+        ],
+        lenses: [],
+        rightEye: { sph: 0, cyl: 0, axis: 0, add: 0 },
+        leftEye: { sph: 0, cyl: 0, axis: 0, add: 0 },
+        pd: null,
+        nearPd: null,
+        vd: null,
+        notes: '',
+        createdAt: '2026-07-19T00:00:00.000Z',
+        updatedAt: '2026-07-19T00:00:00.000Z',
+      },
+      storeId: '1',
+      loginId: 1,
+      salesManId: 1,
+      payable: 95,
+      draft: { ...DEFAULT_PAYMENT_DRAFT },
+      insuranceAmount: 5,
+    });
+
+    expect(payload.InsuranceAmount).toBe('5.00');
+  });
+
+  it('should send empty InsuranceAmount when insurance is not available', () => {
+    const payload = buildSaveSalesDetailsPayload({
+      customer: {
+        id: '114130',
+        displayName: 'Test',
+        initials: 'TE',
+        phoneMasked: '0500000000',
+        phone: '0500000000',
+        loyaltyPoints: 0,
+        lastVisit: '19-07-2026',
+        salesId: 114130,
+      },
+      record: {
+        id: 'rx-ins',
+        customerId: '114130',
+        salesId: 114130,
+        orderLensEnabled: false,
+        frames: [
+          {
+            category: 'Frames - S',
+            categoryId: 6,
+            brandId: 8,
+            brandName: 'BRAND',
+            productId: 15,
+            modelNo: 'MODEL',
+            sellingPrice: 100,
+            quantity: 1,
+            maxDiscount: null,
+            discountPercent: 0,
+          },
+        ],
+        lenses: [],
+        rightEye: { sph: 0, cyl: 0, axis: 0, add: 0 },
+        leftEye: { sph: 0, cyl: 0, axis: 0, add: 0 },
+        pd: null,
+        nearPd: null,
+        vd: null,
+        notes: '',
+        createdAt: '2026-07-19T00:00:00.000Z',
+        updatedAt: '2026-07-19T00:00:00.000Z',
+      },
+      storeId: '1',
+      loginId: 1,
+      salesManId: 1,
+      payable: 100,
+      draft: { ...DEFAULT_PAYMENT_DRAFT },
+    });
+
+    expect(payload.InsuranceAmount).toBe('');
   });
 });

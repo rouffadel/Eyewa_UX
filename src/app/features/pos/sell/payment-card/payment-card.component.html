@@ -29,6 +29,18 @@
         <dt>Total</dt>
         <dd>{{ formatMoney(totals().total) }}</dd>
       </div>
+      @if (totals().insuranceAmount > 0) {
+        <div class="payment-card__row payment-card__row--insurance">
+          <dt>
+            Insurance
+            @if (insuranceCompanyName()) {
+              <span class="payment-card__insurance-name">({{ insuranceCompanyName() }})</span>
+            }
+            <span class="payment-card__insurance-pct">{{ totals().insurancePercentage }}%</span>
+          </dt>
+          <dd>-{{ formatMoney(totals().insuranceAmount) }}</dd>
+        </div>
+      }
     </dl>
 
     <div class="payment-card__checkout-block">

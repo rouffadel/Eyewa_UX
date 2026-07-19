@@ -26,6 +26,8 @@ describe('buildInvoiceViewModel', () => {
         vat: 0,
         total: 250,
         loyaltyDeduction: 0,
+        insuranceAmount: 0,
+        insurancePercentage: 0,
         payable: 250,
       },
       paymentDraft: {
@@ -61,6 +63,8 @@ describe('buildInvoiceViewModel', () => {
         vat: 0,
         total: 250,
         loyaltyDeduction: 0,
+        insuranceAmount: 0,
+        insurancePercentage: 0,
         payable: 250,
       },
       paymentDraft: {
@@ -116,6 +120,8 @@ describe('buildInvoiceFromExistingOrder', () => {
     vat: 72,
     total: 552,
     loyaltyDeduction: 0,
+    insuranceAmount: 0,
+    insurancePercentage: 0,
     payable: 552,
   };
 
@@ -188,6 +194,8 @@ describe('buildInvoiceFromExistingOrder', () => {
         vat: 117,
         total: 897,
         loyaltyDeduction: 0,
+        insuranceAmount: 0,
+        insurancePercentage: 0,
         payable: 897,
       },
       paymentDraft: {

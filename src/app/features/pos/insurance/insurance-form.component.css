@@ -1,0 +1,204 @@
+:host {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.insurance-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 1rem max(1rem, env(safe-area-inset-right, 0)) 1.5rem
+    max(1rem, env(safe-area-inset-left, 0));
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px), (min-width: 600px) and (min-height: 500px) {
+  .insurance-page {
+    max-width: min(640px, 100%);
+    margin-inline: auto;
+    padding: 1.25rem 1rem 1.5rem;
+  }
+}
+
+.insurance-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+}
+
+@media (min-width: 768px), (min-width: 600px) and (min-height: 500px) {
+  .insurance-card {
+    padding: 1.25rem;
+  }
+}
+
+.insurance-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.insurance-card__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-text-heading);
+}
+
+@media (min-width: 768px), (min-width: 600px) and (min-height: 500px) {
+  .insurance-card__header {
+    justify-content: flex-start;
+  }
+}
+
+.insurance-customer {
+  margin: 0;
+  min-height: 1.25rem;
+  font-size: 0.875rem;
+  color: var(--color-text-body);
+}
+
+.insurance-customer--muted {
+  color: var(--color-text-muted);
+}
+
+.insurance-customer__sales-id {
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.insurance-card__meta {
+  min-height: 1.25rem;
+}
+
+.insurance-card__status {
+  min-height: 2.75rem;
+  display: flex;
+  align-items: stretch;
+}
+
+.insurance-card__status:not(.insurance-card__status--visible) {
+  visibility: hidden;
+}
+
+.insurance-message {
+  margin: 0;
+  width: 100%;
+  padding: 0.75rem 0.875rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-sizing: border-box;
+}
+
+.insurance-message--info {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.insurance-message--success {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.insurance-message--error {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.insurance-card__body {
+  display: grid;
+  gap: 0.875rem;
+}
+
+.insurance-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.insurance-field__label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.insurance-field__input {
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--color-text-heading);
+  font-size: 0.9375rem;
+  box-sizing: border-box;
+}
+
+.insurance-field__select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2.25rem;
+}
+
+.insurance-field__input--invalid {
+  border-color: #dc2626;
+}
+
+.insurance-field__hint {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.insurance-card__actions {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 0.625rem;
+  margin-top: 0.25rem;
+}
+
+.insurance-btn {
+  min-height: 48px;
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+
+.insurance-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.insurance-btn--secondary {
+  border: 1.5px solid var(--color-border);
+  background: #fff;
+  color: var(--color-text-heading);
+}
+
+.insurance-btn--secondary:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.insurance-btn--primary {
+  border: none;
+  background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+  color: #fff;
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.28);
+}

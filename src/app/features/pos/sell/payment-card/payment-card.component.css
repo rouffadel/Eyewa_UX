@@ -77,6 +77,29 @@
   font-weight: 800;
 }
 
+.payment-card__row--insurance dt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.payment-card__row--insurance dd {
+  color: #047857;
+  font-weight: 700;
+}
+
+.payment-card__insurance-name {
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.payment-card__insurance-pct {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1d4ed8;
+}
+
 .payment-card__row--input dd {
   display: flex;
   align-items: center;

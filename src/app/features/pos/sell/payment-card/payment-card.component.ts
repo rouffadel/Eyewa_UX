@@ -26,6 +26,7 @@ export class PaymentCardComponent {
   readonly settleFullRemaining = input(false);
   readonly outstandingBalance = input(0);
   readonly amountAlreadyPaid = input(0);
+  readonly insuranceCompanyName = input<string | null>(null);
 
   readonly discountChange = output<number>();
   readonly loyaltyToggle = output<boolean>();

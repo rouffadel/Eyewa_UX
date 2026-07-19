@@ -5,6 +5,7 @@ import { LoginComponent } from './features/auth/login/login.component';
 import { OtpLoginComponent } from './features/auth/otp-login/otp-login.component';
 import { CreateCustomerFormComponent } from './features/pos/customer/create-customer-form.component';
 import { ReportsPageComponent } from './features/pos/reports/reports-page.component';
+import { InsuranceFormComponent } from './features/pos/insurance/insurance-form.component';
 import { PrescriptionFormComponent } from './features/pos/prescription/prescription-form.component';
 import { PosTabPlaceholderComponent } from './features/pos/pos-tab-placeholder/pos-tab-placeholder.component';
 import { ProfilePageComponent } from './features/pos/profile/profile-page.component';
@@ -55,9 +56,8 @@ export const routes: Routes = [
           ),
       },
       {
-        path: 'delivery',
-        component: PosTabPlaceholderComponent,
-        data: { title: 'Delivery / Order' },
+        path: 'insurance',
+        component: InsuranceFormComponent,
       },
       {
         path: 'more',

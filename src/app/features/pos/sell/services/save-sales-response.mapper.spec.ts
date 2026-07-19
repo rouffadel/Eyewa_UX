@@ -58,6 +58,8 @@ describe('buildInvoiceFromSaveSalesResponse', () => {
           vat: 0,
           total: 450,
           loyaltyDeduction: 0,
+          insuranceAmount: 0,
+          insurancePercentage: 0,
           payable: 450,
         },
         paymentDraft: {
@@ -116,6 +118,8 @@ describe('buildInvoiceFromSaveSalesResponse', () => {
           vat: 0,
           total: 480,
           loyaltyDeduction: 0,
+          insuranceAmount: 0,
+          insurancePercentage: 0,
           payable: 480,
         },
         paymentDraft: {

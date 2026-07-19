@@ -24,6 +24,8 @@ export interface SaveSalesDetailsPayload {
   PaidAmount: number;
   AdvancePaidAmount: number;
   PaymentMode: string;
+  /** Insurance coverage amount; empty string when no insurance is applied. */
+  InsuranceAmount: string;
   CustomerName: string;
   CustomerNo: string;
   SalesManId: number;

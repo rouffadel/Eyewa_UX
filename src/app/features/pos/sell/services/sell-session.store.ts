@@ -44,6 +44,8 @@ import {
   hasPrescriptionLensData,
   hasPrescriptionRxData,
 } from '../../prescription/models/prescription.models';
+import { SalesInsuranceRecord } from '../../insurance/models/insurance.models';
+import { InsuranceService } from '../../insurance/services/insurance.service';
 
 @Injectable({ providedIn: 'root' })
 export class SellSessionStore {
@@ -57,9 +59,11 @@ export class SellSessionStore {
   private readonly saveSales = inject(SaveSalesService);
   private readonly categoryService = inject(CategoryService);
   private readonly auth = inject(AuthService);
+  private readonly insuranceService = inject(InsuranceService);
 
   readonly selectedCustomer = signal<Customer | null>(this.customerSession.sellCustomer());
   readonly prescriptionLoading = signal(false);
+  readonly salesInsurance = signal<SalesInsuranceRecord | null>(null);
 
   private readonly prescriptionsByCustomer = signal<Record<string, PrescriptionSummary>>({});
 
@@ -79,6 +83,7 @@ export class SellSessionStore {
     const customer = this.selectedCustomer();
     if (customer?.salesId != null) {
       this.loadSalesDetails(customer, { forceApplyFromApi: true, persistToLocalStorage: true });
+      void this.loadSalesInsurance(customer);
     } else if (customer?.id) {
       this.loadLocalPrescription(customer.id);
     }
@@ -161,8 +166,14 @@ export class SellSessionStore {
   );
 
   readonly paymentTotals = computed(() =>
-    this.payment.calculateTotals(this.cartSubtotal(), this.paymentDraft()),
+    this.payment.calculateTotals(
+      this.cartSubtotal(),
+      this.paymentDraft(),
+      this.salesInsurance()?.discountPercentage ?? null,
+    ),
   );
+
+  readonly hasSalesInsurance = computed(() => this.salesInsurance() !== null);
 
   readonly canPay = computed(() => {
     if (this.isPaying() || this.prescriptionLoading() || this.orderFullyPaid()) {
@@ -208,9 +219,11 @@ export class SellSessionStore {
       this.orderPaymentSummary.set(null);
       this.loadedSalesInvoiceDate.set(null);
       this.loadedSalesQrcodeImg.set(null);
+      this.salesInsurance.set(null);
     }
 
     if (!customer?.id) {
+      this.salesInsurance.set(null);
       this.syncPaymentAmountsToPayable();
       return;
     }
@@ -218,15 +231,19 @@ export class SellSessionStore {
     if (options.freshSale) {
       this.clearCustomerPrescriptionState(customer.id);
       this.prescriptionLoading.set(false);
+      this.salesInsurance.set(null);
       this.syncPaymentAmountsToPayable();
       return;
     }
 
     if (customer.salesId == null) {
       this.loadLocalPrescription(customer.id);
+      this.salesInsurance.set(null);
+      this.syncPaymentAmountsToPayable();
     }
 
     this.loadSalesDetails(customer, { forceApplyFromApi: true, persistToLocalStorage: true });
+    void this.loadSalesInsurance(customer);
   }
 
   ensureSalesDetailsLoaded(): void {
@@ -272,6 +289,34 @@ export class SellSessionStore {
           this.prescriptionLoading.set(false);
         }
       });
+  }
+
+  private async loadSalesInsurance(customer: Customer): Promise<void> {
+    const salesId = customer.salesId;
+    if (salesId == null) {
+      this.salesInsurance.set(null);
+      this.syncPaymentAmountsToPayable();
+      return;
+    }
+
+    try {
+      const record = await this.insuranceService.getInsuranceBySalesId(salesId);
+      if (this.selectedCustomer()?.id !== customer.id) {
+        return;
+      }
+
+      this.salesInsurance.set(record);
+    } catch {
+      if (this.selectedCustomer()?.id !== customer.id) {
+        return;
+      }
+
+      this.salesInsurance.set(null);
+    } finally {
+      if (this.selectedCustomer()?.id === customer.id) {
+        this.syncPaymentAmountsToPayable();
+      }
+    }
   }
 
   private applySalesDetailsResult(
@@ -859,6 +904,7 @@ export class SellSessionStore {
           payable,
           draft,
           orderPayment: this.orderPaymentSummary(),
+          insuranceAmount: this.paymentTotals().insuranceAmount,
         }),
       );
 

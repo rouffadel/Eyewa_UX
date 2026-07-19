@@ -32,7 +32,27 @@ describe('PaymentService', () => {
     expect(totals.vat).toBeCloseTo(165, 2);
     expect(totals.total).toBeCloseTo(1265, 2);
     expect(totals.loyaltyDeduction).toBe(100);
+    expect(totals.insuranceAmount).toBe(0);
     expect(totals.payable).toBeCloseTo(1165, 2);
+  });
+
+  it('should deduct insurance percentage from payable when insurance is present', () => {
+    // Bill total after VAT = 100, insurance 5% => deduct 5, payable 95
+    const totals = service.calculateTotals(
+      100 / 1.15,
+      {
+        ...DEFAULT_PAYMENT_DRAFT,
+        discountAmount: 0,
+        redeemLoyalty: false,
+        loyaltyPoints: 0,
+      },
+      5,
+    );
+
+    expect(totals.total).toBeCloseTo(100, 2);
+    expect(totals.insurancePercentage).toBe(5);
+    expect(totals.insuranceAmount).toBeCloseTo(5, 2);
+    expect(totals.payable).toBeCloseTo(95, 2);
   });
 
   it('should apply discount before VAT', () => {

@@ -21,6 +21,8 @@ interface BuildSaveSalesPayloadOptions {
   payable: number;
   draft: PaymentDraft;
   orderPayment?: SalesDetailsPaymentSummary | null;
+  /** Coverage amount already deducted from payable; empty string when none. */
+  insuranceAmount?: number | null;
 }
 
 export function buildSaveSalesDetailsPayload({
@@ -32,6 +34,7 @@ export function buildSaveSalesDetailsPayload({
   payable,
   draft,
   orderPayment = null,
+  insuranceAmount = null,
 }: BuildSaveSalesPayloadOptions): SaveSalesDetailsPayload {
   const salesId = customer.salesId ?? record.salesId;
 
@@ -53,6 +56,10 @@ export function buildSaveSalesDetailsPayload({
   const discount = roundMoney(grids.reduce((sum, line) => sum + line.Discount, 0));
   const netTotal = roundMoney(grids.reduce((sum, line) => sum + Number(line.SellingPrice), 0));
   const paymentAmounts = resolveSaveSalesPaymentAmounts(netTotal, draft, orderPayment, payable);
+  const resolvedInsuranceAmount =
+    insuranceAmount != null && Number.isFinite(insuranceAmount) && insuranceAmount > 0
+      ? formatAmount(insuranceAmount)
+      : '';
 
   return {
     SalesId: salesId,
@@ -67,6 +74,7 @@ export function buildSaveSalesDetailsPayload({
     PaidAmount: paymentAmounts.paidAmount,
     AdvancePaidAmount: paymentAmounts.advancePaidAmount,
     PaymentMode: paymentModeLabel(draft),
+    InsuranceAmount: resolvedInsuranceAmount,
     CustomerName: customer.displayName,
     CustomerNo: customer.phone ?? customer.phoneMasked,
     SalesManId: salesManId,

@@ -1,10 +1,10 @@
-export type PosTab = 'sell' | 'prescription' | 'reports' | 'delivery' | 'more';
+export type PosTab = 'sell' | 'prescription' | 'reports' | 'insurance' | 'more';
 
 export const POS_TABS: PosTab[] = [
   'sell',
   'prescription',
   'reports',
-  'delivery',
+  'insurance',
   'more',
 ];
 

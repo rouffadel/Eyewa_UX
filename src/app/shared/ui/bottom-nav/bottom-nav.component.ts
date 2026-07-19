@@ -32,10 +32,10 @@ export class BottomNavComponent {
       ariaLabel: 'Reports',
     },
     {
-      tab: 'delivery',
-      label: 'Delivery / Order',
-      shortLabel: 'Delivery',
-      ariaLabel: 'Delivery and order',
+      tab: 'insurance',
+      label: 'Insurance',
+      shortLabel: 'Insurance',
+      ariaLabel: 'Insurance',
     },
     { tab: 'more', label: 'More', ariaLabel: 'More' },
   ];

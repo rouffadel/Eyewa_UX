@@ -67,6 +67,7 @@
       [settleFullRemaining]="store.isSettlingRemainingBalance()"
       [outstandingBalance]="store.outstandingBalance()"
       [amountAlreadyPaid]="store.amountAlreadyPaid()"
+      [insuranceCompanyName]="store.salesInsurance()?.insuranceCompanyName ?? null"
       (discountChange)="onDiscountChange($event)"
       (loyaltyToggle)="onLoyaltyToggle($event)"
       (methodChange)="onMethodChange($event)"
