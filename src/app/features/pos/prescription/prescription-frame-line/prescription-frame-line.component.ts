@@ -332,13 +332,24 @@ export class PrescriptionFrameLineComponent {
       return;
     }
 
+    const storeId = this.storeId();
+
+    if (!storeId) {
+      this.modelSearchRequestId += 1;
+      this.modelSearchOpen.set(true);
+      this.modelSearchLoading.set(false);
+      this.modelResults.set([]);
+      this.modelSearchError.set('Select a store before searching models.');
+      return;
+    }
+
     const requestId = ++this.modelSearchRequestId;
     this.modelSearchLoading.set(true);
     this.modelSearchError.set(null);
     this.modelSearchOpen.set(true);
 
     try {
-      const results = await this.productService.searchProductsByKey(query);
+      const results = await this.productService.searchProductsByKey(query, storeId);
 
       if (requestId !== this.modelSearchRequestId) {
         return;

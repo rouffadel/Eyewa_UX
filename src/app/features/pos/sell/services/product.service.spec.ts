@@ -12,7 +12,7 @@ describe('ProductService', () => {
 
   const appConfigStub = {
     settings: {
-      apiUrl: 'https://demo.api.eyewacloud.com/api',
+      apiUrl: 'https://localhost:7207/api',
       getProductPath: 'products/GetProduct',
       searchProductByKeyPath: 'products/GetProduct',
     },
@@ -41,7 +41,7 @@ describe('ProductService', () => {
     });
 
     const req = httpMock.expectOne(
-      'https://demo.api.eyewacloud.com/api/products/GetProduct?CategoryId=6&BrandId=8&StoreId=2&ProductName=b',
+      'https://localhost:7207/api/products/GetProduct?CategoryId=6&BrandId=8&StoreId=2&ProductName=b',
     );
     expect(req.request.method).toBe('GET');
 
@@ -86,7 +86,7 @@ describe('ProductService', () => {
     });
 
     const req = httpMock.expectOne(
-      'https://demo.api.eyewacloud.com/api/products/GetProduct?CategoryId=1&BrandId=2&StoreId=3&ProductName=ray',
+      'https://localhost:7207/api/products/GetProduct?CategoryId=1&BrandId=2&StoreId=3&ProductName=ray',
     );
     req.flush({
       status: '200',
@@ -106,7 +106,7 @@ describe('ProductService', () => {
     });
 
     const req = httpMock.expectOne(
-      'https://demo.api.eyewacloud.com/api/products/GetProduct?CategoryId=6&BrandId=8&StoreId=2&ProductName=b',
+      'https://localhost:7207/api/products/GetProduct?CategoryId=6&BrandId=8&StoreId=2&ProductName=b',
     );
     req.flush({
       status: '200',

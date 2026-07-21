@@ -26,10 +26,10 @@ export class ProductService {
       });
   }
 
-  searchProductsByKey(productName: string): Promise<ProductOption[]> {
-    const url = this.buildSearchByKeyUrl(productName);
+  searchProductsByKey(productName: string, storeId?: number | null): Promise<ProductOption[]> {
+    const url = this.buildSearchByKeyUrl(productName, storeId);
 
-    return firstValueFrom(this.http.get<GetProductResponse>(url))
+    return firstValueFrom(this.http.post<GetProductResponse>(url, {}))
       .then((response) => this.mapResponse(response))
       .catch((error: unknown) => {
         throw this.toError(error);
@@ -55,18 +55,24 @@ export class ProductService {
     return `${apiUrl}/${getProductPath}?${query.toString()}`;
   }
 
-  private buildSearchByKeyUrl(productName: string): string {
+  private buildSearchByKeyUrl(productName: string, storeId?: number | null): string {
     const settings = this.appConfig.settings;
     const apiUrl = settings?.apiUrl?.replace(/\/$/, '');
-    const searchPath = settings?.searchProductByKeyPath ?? settings?.getProductPath ?? 'products/GetProduct';
+    const searchPath = settings?.searchProductByKeyPath ?? 'products/SearchProductByKey';
 
     if (!apiUrl) {
       throw new Error('Product lookup is not configured.');
     }
 
-    const query = new URLSearchParams({
+    const queryParams: Record<string, string> = {
       ProductName: productName.trim(),
-    });
+    };
+    
+    if (storeId != null) {
+      queryParams['StoreId'] = String(storeId);
+    }
+
+    const query = new URLSearchParams(queryParams);
 
     return `${apiUrl}/${searchPath}?${query.toString()}`;
   }
