@@ -59,9 +59,9 @@ export function buildSaveSalesDetailsPayload({
   const resolvedInsuranceAmount =
     insuranceAmount != null && Number.isFinite(insuranceAmount) && insuranceAmount > 0
       ? formatAmount(insuranceAmount)
-      : '';
+      : '0';
 
-  return {
+  const basePayload = {
     SalesId: salesId,
     LoginId: loginId,
     StoreId: storeId,
@@ -71,13 +71,39 @@ export function buildSaveSalesDetailsPayload({
     Tax: '0',
     NetTotal: formatAmount(netTotal),
     Balance: formatAmount(paymentAmounts.balance),
+    CustomerName: customer.displayName,
+    CustomerNo: customer.phone ?? customer.phoneMasked,
+    SalesManId: salesManId,
+  };
+
+  if (draft.method === 'mixed') {
+    const payments = [];
+    if (draft.cashAmount > 0) {
+      payments.push({
+        PaidAmount: draft.cashAmount,
+        AdvancePaidAmount: draft.cashAmount,
+        InsuranceAmount: resolvedInsuranceAmount,
+        PaymentMode: 'Cash',
+      });
+    }
+    if (draft.cardAmount > 0) {
+      payments.push({
+        PaidAmount: draft.cardAmount,
+        AdvancePaidAmount: draft.cardAmount,
+        InsuranceAmount: resolvedInsuranceAmount,
+        PaymentMode: 'Card',
+      });
+    }
+
+    return { ...basePayload, payments };
+  }
+
+  return {
+    ...basePayload,
     PaidAmount: paymentAmounts.paidAmount,
     AdvancePaidAmount: paymentAmounts.advancePaidAmount,
     PaymentMode: paymentModeLabel(draft),
     InsuranceAmount: resolvedInsuranceAmount,
-    CustomerName: customer.displayName,
-    CustomerNo: customer.phone ?? customer.phoneMasked,
-    SalesManId: salesManId,
   };
 }
 
@@ -90,9 +116,10 @@ function resolveSaveSalesPaymentAmounts(
   const roundedNetTotal = roundMoney(netTotal);
 
   if (draft.settleRemainingBalance && orderPayment) {
+    const remainingBalance = roundMoney(Math.max(0, orderPayment.balance));
     return {
-      paidAmount: roundedNetTotal,
-      advancePaidAmount: roundedNetTotal,
+      paidAmount: remainingBalance,
+      advancePaidAmount: remainingBalance,
       balance: 0,
     };
   }

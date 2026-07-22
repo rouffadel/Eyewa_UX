@@ -28,7 +28,7 @@ export class PaymentService {
   ): PaymentTotals {
     const discount = Math.max(0, draft.discountAmount);
     const afterDiscount = Math.max(0, subtotal - discount);
-    const vatRate = this.appConfig.settings?.vatRate ?? 0.15;
+    const vatRate = 0; // Temporarily forced to 0% as requested
     const vat = afterDiscount * vatRate;
     const total = afterDiscount + vat;
     const loyaltyDeduction =
@@ -74,6 +74,19 @@ export class PaymentService {
     }
 
     if (draft.payPartial) {
+      if (method === 'mixed') {
+        if (draft.method !== 'mixed') {
+          const half = Math.round((draft.partialAmount / 2) * 100) / 100;
+          return {
+            cashAmount: half,
+            cardAmount: Math.max(0, draft.partialAmount - half),
+          };
+        }
+        return {
+          cashAmount: Math.max(0, draft.cashAmount),
+          cardAmount: Math.max(0, draft.cardAmount),
+        };
+      }
       return this.partialAmountsForMethod(method, draft.partialAmount);
     }
 
@@ -140,7 +153,9 @@ export class PaymentService {
     }
 
     if (draft.payPartial) {
-      const partialAmount = Math.max(0, draft.partialAmount);
+      const partialAmount = draft.method === 'mixed' 
+        ? Math.max(0, draft.cashAmount) + Math.max(0, draft.cardAmount)
+        : Math.max(0, draft.partialAmount);
       return partialAmount > 0 && partialAmount < normalizedPayable;
     }
 
@@ -192,11 +207,13 @@ export class PaymentService {
     }
 
     if (draft.payPartial) {
-      const partialAmount = Math.max(0, draft.partialAmount);
+      const partialAmount = draft.method === 'mixed' 
+        ? Math.max(0, draft.cashAmount) + Math.max(0, draft.cardAmount)
+        : Math.max(0, draft.partialAmount);
       const normalizedPayable = Math.max(0, payable);
 
       if (partialAmount <= 0) {
-        return 'Enter the partial payment amount.';
+        return draft.method === 'mixed' ? 'Enter cash and card amounts.' : 'Enter the partial payment amount.';
       }
 
       if (partialAmount >= normalizedPayable) {
@@ -402,7 +419,10 @@ export function paymentAmountPaid(
   }
 
   if (draft.payPartial) {
-    return Math.min(Math.max(0, payable), Math.max(0, draft.partialAmount));
+    const partialAmount = draft.method === 'mixed' 
+      ? Math.max(0, draft.cashAmount) + Math.max(0, draft.cardAmount)
+      : Math.max(0, draft.partialAmount);
+    return Math.min(Math.max(0, payable), partialAmount);
   }
 
   switch (draft.method) {

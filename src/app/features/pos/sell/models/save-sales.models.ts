@@ -11,6 +11,13 @@ export interface SaveSalesGridPayload {
   TaxPer: number;
 }
 
+export interface SaveSalesPaymentPayload {
+  PaidAmount: number;
+  AdvancePaidAmount: number;
+  InsuranceAmount: string;
+  PaymentMode: string;
+}
+
 export interface SaveSalesDetailsPayload {
   SalesId: number;
   LoginId: number;
@@ -21,11 +28,12 @@ export interface SaveSalesDetailsPayload {
   Tax: string;
   NetTotal: string;
   Balance: string;
-  PaidAmount: number;
-  AdvancePaidAmount: number;
-  PaymentMode: string;
+  PaidAmount?: number;
+  AdvancePaidAmount?: number;
+  PaymentMode?: string;
   /** Insurance coverage amount; empty string when no insurance is applied. */
-  InsuranceAmount: string;
+  InsuranceAmount?: string;
+  payments?: SaveSalesPaymentPayload[];
   CustomerName: string;
   CustomerNo: string;
   SalesManId: number;

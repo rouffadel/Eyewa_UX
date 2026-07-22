@@ -20,6 +20,7 @@
     </div>
   }
 
+<!--
   <div class="reports-page__actions">
     @for (action of actions; track action.key) {
       <button
@@ -35,4 +36,87 @@
   </div>
 
   <p class="reports-page__shortcut">F9 Pay &amp; Print</p>
+-->
+
+  <div class="reports-grid-section">
+    <div class="reports-filter-row">
+      <label class="reports-filter-field">
+        <span class="reports-filter-label">From Date</span>
+        <input type="date" class="reports-filter-input" [value]="fromDate()" (change)="onFromDateChange($event)" />
+      </label>
+      <label class="reports-filter-field">
+        <span class="reports-filter-label">To Date</span>
+        <input type="date" class="reports-filter-input" [value]="toDate()" (change)="onToDateChange($event)" />
+      </label>
+      <button type="button" class="reports-btn-search" (click)="loadFramesSalesReport()" [disabled]="isLoading()">
+        {{ isLoading() ? 'Loading...' : 'Search' }}
+      </button>
+      <button type="button" class="reports-btn-clear" (click)="clearFramesSalesReport()" [disabled]="isLoading()">
+        Clear
+      </button>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="reports-error-message">
+        {{ errorMessage() }}
+      </div>
+    }
+
+    <div class="reports-table-container">
+      <table class="reports-table">
+        <thead>
+          <tr>
+            <th>Sale ID</th>
+            <th>Store</th>
+            <th>Customer Name</th>
+            <th>Customer No</th>
+            <th>Invoice Payment ID</th>
+            <th>Date</th>
+            <th>Amount</th>
+            <th>Mode</th>
+            <th>Insurance</th>
+            <th>Net Total</th>
+            <th>Balance</th>
+            <th>Products</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (reportData().length === 0 && !isLoading()) {
+            <tr>
+              <td colspan="12" class="reports-table-empty">No results found.</td>
+            </tr>
+          }
+          @for (row of reportData(); track row.SaleID) {
+            <tr>
+              <td>{{ row.SaleID }}</td>
+              <td>{{ row.StoreName }}</td>
+              <td>{{ row.CustomerName }}</td>
+              <td>{{ row.CustomerNo }}</td>
+              <td>{{ row.InvoicePaymentID }}</td>
+              <td>{{ row.PaymentDate | date:'short' }}</td>
+              <td>{{ row.PaymentAmount }}</td>
+              <td>{{ row.PaymentMode }}</td>
+              <td>{{ row.InsuranceAmount }}</td>
+              <td>{{ row.NetTotal }}</td>
+              <td>{{ row.Balance }}</td>
+              <td>{{ row.Products }}</td>
+            </tr>
+          }
+        </tbody>
+        <!-- @if (extraData()) {
+          <tfoot>
+            <tr>
+              <th colspan="6" style="text-align: right; padding-right: 1rem;">Totals:</th>
+              <th>{{ extraData().TotalAmount | number:'1.2-2' }}</th>
+              <th></th>
+              <th>{{ extraData().TotalInsurance | number:'1.2-2' }}</th>
+              <th>{{ extraData().TotalNetTotal | number:'1.2-2' }}</th>
+              <th>{{ extraData().TotalBalance | number:'1.2-2' }}</th>
+              <th></th>
+            </tr>
+          </tfoot>
+        } -->
+      </table>
+    </div>
+  </div>
 </section>
