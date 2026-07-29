@@ -105,7 +105,7 @@ describe('AuthService persistence', () => {
           provide: AppConfigService,
           useValue: {
             settings: {
-              apiUrl: 'https://demo.api.eyewacloud.com/api',
+              apiUrl: 'https://localhost:7207/api',
               useMockAuth: false,
             },
           },
@@ -151,7 +151,7 @@ describe('AuthService persistence', () => {
           provide: AppConfigService,
           useValue: {
             settings: {
-              apiUrl: 'https://demo.api.eyewacloud.com/api',
+              apiUrl: 'https://localhost:7207/api',
               useMockAuth: false,
             },
           },

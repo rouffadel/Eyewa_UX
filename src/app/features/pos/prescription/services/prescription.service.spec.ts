@@ -19,7 +19,7 @@ describe('PrescriptionService', () => {
           provide: AppConfigService,
           useValue: {
             settings: {
-              apiUrl: 'https://demo.api.eyewacloud.com/api',
+              apiUrl: 'https://localhost:7207/api',
               saveOrderLensePath: 'prescriptions/SaveOrderLense',
             },
           },
@@ -75,7 +75,7 @@ describe('PrescriptionService', () => {
     });
 
     const req = httpMock.expectOne(
-      'https://demo.api.eyewacloud.com/api/prescriptions/SaveOrderLense',
+      'https://localhost:7207/api/prescriptions/SaveOrderLense',
     );
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({

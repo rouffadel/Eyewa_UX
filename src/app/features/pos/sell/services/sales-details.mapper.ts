@@ -15,21 +15,12 @@ export function paymentDraftFromSalesDetails(
 ): Partial<PaymentDraft> {
   const draft: Partial<PaymentDraft> = {
     discountAmount: Math.max(0, payment.discount),
+    settleRemainingBalance: true,
+    partialAmount: 0,
   };
 
-  const remainingBalance = Math.max(0, payment.balance);
-  const netTotal = Math.max(0, payment.netTotal);
-
-  if (remainingBalance > 0 && remainingBalance < netTotal) {
-    draft.payFull = true;
-    draft.settleRemainingBalance = true;
-    draft.payPartial = false;
-    draft.partialAmount = 0;
-  } else {
-    draft.payFull = true;
-    draft.settleRemainingBalance = false;
-    draft.payPartial = false;
-    draft.partialAmount = 0;
+  if (payment.insuranceAmount > 0) {
+    draft.applyInsurance = true;
   }
 
   return draft;
@@ -40,7 +31,7 @@ function toCartItem(line: SalesDetailsGridLineItem): CartLineItem {
   const product: Product = {
     sku: `sales-product-${line.productId}`,
     name: formatLineName(line),
-    price: line.sellingPrice,
+    price: line.productValue,
     category: 'frames',
     description: line.categoryName,
   };
@@ -49,7 +40,7 @@ function toCartItem(line: SalesDetailsGridLineItem): CartLineItem {
     lineId: `sales-${line.salesDetailsId}`,
     product,
     qty: line.quantity,
-    unitPrice: line.sellingPrice,
+    unitPrice: line.productValue,
     discount: discountAmount,
     variantLabel: line.categoryName,
   };
@@ -67,7 +58,7 @@ function formatLineName(line: SalesDetailsGridLineItem): string {
 }
 
 function calculateLineDiscount(line: SalesDetailsGridLineItem): number {
-  const subtotal = line.sellingPrice * line.quantity;
+  const subtotal = line.productValue * line.quantity;
   const percent = Math.max(0, line.discountPercent);
 
   return subtotal * (percent / 100);

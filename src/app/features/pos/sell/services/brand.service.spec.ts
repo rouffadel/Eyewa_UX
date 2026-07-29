@@ -12,7 +12,7 @@ describe('BrandService', () => {
 
   const appConfigStub = {
     settings: {
-      apiUrl: 'https://demo.api.eyewacloud.com/api',
+      apiUrl: 'https://localhost:7207/api',
       getBrandPath: 'products/GetBrand',
     },
   };
@@ -35,7 +35,7 @@ describe('BrandService', () => {
     const promise = service.getBrands('J');
 
     const req = httpMock.expectOne(
-      'https://demo.api.eyewacloud.com/api/products/GetBrand?BrandName=J',
+      'https://localhost:7207/api/products/GetBrand?BrandName=J',
     );
     expect(req.request.method).toBe('GET');
 
@@ -61,7 +61,7 @@ describe('BrandService', () => {
     const promise = service.getBrands('A');
 
     const req = httpMock.expectOne(
-      'https://demo.api.eyewacloud.com/api/products/GetBrand?BrandName=A',
+      'https://localhost:7207/api/products/GetBrand?BrandName=A',
     );
     expect(req.request.method).toBe('GET');
 
@@ -87,7 +87,7 @@ describe('BrandService', () => {
     const promise = service.getBrands('b');
 
     const req = httpMock.expectOne(
-      'https://demo.api.eyewacloud.com/api/products/GetBrand?BrandName=b',
+      'https://localhost:7207/api/products/GetBrand?BrandName=b',
     );
     req.flush({
       status: '200',
@@ -108,7 +108,7 @@ describe('BrandService', () => {
     const promise = service.getBrands('  Ray  ');
 
     const req = httpMock.expectOne(
-      'https://demo.api.eyewacloud.com/api/products/GetBrand?BrandName=Ray',
+      'https://localhost:7207/api/products/GetBrand?BrandName=Ray',
     );
     req.flush({
       status: '200',

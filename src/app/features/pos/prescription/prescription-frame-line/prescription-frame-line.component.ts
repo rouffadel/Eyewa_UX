@@ -74,6 +74,7 @@ export class PrescriptionFrameLineComponent {
         void this.runBrandSearch(query);
       });
 
+    this.GetProductsByStoreId();
     this.modelSearchSubject
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
       .subscribe((query) => {
@@ -207,6 +208,19 @@ export class PrescriptionFrameLineComponent {
     const sale = parseNumericInput(raw);
     this.salePrice.set(sale);
     this.applySalePriceDiscount(sale);
+  }
+
+
+  products: any[] = [];
+  GetProductsByStoreId(){
+    const storeId = this.storeId();
+    this.productService.getAllProductsByStoreId(storeId)
+      .then((options) => {
+        this.products = options;
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   }
 
   protected maxDiscountCap(): number | null {

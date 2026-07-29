@@ -11,7 +11,7 @@ describe('MeasurementService', () => {
         MeasurementService,
         {
           provide: AppConfigService,
-          useValue: { settings: { apiUrl: 'https://demo.api.eyewacloud.com/api' } },
+          useValue: { settings: { apiUrl: 'https://localhost:7207/api' } },
         },
       ],
     });

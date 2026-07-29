@@ -12,7 +12,7 @@ describe('PrescriptionDropdownService', () => {
 
   const appConfigStub = {
     settings: {
-      apiUrl: 'https://demo.api.eyewacloud.com/api',
+      apiUrl: 'https://localhost:7207/api',
       getPrescriptionDropDownsPath: 'prescriptions/GetPrescriptionDropDowns',
     },
   };
@@ -35,7 +35,7 @@ describe('PrescriptionDropdownService', () => {
     const promise = service.getDropdowns();
 
     const req = httpMock.expectOne(
-      'https://demo.api.eyewacloud.com/api/prescriptions/GetPrescriptionDropDowns',
+      'https://localhost:7207/api/prescriptions/GetPrescriptionDropDowns',
     );
     expect(req.request.method).toBe('GET');
 

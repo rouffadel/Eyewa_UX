@@ -67,7 +67,7 @@ function mapFrames(lines: SalesDetailsGridLineItem[]): PrescriptionFrameLine[] {
     brandName: line.brandName,
     productId: line.productId,
     modelNo: line.productName,
-    sellingPrice: line.sellingPrice,
+    sellingPrice: line.productValue,
     quantity: line.quantity,
     maxDiscount: line.maxDiscount,
     discountPercent: line.discountPercent,
@@ -79,10 +79,12 @@ function mapLenses(lines: OrderLenseLine[]): PrescriptionLensLine[] {
   return lines
     .filter((line) => line.isActive && !line.isDeleted)
     .map((line) => ({
+      orderLenseId: line.orderLenseId,
       category: line.category,
       orderLens: line.orderLense,
       price: line.price,
       quantity: line.quantity,
+      originalQuantity: line.quantity,
     }));
 }
 

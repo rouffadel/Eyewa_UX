@@ -37,6 +37,9 @@ export interface SaveSalesDetailsPayload {
   CustomerName: string;
   CustomerNo: string;
   SalesManId: number;
+  DeliveryDate?: string;
+  EarnedLoyaltyPoints?: number;
+  RedeemedLoyaltyPoints?: number;
 }
 
 export interface SaveSalesDetailsRow {

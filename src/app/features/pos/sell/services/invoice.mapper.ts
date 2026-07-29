@@ -20,6 +20,8 @@ export interface BuildInvoiceInput {
   latestPrescription: PrescriptionSummary | null;
   staffName: string;
   orderPaymentBeforeSave?: SalesDetailsPaymentSummary | null;
+  storeName?: string;
+  storeAddress?: string;
 }
 
 export interface BuildInvoiceFromExistingOrderInput {
@@ -33,12 +35,14 @@ export interface BuildInvoiceFromExistingOrderInput {
   staffName: string;
   invoiceDate?: string;
   qrcodeImg?: string | null;
+  storeName?: string;
+  storeAddress?: string;
 }
 
 export function buildInvoiceFromExistingOrder(
   input: BuildInvoiceFromExistingOrderInput,
 ): InvoiceViewModel {
-  const netTotal = Math.max(0, input.orderPayment.netTotal);
+  const netTotal = Math.max(0, input.paymentTotals.payable);
   const balance = Math.max(0, input.orderPayment.balance);
   const paidFields = mapInvoicePaidFields(netTotal, balance, null, undefined, {
     treatOutstandingAsPreviouslyPaid: true,
@@ -53,6 +57,8 @@ export function buildInvoiceFromExistingOrder(
     prescriptionRecord: input.prescriptionRecord,
     latestPrescription: input.latestPrescription,
     staffName: input.staffName,
+    storeName: input.storeName,
+    storeAddress: input.storeAddress,
   });
 
   return {
@@ -91,17 +97,20 @@ export function buildInvoiceViewModel(input: BuildInvoiceInput): InvoiceViewMode
     ...mapInvoiceSummaryFields(input.paymentTotals),
     ...paymentFields,
     user: input.staffName,
+    storeName: input.storeName,
+    storeAddress: input.storeAddress,
   };
 }
 
 export function mapInvoiceSummaryFields(
   totals: PaymentTotals,
-): Pick<InvoiceViewModel, 'subtotal' | 'discount' | 'vat' | 'total'> {
+): Pick<InvoiceViewModel, 'subtotal' | 'discount' | 'vat' | 'total' | 'insuranceAmount'> {
   return {
     subtotal: formatMoney(totals.subtotal),
     discount: formatMoney(totals.discount),
     vat: formatMoney(totals.vat),
     total: formatMoney(totals.total),
+    insuranceAmount: totals.insuranceAmount > 0 ? formatMoney(totals.insuranceAmount) : undefined,
   };
 }
 

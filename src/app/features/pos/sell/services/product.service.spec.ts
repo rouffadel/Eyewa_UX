@@ -139,7 +139,7 @@ describe('ProductService', () => {
     const promise = service.searchProductsByKey('B');
 
     const req = httpMock.expectOne(
-      'https://demo.api.eyewacloud.com/api/products/GetProduct?ProductName=B',
+      'https://localhost:7207/api/products/GetProduct?ProductName=B',
     );
     expect(req.request.method).toBe('GET');
 
@@ -199,7 +199,7 @@ describe('ProductService', () => {
     const promise = service.searchProductsByKey('  B  ');
 
     const req = httpMock.expectOne(
-      'https://demo.api.eyewacloud.com/api/products/GetProduct?ProductName=B',
+      'https://localhost:7207/api/products/GetProduct?ProductName=B',
     );
     req.flush({
       status: '200',

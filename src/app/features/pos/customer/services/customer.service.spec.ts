@@ -12,7 +12,7 @@ describe('CustomerService', () => {
 
   const appConfigStub = {
     settings: {
-      apiUrl: 'https://demo.api.eyewacloud.com/api',
+      apiUrl: 'https://localhost:7207/api',
       insertSalesPath: 'sales/InsertSales',
     },
   };
@@ -43,7 +43,7 @@ describe('CustomerService', () => {
 
     const promise = service.insertSales(payload);
 
-    const req = httpMock.expectOne('https://demo.api.eyewacloud.com/api/sales/InsertSales');
+    const req = httpMock.expectOne('https://localhost:7207/api/sales/InsertSales');
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual(payload);
 
@@ -87,7 +87,7 @@ describe('CustomerService', () => {
     const promise = service.insertSales(payload);
 
     httpMock
-      .expectOne('https://demo.api.eyewacloud.com/api/sales/InsertSales')
+      .expectOne('https://localhost:7207/api/sales/InsertSales')
       .flush({
         status: '200',
         message: 'Success',

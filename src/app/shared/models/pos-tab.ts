@@ -1,11 +1,11 @@
-export type PosTab = 'sell' | 'prescription' | 'reports' | 'insurance' | 'more';
+export type PosTab = 'sell' | 'prescription' | 'reports' | 'insurance' | 'more' | 'deliveries';
 
 export const POS_TABS: PosTab[] = [
   'sell',
   'prescription',
   'reports',
   'insurance',
-  'more',
+  'deliveries',
 ];
 
 export function posTabFromUrlSegment(segment: string | undefined): PosTab | null {

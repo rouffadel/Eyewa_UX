@@ -12,7 +12,7 @@ describe('TokenRefreshService', () => {
 
   const appConfigStub = {
     settings: {
-      apiUrl: 'https://demo.api.eyewacloud.com/api',
+      apiUrl: 'https://localhost:7207/api',
       authRefreshPath: 'auth/RefreshToken',
     },
   };
@@ -34,7 +34,7 @@ describe('TokenRefreshService', () => {
   it('should refresh tokens with POST body', async () => {
     const promise = service.refresh('old-refresh-token');
 
-    const req = httpMock.expectOne('https://demo.api.eyewacloud.com/api/auth/RefreshToken');
+    const req = httpMock.expectOne('https://localhost:7207/api/auth/RefreshToken');
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ token: 'old-refresh-token' });
 
@@ -58,7 +58,7 @@ describe('TokenRefreshService', () => {
     const promise = service.refresh('old-refresh-token');
 
     httpMock
-      .expectOne('https://demo.api.eyewacloud.com/api/auth/RefreshToken')
+      .expectOne('https://localhost:7207/api/auth/RefreshToken')
       .flush({
         status: '200',
         message: 'Success',

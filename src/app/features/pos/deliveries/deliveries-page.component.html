@@ -1,0 +1,54 @@
+<div class="deliveries-page">
+  <header class="deliveries-header">
+    <h1 class="deliveries-title">Today's Deliveries</h1>
+  </header>
+
+  @if (isLoading()) {
+    <div class="deliveries-loading">Loading deliveries...</div>
+  } @else if (error()) {
+    <div class="deliveries-error">{{ error() }}</div>
+  } @else if (deliveries().length === 0) {
+    <div class="deliveries-empty">No deliveries scheduled for today.</div>
+  } @else {
+    <div class="deliveries-table-container">
+      <table class="deliveries-table">
+        <thead>
+          <tr>
+            <th>Customer Name</th>
+            <th>Mobile Number</th>
+            <th>Gross Total</th>
+            <th>Paid Amount</th>
+            <th>Insurance Amount</th>
+            <th>Balance</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (delivery of deliveries(); track delivery.SalesId) {
+            <tr>
+              <td>{{ delivery.CustomerName }}</td>
+              <td>{{ delivery.MobileNumber }}</td>
+              <td>{{ delivery.GrossTotal | number:'1.2-2' }} SAR</td>
+              <td>{{ delivery.PaidAmount | number:'1.2-2' }} SAR</td>
+              <td>{{ (delivery.InsuranceAmount || 0) | number:'1.2-2' }} SAR</td>
+              <td>{{ getRemainingBalance(delivery) | number:'1.2-2' }} SAR</td>
+              <td>
+                @if (getRemainingBalance(delivery) > 0) {
+                  <button 
+                    class="deliveries-btn-open" 
+                    (click)="onOpen(delivery)"
+                    aria-label="Open delivery"
+                  >
+                    Open
+                  </button>
+                } @else {
+                  <span class="deliveries-btn-closed">Closed</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

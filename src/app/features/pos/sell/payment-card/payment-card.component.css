@@ -145,6 +145,11 @@
   cursor: pointer;
 }
 
+.payment-card__loyalty-toggle--disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 .payment-card__loyalty-text {
   flex: 1 1 auto;
   min-width: 0;

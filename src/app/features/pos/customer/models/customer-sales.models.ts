@@ -83,3 +83,13 @@ export function buildCreatedCustomerSession(
     createdAt: new Date().toISOString(),
   };
 }
+
+export interface GetLoyaltyPointsResponse {
+  status: string;
+  message: string;
+  objresult: { points: number };
+}
+
+export interface GetLoyaltyPointsResult {
+  points: number;
+}

@@ -31,10 +31,12 @@ export interface PrescriptionFrameLineTotals {
 }
 
 export interface PrescriptionLensLine {
+  orderLenseId?: number | null;
   category: string;
   orderLens: string;
   price: number | null;
   quantity: number;
+  originalQuantity?: number;
 }
 
 export interface PrescriptionFormValue {
@@ -159,10 +161,12 @@ export function createEmptyFrameLine(category: string = FRAME_CATEGORIES[0]): Pr
 
 export function createEmptyLensLine(): PrescriptionLensLine {
   return {
+    orderLenseId: null,
     category: LENS_CATEGORY_OPTIONS[0].value,
     orderLens: '',
     price: null,
     quantity: 1,
+    originalQuantity: 0,
   };
 }
 

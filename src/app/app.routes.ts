@@ -49,6 +49,13 @@ export const routes: Routes = [
         component: ReportsPageComponent,
       },
       {
+        path: 'deliveries',
+        loadComponent: () =>
+          import('./features/pos/deliveries/deliveries-page.component').then(
+            (m) => m.DeliveriesPageComponent,
+          ),
+      },
+      {
         path: 'measurements',
         loadComponent: () =>
           import('./features/pos/measurements/measurements-form.component').then(

@@ -10,7 +10,7 @@ import {
   SaveSalesGridPayload,
 } from '../models/save-sales.models';
 import { SalesDetailsPaymentSummary } from '../models/sales-details-grid.models';
-import { paymentAmountPaid } from './payment.service';
+import { paymentAmountPaid, orderAmountAlreadyPaid } from './payment.service';
 
 interface BuildSaveSalesPayloadOptions {
   customer: Customer;
@@ -23,6 +23,7 @@ interface BuildSaveSalesPayloadOptions {
   orderPayment?: SalesDetailsPaymentSummary | null;
   /** Coverage amount already deducted from payable; empty string when none. */
   insuranceAmount?: number | null;
+  deliveryDate?: string | null;
 }
 
 export function buildSaveSalesDetailsPayload({
@@ -35,6 +36,7 @@ export function buildSaveSalesDetailsPayload({
   draft,
   orderPayment = null,
   insuranceAmount = null,
+  deliveryDate = null,
 }: BuildSaveSalesPayloadOptions): SaveSalesDetailsPayload {
   const salesId = customer.salesId ?? record.salesId;
 
@@ -74,6 +76,8 @@ export function buildSaveSalesDetailsPayload({
     CustomerName: customer.displayName,
     CustomerNo: customer.phone ?? customer.phoneMasked,
     SalesManId: salesManId,
+    RedeemedLoyaltyPoints: draft.redeemLoyalty && draft.loyaltyPoints > 0 ? Math.min(draft.loyaltyPoints, netTotal) : 0,
+    ...(deliveryDate ? { DeliveryDate: deliveryDate } : {}),
   };
 
   if (draft.method === 'mixed') {
@@ -116,7 +120,8 @@ function resolveSaveSalesPaymentAmounts(
   const roundedNetTotal = roundMoney(netTotal);
 
   if (draft.settleRemainingBalance && orderPayment) {
-    const remainingBalance = roundMoney(Math.max(0, orderPayment.balance));
+    const alreadyPaid = orderAmountAlreadyPaid(orderPayment);
+    const remainingBalance = roundMoney(Math.max(0, payable - alreadyPaid));
     return {
       paidAmount: remainingBalance,
       advancePaidAmount: remainingBalance,
@@ -124,22 +129,15 @@ function resolveSaveSalesPaymentAmounts(
     };
   }
 
-  if (draft.payPartial) {
-    const paidAmount = roundMoney(
-      Math.min(roundedNetTotal, paymentAmountPaid(payable, draft, orderPayment)),
-    );
-
-    return {
-      paidAmount,
-      advancePaidAmount: paidAmount,
-      balance: roundMoney(Math.max(0, roundedNetTotal - paidAmount)),
-    };
-  }
+  const alreadyPaid = orderPayment ? orderAmountAlreadyPaid(orderPayment) : 0;
+  const paidAmount = roundMoney(
+    paymentAmountPaid(payable, draft, orderPayment),
+  );
 
   return {
-    paidAmount: roundedNetTotal,
-    advancePaidAmount: roundedNetTotal,
-    balance: 0,
+    paidAmount,
+    advancePaidAmount: paidAmount,
+    balance: roundMoney(Math.max(0, payable - alreadyPaid - paidAmount)),
   };
 }
 

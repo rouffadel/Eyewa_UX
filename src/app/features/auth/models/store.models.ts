@@ -15,6 +15,18 @@ export interface FillStoreRow {
   isDefault?: boolean;
 }
 
+export interface Product {
+  productID: number;
+  productName: string;
+  productValue: number;
+  maxDiscount: number;
+  categoryID: number;
+  categoryName: string;
+  brandID: number;
+  brandName: string;
+  availableQuantity: number;
+}
+
 /** Current API shape — `objresult` is a store array. */
 export type FillStoreObjResult =
   | FillStoreRow[]

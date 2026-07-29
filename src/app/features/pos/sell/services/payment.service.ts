@@ -24,7 +24,8 @@ export class PaymentService {
   calculateTotals(
     subtotal: number,
     draft: PaymentDraft,
-    insuranceDiscountPercentage: number | null = null,
+    insuranceCompensation: number | null = null,
+    insuranceCompensationType: 'percentage' | 'amount' | null = null,
   ): PaymentTotals {
     const discount = Math.max(0, draft.discountAmount);
     const afterDiscount = Math.max(0, subtotal - discount);
@@ -36,14 +37,19 @@ export class PaymentService {
         ? Math.min(draft.loyaltyPoints, total)
         : 0;
     const afterLoyalty = Math.max(0, total - loyaltyDeduction);
-    const insurancePercentage =
-      insuranceDiscountPercentage != null && Number.isFinite(insuranceDiscountPercentage)
-        ? Math.max(0, insuranceDiscountPercentage)
-        : 0;
-    const insuranceAmount =
-      insurancePercentage > 0
-        ? Math.round(((afterLoyalty * insurancePercentage) / 100) * 100) / 100
-        : 0;
+    
+    let insuranceAmount = 0;
+    const compensation = insuranceCompensation != null && Number.isFinite(insuranceCompensation) ? Math.max(0, insuranceCompensation) : 0;
+    const compensationType = insuranceCompensationType || 'percentage';
+
+    if (compensation > 0) {
+      if (compensationType === 'amount') {
+        insuranceAmount = Math.min(afterLoyalty, compensation);
+      } else {
+        insuranceAmount = Math.round(((afterLoyalty * compensation) / 100) * 100) / 100;
+      }
+    }
+    
     const payable = Math.max(0, afterLoyalty - insuranceAmount);
 
     return {
@@ -53,7 +59,8 @@ export class PaymentService {
       total,
       loyaltyDeduction,
       insuranceAmount,
-      insurancePercentage,
+      insuranceCompensation: compensation,
+      insuranceCompensationType: compensationType,
       payable,
     };
   }
@@ -67,53 +74,30 @@ export class PaymentService {
     method: PaymentMethod,
     draft: PaymentDraft,
     orderPayment?: SalesDetailsPaymentSummary | null,
-  ): Pick<PaymentDraft, 'cashAmount' | 'cardAmount'> {
-    if (draft.settleRemainingBalance) {
-      const due = settlementAmountDue(payable, draft, orderPayment);
-      return this.partialAmountsForMethod(method, due);
-    }
+  ): Pick<PaymentDraft, 'cashAmount' | 'cardAmount' | 'partialAmount'> {
+    // Default to 0 as requested by user instead of the full payable amount
+    const amount = Math.max(0, draft.partialAmount);
 
-    if (draft.payPartial) {
-      if (method === 'mixed') {
-        if (draft.method !== 'mixed') {
-          const half = Math.round((draft.partialAmount / 2) * 100) / 100;
-          return {
-            cashAmount: half,
-            cardAmount: Math.max(0, draft.partialAmount - half),
-          };
-        }
+    if (method === 'mixed') {
+      if (draft.method !== 'mixed') {
+        const half = Math.round((amount / 2) * 100) / 100;
         return {
-          cashAmount: Math.max(0, draft.cashAmount),
-          cardAmount: Math.max(0, draft.cardAmount),
+          cashAmount: half,
+          cardAmount: Math.max(0, amount - half),
+          partialAmount: amount,
         };
       }
-      return this.partialAmountsForMethod(method, draft.partialAmount);
+      return {
+        cashAmount: Math.max(0, draft.cashAmount),
+        cardAmount: Math.max(0, draft.cardAmount),
+        partialAmount: draft.partialAmount,
+      };
     }
 
-    const normalizedPayable = Math.max(0, payable);
-
-    switch (method) {
-      case 'cash':
-        return { cashAmount: normalizedPayable, cardAmount: 0 };
-      case 'card':
-        return { cashAmount: 0, cardAmount: normalizedPayable };
-      case 'mixed': {
-        if (draft.method !== 'mixed') {
-          const half = Math.round((normalizedPayable / 2) * 100) / 100;
-          return {
-            cashAmount: half,
-            cardAmount: Math.max(0, normalizedPayable - half),
-          };
-        }
-
-        return {
-          cashAmount: Math.max(0, draft.cashAmount),
-          cardAmount: Math.max(0, draft.cardAmount),
-        };
-      }
-      default:
-        return { cashAmount: 0, cardAmount: 0 };
-    }
+    return {
+      ...this.partialAmountsForMethod(method, amount),
+      partialAmount: amount,
+    };
   }
 
   applyMixedCashAmount(_payable: number, cashAmount: number): Pick<PaymentDraft, 'cashAmount'> {
@@ -128,20 +112,16 @@ export class PaymentService {
     };
   }
 
-  isPaymentComplete(
-    payable: number,
-    draft: PaymentDraft,
-    orderPayment?: SalesDetailsPaymentSummary | null,
-  ): boolean {
-    if (draft.method === 'more') {
-      return false;
-    }
-
+  isPaymentComplete(payable: number, draft: PaymentDraft, orderPayment?: SalesDetailsPaymentSummary | null): boolean {
     const normalizedPayable = Math.max(0, payable);
 
     if (normalizedPayable === 0 && !draft.settleRemainingBalance) {
       return false;
     }
+
+    const amount = draft.method === 'mixed' 
+      ? mixedAmountPaid(draft)
+      : Math.max(0, draft.partialAmount);
 
     if (draft.settleRemainingBalance) {
       const due = settlementAmountDue(payable, draft, orderPayment);
@@ -149,30 +129,33 @@ export class PaymentService {
         return false;
       }
 
-      return this.amountsEqual(mixedAmountPaid(draft), due);
+      return this.amountsEqual(amount, due);
     }
 
-    if (draft.payPartial) {
-      const partialAmount = draft.method === 'mixed' 
-        ? Math.max(0, draft.cashAmount) + Math.max(0, draft.cardAmount)
-        : Math.max(0, draft.partialAmount);
-      return partialAmount > 0 && partialAmount < normalizedPayable;
+    return this.amountsEqual(amount, normalizedPayable);
+  }
+
+  isPartialPayment(payable: number, draft: PaymentDraft, orderPayment?: SalesDetailsPaymentSummary | null): boolean {
+    const normalizedPayable = Math.max(0, payable);
+
+    if (normalizedPayable === 0 && !draft.settleRemainingBalance) {
+      return false;
     }
 
-    switch (draft.method) {
-      case 'cash':
-        return this.amountsEqual(draft.cashAmount, normalizedPayable) && draft.cardAmount === 0;
-      case 'card':
-        return this.amountsEqual(draft.cardAmount, normalizedPayable) && draft.cashAmount === 0;
-      case 'mixed':
-        return (
-          draft.cashAmount > 0 &&
-          draft.cardAmount > 0 &&
-          this.amountsEqual(draft.cashAmount + draft.cardAmount, normalizedPayable)
-        );
-      default:
+    const amount = draft.method === 'mixed' 
+      ? mixedAmountPaid(draft)
+      : Math.max(0, draft.partialAmount);
+
+    if (draft.settleRemainingBalance) {
+      const due = settlementAmountDue(payable, draft, orderPayment);
+      if (due <= 0) {
         return false;
+      }
+
+      return amount > 0 && amount < due;
     }
+
+    return amount > 0 && amount < normalizedPayable;
   }
 
   paymentValidationMessage(
@@ -184,56 +167,31 @@ export class PaymentService {
       return 'Select Cash, Card, or Mixed to continue.';
     }
 
+    const amount = draft.method === 'mixed' 
+      ? mixedAmountPaid(draft)
+      : Math.max(0, draft.partialAmount);
+
+    if (amount <= 0) {
+      return draft.method === 'mixed' ? 'Enter cash and card amounts.' : 'Enter the payment amount.';
+    }
+
     if (draft.settleRemainingBalance) {
       const due = settlementAmountDue(payable, draft, orderPayment);
       if (due <= 0) {
         return 'No remaining balance to pay.';
       }
 
-      if (!this.isPaymentComplete(payable, draft, orderPayment)) {
-        if (draft.method === 'mixed') {
-          const balance = Math.max(0, due - mixedAmountPaid(draft));
-          if (balance > AMOUNT_EPSILON) {
-            return `Remaining balance: ${formatMoney(balance)} SAR. Cash and card must cover the amount due.`;
-          }
-
-          return 'Enter cash and card amounts that add up to the remaining balance.';
-        }
-
-        return 'Payment amount must match the remaining balance.';
+      if (amount > due) {
+        return 'Payment amount cannot exceed the remaining balance.';
       }
 
       return null;
     }
 
-    if (draft.payPartial) {
-      const partialAmount = draft.method === 'mixed' 
-        ? Math.max(0, draft.cashAmount) + Math.max(0, draft.cardAmount)
-        : Math.max(0, draft.partialAmount);
-      const normalizedPayable = Math.max(0, payable);
+    const normalizedPayable = Math.max(0, payable);
 
-      if (partialAmount <= 0) {
-        return draft.method === 'mixed' ? 'Enter cash and card amounts.' : 'Enter the partial payment amount.';
-      }
-
-      if (partialAmount >= normalizedPayable) {
-        return 'Partial payment must be less than the payable amount.';
-      }
-
-      return null;
-    }
-
-    if (!this.isPaymentComplete(payable, draft)) {
-      if (draft.method === 'mixed') {
-        const balance = mixedBalanceRemaining(payable, draft);
-        if (balance > AMOUNT_EPSILON) {
-          return `Remaining balance: ${formatMoney(balance)} SAR. Cash and card must cover the payable amount.`;
-        }
-
-        return 'Enter cash and card amounts that add up to the payable amount.';
-      }
-
-      return 'Payment amount must match the payable amount.';
+    if (amount > normalizedPayable) {
+      return 'Payment amount cannot exceed the payable amount.';
     }
 
     return null;
@@ -290,10 +248,11 @@ export function settlementAmountDue(
   orderPayment?: SalesDetailsPaymentSummary | null,
 ): number {
   if (draft.settleRemainingBalance && orderPayment) {
-    return Math.max(0, orderPayment.balance);
+    const alreadyPaid = orderAmountAlreadyPaid(orderPayment);
+    return Math.max(0, payable - alreadyPaid);
   }
 
-  if (draft.payPartial) {
+  if (draft.method !== 'mixed' && draft.partialAmount > 0) {
     return Math.max(0, draft.partialAmount);
   }
 
@@ -333,7 +292,7 @@ export function resolveInvoicePartialAmount(
   paymentDraft: PaymentDraft | null | undefined,
   orderPayment: SalesDetailsPaymentSummary | null | undefined,
 ): number | undefined {
-  if (paymentDraft?.payPartial && paymentDraft.partialAmount > 0) {
+  if (paymentDraft?.partialAmount && paymentDraft.partialAmount > 0) {
     return paymentDraft.partialAmount;
   }
 
@@ -389,6 +348,7 @@ export function resolveInvoicePaymentBreakdown(
       balance: normalizedBalance,
       totalTax: 0,
       paidAmount: null,
+      insuranceAmount: 0,
     };
     previouslyPaid = orderAmountAlreadyPaid(orderForPreviouslyPaid);
   }
@@ -414,27 +374,18 @@ export function paymentAmountPaid(
   draft: PaymentDraft,
   orderPayment?: SalesDetailsPaymentSummary | null,
 ): number {
+  const amount = draft.method === 'mixed'
+    ? mixedAmountPaid(draft)
+    : Math.max(0, draft.partialAmount);
+
   if (draft.settleRemainingBalance && orderPayment) {
-    return Math.max(0, orderPayment.netTotal);
+    const previouslyPaid = orderAmountAlreadyPaid(orderPayment);
+    const due = Math.max(0, orderPayment.balance);
+    const amountToPayThisTime = Math.min(amount, due);
+    return previouslyPaid + amountToPayThisTime;
   }
 
-  if (draft.payPartial) {
-    const partialAmount = draft.method === 'mixed' 
-      ? Math.max(0, draft.cashAmount) + Math.max(0, draft.cardAmount)
-      : Math.max(0, draft.partialAmount);
-    return Math.min(Math.max(0, payable), partialAmount);
-  }
-
-  switch (draft.method) {
-    case 'cash':
-      return Math.max(0, draft.cashAmount);
-    case 'card':
-      return Math.max(0, draft.cardAmount);
-    case 'mixed':
-      return mixedAmountPaid(draft);
-    default:
-      return Math.max(0, payable);
-  }
+  return Math.min(Math.max(0, payable), amount);
 }
 
 export function paymentBalanceRemaining(
@@ -442,10 +393,6 @@ export function paymentBalanceRemaining(
   draft: PaymentDraft,
   orderPayment?: SalesDetailsPaymentSummary | null,
 ): number {
-  if (draft.settleRemainingBalance) {
-    return 0;
-  }
-
   return Math.max(0, Math.max(0, payable) - paymentAmountPaid(payable, draft, orderPayment));
 }
 

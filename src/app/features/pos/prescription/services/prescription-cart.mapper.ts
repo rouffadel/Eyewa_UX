@@ -92,10 +92,12 @@ function cartItemToLensLine(
   existing?: PrescriptionLensLine,
 ): PrescriptionLensLine {
   return {
+    orderLenseId: existing?.orderLenseId ?? null,
     category: existing?.category ?? item.variantLabel ?? '',
     orderLens: existing?.orderLens ?? item.product.name,
     price: item.unitPrice,
     quantity: Math.max(1, item.qty),
+    originalQuantity: existing?.originalQuantity,
   };
 }
 

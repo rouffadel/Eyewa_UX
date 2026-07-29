@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../auth/services/auth.service';
 import { CustomerProfileCardComponent } from './customer-profile-card/customer-profile-card.component';
@@ -23,10 +23,17 @@ import { SellSessionStore } from './services/sell-session.store';
   templateUrl: './sell-dashboard.component.html',
   styleUrl: './sell-dashboard.component.css',
 })
-export class SellDashboardComponent {
+export class SellDashboardComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
   protected readonly store = inject(SellSessionStore);
+
+  ngOnInit(): void {
+    const customer = this.store.selectedCustomer();
+    if (customer?.salesId != null) {
+      void this.store.loadSalesInsurance(customer);
+    }
+  }
 
   protected onCategoryChange(category: CatalogCategory): void {
     this.store.setCatalogCategory(category);
@@ -58,6 +65,10 @@ export class SellDashboardComponent {
     this.store.updatePaymentDraft({ discountAmount: amount });
   }
 
+  protected onInsuranceToggle(applyInsurance: boolean): void {
+    this.store.toggleInsurance(applyInsurance);
+  }
+
   protected onLoyaltyToggle(enabled: boolean): void {
     this.store.setLoyaltyRedemption(enabled);
   }
@@ -77,24 +88,24 @@ export class SellDashboardComponent {
     this.store.clearStatusMessages();
   }
 
-  protected onPartialToggle(enabled: boolean): void {
-    this.store.setPartialPayment(enabled);
-    this.store.clearStatusMessages();
-  }
-
-  protected onPayFullToggle(enabled: boolean): void {
-    this.store.setPayFull(enabled);
-    this.store.clearStatusMessages();
-  }
 
   protected onPartialAmountChange(amount: number): void {
     this.store.setPartialPaymentAmount(amount);
     this.store.clearStatusMessages();
   }
 
+  protected onDeliveryDateChange(date: string | null): void {
+    this.store.setDeliveryDate(date);
+    this.store.clearStatusMessages();
+  }
+
   protected onPay(): void {
     const staffName = this.auth.currentSession()?.displayName ?? '—';
-    void this.store.pay(staffName);
+    void this.store.pay(staffName).then((paid) => {
+      if (paid) {
+        void this.router.navigate(['/home/sell/invoice']);
+      }
+    });
   }
 
   protected onPayAndPrint(): void {
@@ -115,7 +126,9 @@ export class SellDashboardComponent {
   }
 
   protected onNewPrescription(): void {
-    void this.router.navigate(['/home/prescription']);
+    void this.store.startNewSaleIfLocked().then(() => {
+      void this.router.navigate(['/home/prescription']);
+    });
   }
 
   protected onViewPrescription(): void {

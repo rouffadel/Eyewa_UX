@@ -13,12 +13,11 @@ export interface PaymentDraft {
   method: PaymentMethod;
   cashAmount: number;
   cardAmount: number;
-  payPartial: boolean;
   partialAmount: number;
-  /** Pay the full payable amount (default). Mutually exclusive with payPartial. */
-  payFull: boolean;
+  applyInsurance: boolean;
   /** Pay off the remaining balance on an existing partially-paid order. */
   settleRemainingBalance: boolean;
+  deliveryDate: string | null;
 }
 
 export interface PaymentTotals {
@@ -28,7 +27,8 @@ export interface PaymentTotals {
   total: number;
   loyaltyDeduction: number;
   insuranceAmount: number;
-  insurancePercentage: number;
+  insuranceCompensation: number;
+  insuranceCompensationType: 'percentage' | 'amount' | null;
   payable: number;
 }
 
@@ -39,8 +39,8 @@ export const DEFAULT_PAYMENT_DRAFT: PaymentDraft = {
   method: 'cash',
   cashAmount: 0,
   cardAmount: 0,
-  payPartial: false,
   partialAmount: 0,
-  payFull: true,
+  applyInsurance: true,
   settleRemainingBalance: false,
+  deliveryDate: null,
 };

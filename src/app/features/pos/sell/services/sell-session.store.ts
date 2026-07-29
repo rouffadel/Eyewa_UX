@@ -12,7 +12,7 @@ import { PrescriptionService } from '../../prescription/services/prescription.se
 import { CartLineItem, lineTotal } from '../models/cart.models';
 import { Customer, PrescriptionSummary, SavedPrescriptionListItem } from '../models/customer.models';
 import { InvoiceViewModel } from '../models/invoice.models';
-import { CatalogCategory, Product } from '../models/product.models';
+import { CatalogCategory, Product, ProductOption } from '../models/product.models';
 import { PaymentDraft, PaymentMethod, PaymentRegisterAction } from '../models/payment.models';
 import { SalesDetailsGridLineItem, SalesDetailsPaymentSummary } from '../models/sales-details-grid.models';
 import { BarcodeScanService } from './barcode-scan.service';
@@ -37,7 +37,7 @@ import {
 } from './api-sale-prescription.mapper';
 import { buildSaveSalesDetailsPayload, hasPrescriptionFramesForSales } from './save-sales.mapper';
 import { buildInvoiceFromSaveSalesResponse } from './save-sales-response.mapper';
-import { buildInvoiceFromExistingOrder } from './invoice.mapper';
+import { buildInvoiceFromExistingOrder, BuildInvoiceInput } from './invoice.mapper';
 import { SaveSalesService } from './save-sales.service';
 import {
   createEmptyEyePrescription,
@@ -46,11 +46,15 @@ import {
 } from '../../prescription/models/prescription.models';
 import { SalesInsuranceRecord } from '../../insurance/models/insurance.models';
 import { InsuranceService } from '../../insurance/services/insurance.service';
+import { CustomerService } from '../../customer/services/customer.service';
+import { InsertSalesPayload, formatInvoiceDate } from '../../customer/models/customer-sales.models';
+import { ProductService } from './product.service';
 
 @Injectable({ providedIn: 'root' })
 export class SellSessionStore {
   private readonly payment = inject(PaymentService);
   private readonly customerSession = inject(CustomerSessionService);
+  private readonly customerService = inject(CustomerService);
   private readonly barcodeScan = inject(BarcodeScanService);
   private readonly salesDetails = inject(SalesDetailsService);
   private readonly orderLense = inject(OrderLenseService);
@@ -60,6 +64,7 @@ export class SellSessionStore {
   private readonly categoryService = inject(CategoryService);
   private readonly auth = inject(AuthService);
   private readonly insuranceService = inject(InsuranceService);
+  private readonly productService = inject(ProductService);
 
   readonly selectedCustomer = signal<Customer | null>(this.customerSession.sellCustomer());
   readonly prescriptionLoading = signal(false);
@@ -87,6 +92,42 @@ export class SellSessionStore {
     } else if (customer?.id) {
       this.loadLocalPrescription(customer.id);
     }
+
+    const storeId = this.auth.selectedStore()?.storeId;
+    if (storeId) {
+      void this.loadCatalogProducts(storeId);
+    }
+  }
+
+  async loadCatalogProducts(storeId: number): Promise<void> {
+    try {
+      const options = await this.productService.getAllProductsByStoreId(storeId);
+      const products = options.map((opt) => this.toProduct(opt));
+      this.catalogProducts.set(products);
+    } catch (err) {
+      console.error('Failed to load products for catalog', err);
+    }
+  }
+
+  private toProduct(option: ProductOption): Product {
+    let category: CatalogCategory = 'frames';
+    if (option.categoryName) {
+      const lower = option.categoryName.toLowerCase();
+      if (lower.includes('lens') && !lower.includes('contact')) {
+        category = 'lenses';
+      } else if (lower.includes('contact')) {
+        category = 'contact-lens';
+      } else if (lower.includes('access')) {
+        category = 'accessories';
+      }
+    }
+
+    return {
+      sku: `product-${option.productId}`,
+      name: option.productName,
+      price: option.productValue,
+      category,
+    };
   }
 
   readonly latestPrescription = computed(() => {
@@ -169,11 +210,21 @@ export class SellSessionStore {
     this.payment.calculateTotals(
       this.cartSubtotal(),
       this.paymentDraft(),
-      this.salesInsurance()?.discountPercentage ?? null,
+      this.paymentDraft().applyInsurance
+        ? this.salesInsurance()?.compensation ?? null
+        : null,
+      this.paymentDraft().applyInsurance
+        ? this.salesInsurance()?.compensationType ?? null
+        : null,
     ),
   );
 
   readonly hasSalesInsurance = computed(() => this.salesInsurance() !== null);
+
+  readonly isInsuranceLocked = computed(() => {
+    const summary = this.orderPaymentSummary();
+    return summary ? summary.insuranceAmount > 0 : false;
+  });
 
   readonly canPay = computed(() => {
     if (this.isPaying() || this.prescriptionLoading() || this.orderFullyPaid()) {
@@ -183,7 +234,16 @@ export class SellSessionStore {
     return this.selectedCustomer() !== null && this.cartItems().length > 0;
   });
 
-  readonly orderFullyPaid = computed(() => isOrderFullyPaid(this.orderPaymentSummary()));
+  readonly orderFullyPaid = computed(() => {
+    const summary = this.orderPaymentSummary();
+    if (!summary) return false;
+    
+    if (Math.max(0, summary.netTotal) <= 0) {
+      return false;
+    }
+    
+    return this.outstandingBalance() <= 0.01;
+  });
 
   readonly canPrintReceipt = computed(() => {
     if (this.isPaying() || this.prescriptionLoading() || !this.orderFullyPaid()) {
@@ -199,9 +259,15 @@ export class SellSessionStore {
     () => this.paymentDraft().settleRemainingBalance && this.orderPaymentSummary() !== null,
   );
 
-  readonly outstandingBalance = computed(() =>
-    Math.max(0, this.orderPaymentSummary()?.balance ?? 0),
-  );
+  readonly outstandingBalance = computed(() => {
+    const summary = this.orderPaymentSummary();
+    if (!summary) return 0;
+    
+    const alreadyPaid = orderAmountAlreadyPaid(summary);
+    const newPayable = this.paymentTotals().payable;
+    
+    return Math.max(0, newPayable - alreadyPaid);
+  });
 
   readonly amountAlreadyPaid = computed(() => orderAmountAlreadyPaid(this.orderPaymentSummary()));
 
@@ -214,6 +280,15 @@ export class SellSessionStore {
     const previousId = this.selectedCustomer()?.id;
     this.selectedCustomer.set(customer);
     this.resetLoyaltyRedemption();
+
+    if (customer && customer.phoneMasked) {
+      this.customerService.getCustomerLoyaltyPoints(customer.phoneMasked).then((points) => {
+        const current = this.selectedCustomer();
+        if (current && current.id === customer.id) {
+          this.selectedCustomer.set({ ...current, loyaltyPoints: points });
+        }
+      });
+    }
 
     if (customer?.id !== previousId) {
       this.cartItems.set([]);
@@ -330,7 +405,7 @@ export class SellSessionStore {
       });
   }
 
-  private async loadSalesInsurance(customer: Customer): Promise<void> {
+  async loadSalesInsurance(customer: Customer): Promise<void> {
     const salesId = customer.salesId;
     if (salesId == null) {
       this.salesInsurance.set(null);
@@ -586,6 +661,35 @@ export class SellSessionStore {
     this.loadLocalPrescription(customerId);
   }
 
+  async startNewSaleIfLocked(): Promise<void> {
+    const customer = this.selectedCustomer();
+    if (!customer || !this.isCartLocked()) {
+      return;
+    }
+
+    const storeId = String(this.auth.currentSession()?.user.storeId ?? '');
+    const loginId = String(this.auth.currentSession()?.user.loginId ?? '');
+
+    const payload: InsertSalesPayload = {
+      storeId,
+      customerName: customer.displayName,
+      customerNo: customer.phone ?? customer.phoneMasked,
+      loginId,
+      invoiceNo: '',
+      invoiceDate: formatInvoiceDate(),
+    };
+
+    try {
+      const result = await this.customerService.insertSales(payload);
+      const session = this.customerSession.saveFromCreate(payload, result);
+      
+      this.selectCustomer(this.customerSession.toSellCustomer(session), { freshSale: true });
+    } catch (error) {
+      this.statusMessage.set(error instanceof Error ? error.message : 'Unable to create new sale.');
+      throw error;
+    }
+  }
+
   selectCreatedCustomer(): void {
     const customer = this.customerSession.sellCustomer();
     this.selectCustomer(customer, { freshSale: true });
@@ -729,6 +833,30 @@ export class SellSessionStore {
     this.syncPaymentAmountsToPayable();
   }
 
+  toggleInsurance(applyInsurance: boolean): void {
+    const draft = this.paymentDraft();
+    let partialAmount = draft.partialAmount;
+
+    if (partialAmount > 0) {
+      const currentTotals = this.paymentTotals();
+      const newTotals = this.payment.calculateTotals(
+        this.cartSubtotal(),
+        draft,
+        applyInsurance ? (this.salesInsurance()?.compensation ?? null) : null,
+        applyInsurance ? (this.salesInsurance()?.compensationType ?? null) : null
+      );
+
+      if (applyInsurance) {
+        partialAmount = Math.max(0, partialAmount - newTotals.insuranceAmount);
+      } else {
+        partialAmount = partialAmount + currentTotals.insuranceAmount;
+      }
+    }
+
+    this.paymentDraft.update((current) => ({ ...current, applyInsurance, partialAmount }));
+    this.syncPaymentAmountsToPayable();
+  }
+
   setPaymentMethod(method: PaymentMethod): void {
     const payable = this.paymentTotals().payable;
     const amounts = this.payment.syncAmountsForMethod(payable, method, this.paymentDraft(), this.orderPaymentSummary());
@@ -750,31 +878,6 @@ export class SellSessionStore {
     this.paymentDraft.update((draft) => ({ ...draft, method: 'mixed', ...amounts }));
   }
 
-  setPartialPayment(enabled: boolean): void {
-    const hasOutstanding = this.hasOutstandingOrderBalance();
-
-    this.paymentDraft.update((draft) => ({
-      ...draft,
-      payPartial: enabled,
-      payFull: !enabled,
-      partialAmount: enabled ? draft.partialAmount : 0,
-      settleRemainingBalance: !enabled && hasOutstanding,
-    }));
-    this.syncPaymentAmountsToPayable();
-  }
-
-  setPayFull(enabled: boolean): void {
-    const hasOutstanding = this.hasOutstandingOrderBalance();
-
-    this.paymentDraft.update((draft) => ({
-      ...draft,
-      payFull: enabled,
-      payPartial: !enabled,
-      partialAmount: enabled ? 0 : draft.partialAmount,
-      settleRemainingBalance: enabled && hasOutstanding,
-    }));
-    this.syncPaymentAmountsToPayable();
-  }
 
   private hasOutstandingOrderBalance(): boolean {
     return (this.orderPaymentSummary()?.balance ?? 0) > 0;
@@ -783,12 +886,14 @@ export class SellSessionStore {
   setPartialPaymentAmount(amount: number): void {
     this.paymentDraft.update((draft) => ({
       ...draft,
-      payPartial: true,
-      payFull: false,
       partialAmount: Math.max(0, amount),
       settleRemainingBalance: false,
     }));
     this.syncPaymentAmountsToPayable();
+  }
+
+  setDeliveryDate(date: string | null): void {
+    this.paymentDraft.update((draft) => ({ ...draft, deliveryDate: date }));
   }
 
   setLoyaltyRedemption(enabled: boolean): void {
@@ -944,10 +1049,11 @@ export class SellSessionStore {
           draft,
           orderPayment: this.orderPaymentSummary(),
           insuranceAmount: this.paymentTotals().insuranceAmount,
+          deliveryDate: draft.deliveryDate,
         }),
       );
 
-      const invoiceInput = {
+      const invoiceInput: BuildInvoiceInput = {
         customer,
         cartItems: this.cartItems(),
         paymentTotals: this.paymentTotals(),
@@ -956,6 +1062,8 @@ export class SellSessionStore {
         latestPrescription: this.latestPrescription(),
         staffName,
         orderPaymentBeforeSave,
+        storeName: this.auth.selectedStore()?.storeName,
+        storeAddress: 'Al Ahsa, 829200\n+517272723638, NB.OPTICAL@HOTMAIL.COM',
       };
 
       this.lastInvoice.set(
@@ -996,7 +1104,7 @@ export class SellSessionStore {
       return `${this.paymentModeLabel(draft)} ${formatMoney(due)} SAR (paid in full)`;
     }
 
-    if (draft.payPartial) {
+    if (this.payment.isPartialPayment(payable, draft, this.orderPaymentSummary())) {
       const paid = paymentAmountPaid(payable, draft);
       const balance = paymentBalanceRemaining(payable, draft);
       return `${this.paymentModeLabel(draft)} ${formatMoney(paid)} SAR (balance ${formatMoney(balance)} SAR)`;
@@ -1045,6 +1153,8 @@ export class SellSessionStore {
         staffName,
         invoiceDate: this.loadedSalesInvoiceDate() ?? undefined,
         qrcodeImg: this.loadedSalesQrcodeImg(),
+        storeName: this.auth.selectedStore()?.storeName,
+        storeAddress: 'Al Ahsa, 829200\n+517272723638, NB.OPTICAL@HOTMAIL.COM',
       }),
     );
   }

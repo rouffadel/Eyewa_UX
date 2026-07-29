@@ -57,7 +57,9 @@ export class InsuranceFormComponent implements OnInit {
   protected readonly form = this.fb.group({
     insuranceCompanyId: [null as number | null, Validators.required],
     policyNumber: ['', Validators.required],
-    discountPercentage: [null as number | null, Validators.required],
+    compensation: [null as number | null, Validators.required],
+    compensationType: ['percentage' as 'percentage' | 'amount', Validators.required],
+    validityStartDate: [null as string | null],
     validityEndDate: ['', Validators.required],
   });
 
@@ -178,7 +180,9 @@ export class InsuranceFormComponent implements OnInit {
     this.form.reset({
       insuranceCompanyId: record.insuranceCompanyId,
       policyNumber: record.policyNumber,
-      discountPercentage: record.discountPercentage,
+      compensation: record.compensation,
+      compensationType: record.compensationType,
+      validityStartDate: toDateInputValue(record.validityStartDate),
       validityEndDate: toDateInputValue(record.validityEndDate),
     });
     this.form.markAsPristine();
@@ -199,7 +203,9 @@ export class InsuranceFormComponent implements OnInit {
     this.form.reset({
       insuranceCompanyId: null,
       policyNumber: '',
-      discountPercentage: null,
+      compensation: null,
+      compensationType: 'percentage',
+      validityStartDate: null,
       validityEndDate: '',
     });
   }

@@ -36,7 +36,10 @@
             @if (insuranceCompanyName()) {
               <span class="payment-card__insurance-name">({{ insuranceCompanyName() }})</span>
             }
-            <span class="payment-card__insurance-pct">{{ totals().insurancePercentage }}%</span>
+            <span class="payment-card__insurance-pct">
+              {{ totals().insuranceCompensation }}
+              {{ totals().insuranceCompensationType === 'percentage' ? '%' : 'SAR' }}
+            </span>
           </dt>
           <dd>-{{ formatMoney(totals().insuranceAmount) }}</dd>
         </div>
@@ -45,6 +48,21 @@
 
     <div class="payment-card__checkout-block">
       <div class="payment-card__loyalty">
+        @if (hasSalesInsurance()) {
+          <div class="payment-card__loyalty-row payment-card__insurance-row" style="margin-bottom: 0.5rem;">
+            <label class="payment-card__loyalty-toggle" [class.payment-card__loyalty-toggle--disabled]="isInsuranceLocked()">
+              <span class="payment-card__loyalty-text">Apply Insurance</span>
+              <input
+                type="checkbox"
+                [ngModel]="draft().applyInsurance"
+                (ngModelChange)="insuranceToggle.emit($event)"
+                [disabled]="isInsuranceLocked()"
+              />
+              <span class="payment-card__switch" aria-hidden="true"></span>
+            </label>
+          </div>
+        }
+
         <div class="payment-card__loyalty-row">
           <label class="payment-card__loyalty-toggle">
             <span class="payment-card__loyalty-text">Redeem Loyalty Points</span>
@@ -83,26 +101,6 @@
         <p class="payment-card__paid-banner" role="status">This order is paid in full.</p>
       } @else {
       <div class="payment-card__partial">
-        <label class="payment-card__loyalty-toggle">
-          <span class="payment-card__loyalty-text">Pay Full</span>
-          <input
-            type="checkbox"
-            [ngModel]="draft().payFull"
-            (ngModelChange)="payFullToggle.emit($event)"
-          />
-          <span class="payment-card__switch" aria-hidden="true"></span>
-        </label>
-
-        <label class="payment-card__loyalty-toggle">
-          <span class="payment-card__loyalty-text">Pay Partial</span>
-          <input
-            type="checkbox"
-            [ngModel]="draft().payPartial"
-            (ngModelChange)="partialToggle.emit($event)"
-          />
-          <span class="payment-card__switch" aria-hidden="true"></span>
-        </label>
-
         @if (showSettlementSummary()) {
           <div class="payment-card__mixed-summary payment-card__settlement-summary">
             <div class="payment-card__method-row">
@@ -122,7 +120,7 @@
           </div>
         }
 
-        @if (draft().payPartial && draft().method !== 'mixed') {
+        @if (draft().method !== 'mixed') {
           <label class="payment-card__method-field payment-card__partial-field">
             <span class="payment-card__method-label">Payment Amount</span>
             <input
@@ -131,10 +129,13 @@
               min="0"
               step="any"
               inputmode="decimal"
-              [ngModel]="draft().partialAmount"
-              (ngModelChange)="onPartialAmountInput($event)"
+              placeholder="0.00"
+              [disabled]="totals().payable === 0"
+              [ngModel]="draft().partialAmount || null"
+              (ngModelChange)="onPartialAmountInput($event || 0)"
             />
           </label>
+
           <div class="payment-card__mixed-summary">
             <div class="payment-card__method-row">
               <span class="payment-card__method-label">Total Paid</span>
@@ -148,6 +149,18 @@
             </div>
           </div>
         }
+
+        <div class="payment-card__delivery-date-row">
+          <label class="payment-card__method-field">
+            <span class="payment-card__method-label">Delivery Date (Optional)</span>
+            <input
+              class="payment-card__method-input"
+              type="date"
+              [ngModel]="draft().deliveryDate"
+              (ngModelChange)="deliveryDateChange.emit($event)"
+            />
+          </label>
+        </div>
       </div>
       }
     </div>
@@ -226,8 +239,9 @@
               min="0"
               step="any"
               inputmode="decimal"
-              [ngModel]="draft().cashAmount"
-              (ngModelChange)="onCashAmountInput($event)"
+              placeholder="0.00"
+              [ngModel]="draft().cashAmount || null"
+              (ngModelChange)="onCashAmountInput($event || 0)"
             />
           </label>
           <label class="payment-card__method-field">
@@ -238,8 +252,9 @@
               min="0"
               step="any"
               inputmode="decimal"
-              [ngModel]="draft().cardAmount"
-              (ngModelChange)="onCardAmountInput($event)"
+              placeholder="0.00"
+              [ngModel]="draft().cardAmount || null"
+              (ngModelChange)="onCardAmountInput($event || 0)"
             />
           </label>
           <div class="payment-card__mixed-summary">

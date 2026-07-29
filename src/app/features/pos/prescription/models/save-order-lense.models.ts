@@ -6,6 +6,7 @@ export interface SaveOrderLensePayload {
 }
 
 export interface SaveOrderLenseLine {
+  OrderLenseId: number;
   CategoryId: string;
   Brand: string;
   Price: string;

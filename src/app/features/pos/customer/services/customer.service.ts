@@ -25,6 +25,25 @@ export class CustomerService {
       });
   }
 
+  getCustomerLoyaltyPoints(customerNo: string): Promise<number> {
+    const settings = this.appConfig.settings;
+    const apiUrl = settings?.apiUrl?.replace(/\/$/, '');
+    if (!apiUrl) {
+      throw new Error('Customer save is not configured.');
+    }
+
+    const url = `${apiUrl}/api/sales/GetCustomerLoyaltyPoints?customerNo=${encodeURIComponent(customerNo)}`;
+
+    return firstValueFrom(this.http.get<any>(url))
+      .then((response) => {
+        if (response.status && response.status !== '200') {
+          return 0; // Return 0 if failed
+        }
+        return response.objresult?.points ?? 0;
+      })
+      .catch(() => 0); // Ignore error and return 0
+  }
+
   private buildUrl(): string {
     const settings = this.appConfig.settings;
     const apiUrl = settings?.apiUrl?.replace(/\/$/, '');

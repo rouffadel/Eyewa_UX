@@ -45,7 +45,9 @@ export interface SalesInsuranceRecord {
   insuranceCompanyName: string;
   taxRegistrationNumber: string | null;
   policyNumber: string;
-  discountPercentage: number;
+  compensation: number;
+  compensationType: 'percentage' | 'amount';
+  validityStartDate: string | null;
   validityEndDate: string;
   isActive: boolean;
 }
@@ -57,7 +59,9 @@ export interface GetInsuranceBySalesIdApiRow {
   InsuranceCompanyName?: string;
   TaxRegistrationNumber?: string | null;
   PolicyNumber?: string;
-  DiscountPercentage?: number;
+  Compensation?: number;
+  CompensationType?: string;
+  ValidityStartDate?: string | null;
   ValidityEndDate?: string;
   IsActive?: boolean;
 }
@@ -73,7 +77,9 @@ export interface SaveSalesInsurancePayload {
   SalesId: number;
   InsuranceCompanyId: number;
   PolicyNumber: string;
-  DiscountPercentage: number;
+  Compensation: number;
+  CompensationType: string;
+  ValidityStartDate: string | null;
   ValidityEndDate: string;
 }
 
@@ -87,7 +93,9 @@ export interface SaveSalesInsuranceResponse {
 export interface InsuranceFormValue {
   insuranceCompanyId: number | null;
   policyNumber: string;
-  discountPercentage: number | null;
+  compensation: number | null;
+  compensationType: 'percentage' | 'amount';
+  validityStartDate: string | null;
   validityEndDate: string;
 }
 
@@ -99,8 +107,8 @@ export function buildSaveSalesInsurancePayload(
     throw new Error('Insurance company is required.');
   }
 
-  if (value.discountPercentage == null || !Number.isFinite(value.discountPercentage)) {
-    throw new Error('Discount percentage is required.');
+  if (value.compensation == null || !Number.isFinite(value.compensation)) {
+    throw new Error('Compensation is required.');
   }
 
   const policyNumber = value.policyNumber.trim();
@@ -117,7 +125,9 @@ export function buildSaveSalesInsurancePayload(
     SalesId: salesId,
     InsuranceCompanyId: value.insuranceCompanyId,
     PolicyNumber: policyNumber,
-    DiscountPercentage: value.discountPercentage,
+    Compensation: value.compensation,
+    CompensationType: value.compensationType,
+    ValidityStartDate: value.validityStartDate ? toApiDateTime(value.validityStartDate) : null,
     ValidityEndDate: validityEndDate,
   };
 }
@@ -140,7 +150,9 @@ export function normalizeSalesInsuranceRow(
     insuranceCompanyName: String(row.InsuranceCompanyName ?? '').trim(),
     taxRegistrationNumber: row.TaxRegistrationNumber ?? null,
     policyNumber: String(row.PolicyNumber ?? '').trim(),
-    discountPercentage: Number(row.DiscountPercentage ?? 0),
+    compensation: Number(row.Compensation ?? 0),
+    compensationType: (row.CompensationType === 'amount' ? 'amount' : 'percentage'),
+    validityStartDate: row.ValidityStartDate ? String(row.ValidityStartDate) : null,
     validityEndDate: String(row.ValidityEndDate ?? ''),
     isActive: row.IsActive !== false,
   };

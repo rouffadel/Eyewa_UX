@@ -46,6 +46,8 @@ export interface SalesDetailsGridApiRow {
   balance?: number;
   TotalTax?: number;
   totalTax?: number;
+  InsuranceAmount?: number;
+  insuranceAmount?: number;
 }
 
 export interface SalesDetailsGridLineApiRow {
@@ -107,6 +109,7 @@ export interface SalesDetailsGridRow {
   netTotal: number;
   balance: number;
   totalTax: number;
+  insuranceAmount: number;
 }
 
 export interface SalesDetailsGridLineItem {
@@ -133,6 +136,7 @@ export interface SalesDetailsPaymentSummary {
   balance: number;
   totalTax: number;
   paidAmount: number | null;
+  insuranceAmount: number;
 }
 
 export type SalesDetailsGridObjResult =
@@ -188,6 +192,7 @@ export function extractSalesDetailsPayment(
     balance: row.balance,
     totalTax: row.totalTax,
     paidAmount: paidAmount == null ? null : Number(paidAmount),
+    insuranceAmount: row.insuranceAmount,
   };
 }
 
@@ -227,6 +232,7 @@ function normalizeSalesDetailsRow(raw: SalesDetailsGridApiRow): SalesDetailsGrid
     netTotal: raw.NetTotal ?? raw.netTotal ?? 0,
     balance: raw.Balance ?? raw.balance ?? 0,
     totalTax: raw.TotalTax ?? raw.totalTax ?? 0,
+    insuranceAmount: raw.InsuranceAmount ?? raw.insuranceAmount ?? 0,
   };
 }
 

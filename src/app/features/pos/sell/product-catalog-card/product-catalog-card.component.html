@@ -17,38 +17,6 @@
   </div>
 
   <div class="catalog-card__body">
-    <div class="catalog-card__toolbar">
-      <label class="catalog-card__search">
-        <svg class="catalog-card__search-icon" viewBox="0 0 24 24" aria-hidden="true">
-          <circle cx="11" cy="11" r="7" />
-          <path d="M20 20l-3.5-3.5" />
-        </svg>
-        <input
-          type="search"
-          [placeholder]="searchPlaceholder()"
-          [ngModel]="search()"
-          [disabled]="locked()"
-          (ngModelChange)="onSearchInput($event)"
-        />
-        <button
-          type="button"
-          class="catalog-card__scan-btn"
-          aria-label="Scan barcode"
-          [disabled]="locked()"
-          (click)="onScanClick($event)"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M4 7V5a1 1 0 0 1 1-1h2M20 7V5a1 1 0 0 0-1-1h-2M4 17v2a1 1 0 0 0 1 1h2M20 17v2a1 1 0 0 1-1 1h-2M8 12h8" />
-          </svg>
-        </button>
-      </label>
-      <button type="button" class="catalog-card__icon-btn" aria-label="Filter products" (click)="filterClick.emit()">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M4 6h16M7 12h10M10 18h4" />
-        </svg>
-      </button>
-    </div>
-
     <div class="catalog-card__grid-wrap">
       <div class="catalog-card__grid">
         @for (product of products(); track product.sku) {

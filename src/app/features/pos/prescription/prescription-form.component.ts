@@ -337,10 +337,12 @@ export class PrescriptionFormComponent implements OnInit {
 
   private createLensGroup(line: PrescriptionLensLine): FormGroup {
     return this.fb.group({
+      orderLenseId: [line.orderLenseId],
       category: [line.category],
       orderLens: [line.orderLens],
       price: [line.price],
       quantity: [line.quantity],
+      originalQuantity: [line.originalQuantity],
     });
   }
 
@@ -385,10 +387,12 @@ export class PrescriptionFormComponent implements OnInit {
 
   private normalizeLens(value: Partial<PrescriptionLensLine>): PrescriptionLensLine {
     return {
+      orderLenseId: value.orderLenseId ?? null,
       category: value.category?.trim() ?? '',
       orderLens: value.orderLens?.trim() ?? '',
       price: parseNumericInput(value.price),
       quantity: Math.max(1, value.quantity ?? 1),
+      originalQuantity: value.originalQuantity,
     };
   }
 

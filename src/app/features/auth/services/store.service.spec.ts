@@ -12,7 +12,7 @@ describe('StoreService', () => {
 
   const appConfigStub = {
     settings: {
-      apiUrl: 'https://demo.api.eyewacloud.com/api',
+      apiUrl: 'https://localhost:7207/api',
       storesPath: 'stores/FillStore',
     },
   };
@@ -35,7 +35,7 @@ describe('StoreService', () => {
     const promise = service.fillStores(1, 0);
 
     const req = httpMock.expectOne(
-      'https://demo.api.eyewacloud.com/api/stores/FillStore?LoginId=1&StoreId=0',
+      'https://localhost:7207/api/stores/FillStore?LoginId=1&StoreId=0',
     );
     expect(req.request.method).toBe('GET');
 
@@ -62,7 +62,7 @@ describe('StoreService', () => {
 
     httpMock
       .expectOne(
-        'https://demo.api.eyewacloud.com/api/stores/FillStore?LoginId=1&StoreId=0',
+        'https://localhost:7207/api/stores/FillStore?LoginId=1&StoreId=0',
       )
       .flush({
         status: '200',

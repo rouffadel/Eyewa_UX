@@ -27,6 +27,7 @@ export interface InvoiceViewModel {
   discount: string;
   vat: string;
   total: string;
+  insuranceAmount?: string;
   partialAmount?: string;
   previouslyPaid?: string;
   paidThisTime?: string;

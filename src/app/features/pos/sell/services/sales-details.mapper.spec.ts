@@ -48,9 +48,7 @@ describe('sales-details.mapper', () => {
 
     expect(paymentDraftFromSalesDetails(payment)).toEqual({
       discountAmount: 0,
-      payFull: true,
       settleRemainingBalance: true,
-      payPartial: false,
       partialAmount: 0,
     });
   });
@@ -119,9 +117,7 @@ describe('sales-details.mapper', () => {
 
     expect(paymentDraftFromSalesDetails(payment)).toEqual({
       discountAmount: 0,
-      payFull: true,
-      settleRemainingBalance: false,
-      payPartial: false,
+      settleRemainingBalance: true,
       partialAmount: 0,
     });
   });

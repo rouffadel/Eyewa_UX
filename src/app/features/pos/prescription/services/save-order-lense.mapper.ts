@@ -11,8 +11,12 @@ export function buildSaveOrderLensePayload(payload: PrescriptionPayload): SaveOr
     throw new Error('Sales ID is required to save prescription.');
   }
 
+  const orderLenses = payload.lenses
+    .map((line) => toOrderLensLine(line))
+    .filter((line): line is SaveOrderLensePayload['OrderLenses'][number] => line !== null);
+
   return {
-    OrderLenses: payload.lenses.map((line) => toOrderLensLine(line)),
+    OrderLenses: orderLenses,
     PrescriptionDetails: [
       toPrescriptionDetail(payload.rightEye),
       toPrescriptionDetail(payload.leftEye),
@@ -22,16 +26,23 @@ export function buildSaveOrderLensePayload(payload: PrescriptionPayload): SaveOr
   };
 }
 
-function toOrderLensLine(line: PrescriptionLensLine): SaveOrderLensePayload['OrderLenses'][number] {
+function toOrderLensLine(line: PrescriptionLensLine): SaveOrderLensePayload['OrderLenses'][number] | null {
   const price = line.price ?? 0;
   const quantity = Math.max(1, line.quantity ?? 1);
+  const originalQuantity = line.originalQuantity ?? 0;
+  const delta = quantity - originalQuantity;
+
+  if (delta === 0 && line.orderLenseId) {
+    return null;
+  }
 
   return {
+    OrderLenseId: line.orderLenseId ?? 0,
     CategoryId: line.category,
     Brand: line.orderLens,
     Price: formatPrice(price),
-    Quantity: String(quantity),
-    Total: calculateLensLineTotal(price, quantity),
+    Quantity: String(delta),
+    Total: calculateLensLineTotal(price, delta),
   };
 }
 

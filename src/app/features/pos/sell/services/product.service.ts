@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 import { AppConfigService } from '../../../../services/app-config.service';
 import {
   GetProductResponse,
@@ -76,6 +76,36 @@ export class ProductService {
 
     return `${apiUrl}/${searchPath}?${query.toString()}`;
   }
+
+
+private buildGetAllProductsByStoreIdUrl(storeId: number): string {
+  const settings = this.appConfig.settings;
+  const apiUrl = settings?.apiUrl?.replace(/\/$/, '');
+  const productsPath =
+    settings?.getAllProductsByStoreIdPath ??
+    'products/GetAllProductsByStoreId';
+
+  if (!apiUrl) {
+    throw new Error('Products API is not configured.');
+  }
+
+  const query = new URLSearchParams({
+    StoreId: String(storeId),
+  });
+
+  return `${apiUrl}/${productsPath}?${query.toString()}`;
+}
+
+  getAllProductsByStoreId(storeId: any): Promise<ProductOption[]> {
+    const url = this.buildGetAllProductsByStoreIdUrl(storeId);
+
+    return firstValueFrom(this.http.get<GetProductResponse>(url))
+      .then((response) => this.mapResponse(response))
+      .catch((error: unknown) => {
+        throw this.toError(error);
+      });
+  }
+
 
   private mapResponse(response: GetProductResponse): ProductOption[] {
     const rows = this.extractRows(response?.objresult);

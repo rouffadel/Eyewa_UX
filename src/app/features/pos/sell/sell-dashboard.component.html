@@ -40,13 +40,9 @@
     <app-product-catalog-card
       [category]="store.catalogCategory()"
       [products]="store.filteredProducts()"
-      [search]="store.catalogSearch()"
       [locked]="store.isCartLocked()"
       (categoryChange)="onCategoryChange($event)"
-      (searchChange)="onCatalogSearch($event)"
       (productSelect)="onProductSelect($event)"
-      (scanClick)="onScan()"
-      (filterClick)="onFilter()"
     />
 
     <app-cart-card
@@ -70,14 +66,16 @@
       [outstandingBalance]="store.outstandingBalance()"
       [amountAlreadyPaid]="store.amountAlreadyPaid()"
       [insuranceCompanyName]="store.salesInsurance()?.insuranceCompanyName ?? null"
+      [hasSalesInsurance]="store.hasSalesInsurance()"
+      [isInsuranceLocked]="store.isInsuranceLocked()"
       (discountChange)="onDiscountChange($event)"
       (loyaltyToggle)="onLoyaltyToggle($event)"
+      (insuranceToggle)="onInsuranceToggle($event)"
       (methodChange)="onMethodChange($event)"
       (cashAmountChange)="onCashAmountChange($event)"
       (cardAmountChange)="onCardAmountChange($event)"
-      (partialToggle)="onPartialToggle($event)"
-      (payFullToggle)="onPayFullToggle($event)"
       (partialAmountChange)="onPartialAmountChange($event)"
+      (deliveryDateChange)="onDeliveryDateChange($event)"
       (pay)="onPay()"
       (payAndPrint)="onPayAndPrint()"
       (printReceipt)="onPrintReceipt()"
