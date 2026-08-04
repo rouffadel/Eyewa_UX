@@ -1,0 +1,126 @@
+<div class="status-page">
+  <div class="status-header">
+    <h1>Order Status</h1>
+    <p>View recent orders and update their status to notify customers.</p>
+  </div>
+
+  <div *ngIf="message()" class="alert" [ngClass]="message()?.type === 'success' ? 'alert-success' : 'alert-error'">
+    <svg *ngIf="message()?.type === 'success'" class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+    <svg *ngIf="message()?.type === 'error'" class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+    {{ message()?.text }}
+  </div>
+
+  <div class="header-actions" style="margin-bottom: 20px; display: flex; justify-content: flex-end;">
+    <div class="search-container">
+      <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+      </svg>
+      <input 
+        type="text" 
+        class="search-input" 
+        placeholder="Search by Customer, Invoice, ID..." 
+        [ngModel]="searchTerm()" 
+        (ngModelChange)="searchTerm.set($event)"
+      />
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Sales ID</th>
+          <th>Invoice No</th>
+          <th>Customer</th>
+          <th>Product(s)</th>
+          <th class="col-right">Paid</th>
+          <th class="col-right">Balance</th>
+          <th>Status</th>
+          <th class="col-center">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngIf="isLoadingOrders()">
+          <td colspan="8" class="col-center" style="padding: 32px; color: #94a3b8;">Loading orders...</td>
+        </tr>
+        <tr *ngIf="!isLoadingOrders() && filteredOrders().length === 0">
+          <td colspan="8" class="col-center" style="padding: 32px; color: #94a3b8;">No matching orders found.</td>
+        </tr>
+        <tr *ngFor="let order of filteredOrders()">
+          <td class="fw-bold">#{{ order.salesId }}</td>
+          <td class="fw-bold">{{ order.invoiceNo }}</td>
+          <td>
+            {{ order.customerName || 'Walk-in Customer' }}
+            <ng-container *ngIf="order.customerNo">({{ order.customerNo }})</ng-container>
+          </td>
+          <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" [title]="order.productName">{{ order.productName }}</td>
+          <td class="col-right text-paid">{{ order.paidAmount | number:'1.2-2' }}</td>
+          <td class="col-right text-balance">{{ order.balance | number:'1.2-2' }}</td>
+          <td>
+            <span class="badge" [ngClass]="order.statusName ? 'badge-active' : ''">
+              {{ order.statusName || 'Pending' }}
+            </span>
+          </td>
+          <td class="col-center">
+            <button (click)="editOrder(order)" class="btn-icon" title="Edit Order Status">
+              <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Edit Order Modal Overlay -->
+<div *ngIf="selectedOrder()" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Update Order {{ selectedOrder().invoiceNo }}</h3>
+      <button (click)="cancelEdit()" class="btn-close">
+        <svg style="width: 24px; height: 24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <p class="label">Total Amount</p>
+          <p class="value">{{ selectedOrder().grossTotal | number:'1.2-2' }}</p>
+        </div>
+        <div class="stat-item">
+          <p class="label">Amount Paid</p>
+          <p class="value text-paid">{{ selectedOrder().paidAmount | number:'1.2-2' }}</p>
+        </div>
+        <div class="stat-item">
+          <p class="label">Balance</p>
+          <p class="value text-balance">{{ selectedOrder().balance | number:'1.2-2' }}</p>
+        </div>
+        <div class="stat-item">
+          <p class="label">Insurance & Discount</p>
+          <p class="value" style="font-size: 14px;">Ins: {{ selectedOrder().insuranceAmount | number:'1.2-2' }} | Disc: {{ selectedOrder().discountAmount | number:'1.2-2' }}</p>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>New Status</label>
+        <select [(ngModel)]="selectedStatusId" class="form-select">
+          <option [ngValue]="null" disabled>-- Select a Status --</option>
+          <option *ngFor="let status of statuses()" [ngValue]="status.id">
+            {{ status.statusName }}
+          </option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button (click)="cancelEdit()" class="btn btn-secondary">
+        Cancel
+      </button>
+      <button (click)="updateStatus()" [disabled]="isUpdating() || !selectedStatusId()" class="btn btn-primary">
+        <svg *ngIf="isUpdating()" class="spin-icon" fill="none" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+        {{ isUpdating() ? 'Updating...' : 'Update Status & Notify' }}
+      </button>
+    </div>
+  </div>
+</div>

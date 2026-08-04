@@ -76,9 +76,15 @@ export class AppHeaderComponent implements AfterViewInit {
     return storeId != null && storeId > 0 ? `Store ${storeId}` : 'Select store';
   });
 
-  protected readonly loyaltyPoints = computed(
-    () => this.authService.currentSession()?.loyaltyPoints ?? 0,
-  );
+  readonly overrideLoyaltyPoints = input<number | null>(null);
+
+  protected readonly loyaltyPoints = computed(() => {
+    const override = this.overrideLoyaltyPoints();
+    if (override !== null) {
+      return override;
+    }
+    return this.authService.currentSession()?.loyaltyPoints ?? 0;
+  });
 
   protected readonly userInitials = computed(() => {
     const name = this.userName();

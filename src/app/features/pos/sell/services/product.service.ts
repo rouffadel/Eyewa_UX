@@ -136,6 +136,7 @@ private buildGetAllProductsByStoreIdUrl(storeId: number): string {
     const brandId = row.brandID ?? row.BrandID;
     const brandName = row.brandName ?? row.BrandName;
     const maxDiscount = this.parseNumber(row.maxDiscount ?? row.MaxDiscount);
+    const photoPath = row.photoPath ?? row.PhotoPath;
 
     if (productId == null || !productName?.trim() || productValue == null) {
       return null;
@@ -154,6 +155,7 @@ private buildGetAllProductsByStoreIdUrl(storeId: number): string {
       ...(categoryName ? { categoryName } : {}),
       brandId,
       brandName: brandName.trim(),
+      ...(photoPath ? { photoPath } : {}),
     };
   }
 

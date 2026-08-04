@@ -216,6 +216,32 @@
   cursor: not-allowed;
 }
 
+.reports-btn-export {
+  height: 38px;
+  padding: 0 1.25rem;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.reports-btn-export:hover:not(:disabled) {
+  background: #059669;
+}
+
+.reports-btn-export:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.reports-btn-export:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .reports-error-message {
   margin-bottom: 1rem;
   padding: 0.75rem;

@@ -54,11 +54,31 @@
       <button type="button" class="reports-btn-clear" (click)="clearFramesSalesReport()" [disabled]="isLoading()">
         Clear
       </button>
+      <button type="button" class="reports-btn-export" (click)="exportToExcel()" [disabled]="isLoading() || reportData().length === 0">
+        Export Excel
+      </button>
     </div>
 
     @if (errorMessage()) {
       <div class="reports-error-message">
         {{ errorMessage() }}
+      </div>
+    }
+
+    @if (extraData()) {
+      <div class="reports-summary-inline" style="display: flex; gap: 24px; margin-bottom: 12px; align-items: center; justify-content: flex-end; padding: 0 4px;">
+        <div style="display: flex; align-items: baseline; gap: 8px;">
+          <span style="color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase;">Total Cash:</span>
+          <span style="font-size: 15px; font-weight: 700; color: #059669;">{{ extraData().TotalCash | number:'1.2-2' }}</span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 8px;">
+          <span style="color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase;">Total Card:</span>
+          <span style="font-size: 15px; font-weight: 700; color: #2563eb;">{{ extraData().TotalCard | number:'1.2-2' }}</span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 8px;">
+          <span style="color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase;">Total Payment:</span>
+          <span style="font-size: 15px; font-weight: 800; color: #0f172a;">{{ extraData().TotalAmount | number:'1.2-2' }}</span>
+        </div>
       </div>
     }
 

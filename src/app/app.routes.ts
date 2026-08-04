@@ -63,6 +63,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'status',
+        loadComponent: () =>
+          import('./features/pos/status/status-page.component').then(
+            (m) => m.StatusPageComponent,
+          ),
+      },
+      {
         path: 'insurance',
         component: InsuranceFormComponent,
       },

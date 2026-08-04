@@ -127,6 +127,7 @@ export class SellSessionStore {
       name: option.productName,
       price: option.productValue,
       category,
+      ...(option.photoPath ? { photoPath: option.photoPath } : {}),
     };
   }
 

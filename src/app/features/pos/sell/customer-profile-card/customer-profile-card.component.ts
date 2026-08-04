@@ -9,7 +9,7 @@ import { Customer } from '../models/customer.models';
 })
 export class CustomerProfileCardComponent {
   /** Flip to true when loyalty redemption is enabled (Phase 3). */
-  showLoyaltySection = false;
+  showLoyaltySection = true;
 
   readonly customer = input<Customer | null>(null);
   readonly refreshing = input(false);

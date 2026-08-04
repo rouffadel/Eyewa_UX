@@ -15,7 +15,7 @@ interface ReportAction {
 
 @Component({
   selector: 'app-reports-page',
-  imports: [DatePipe],
+  imports: [DatePipe, DecimalPipe],
   templateUrl: './reports-page.component.html',
   styleUrl: './reports-page.component.css',
 })
@@ -117,7 +117,18 @@ export class ReportsPageComponent {
         storeId,
       );
       this.reportData.set(data.objresult ?? []);
-      this.extraData.set(data.extraData ?? null);
+      if (data.extraData) {
+        this.extraData.set({
+          TotalAmount: data.extraData.TotalAmount ?? (data.extraData as any).totalAmount ?? 0,
+          TotalCash: data.extraData.TotalCash ?? (data.extraData as any).totalCash ?? 0,
+          TotalCard: data.extraData.TotalCard ?? (data.extraData as any).totalCard ?? 0,
+          TotalInsurance: data.extraData.TotalInsurance ?? (data.extraData as any).totalInsurance ?? 0,
+          TotalNetTotal: data.extraData.TotalNetTotal ?? (data.extraData as any).totalNetTotal ?? 0,
+          TotalBalance: data.extraData.TotalBalance ?? (data.extraData as any).totalBalance ?? 0,
+        });
+      } else {
+        this.extraData.set(null);
+      }
     } catch (error) {
       this.errorMessage.set(error instanceof Error ? error.message : 'Unknown error');
     } finally {
@@ -132,6 +143,44 @@ export class ReportsPageComponent {
     this.reportData.set([]);
     this.extraData.set(null);
     this.errorMessage.set(null);
+  }
+
+  protected exportToExcel(): void {
+    const data = this.reportData();
+    if (!data || data.length === 0) return;
+
+    // CSV Headers
+    let csv = 'Sale ID,Store,Customer Name,Customer No,Invoice Payment ID,Date,Amount,Mode,Insurance,Net Total,Balance,Products\n';
+
+    // Rows
+    data.forEach(row => {
+      const products = `"${(row.Products || '').replace(/"/g, '""')}"`;
+      const custName = `"${(row.CustomerName || '').replace(/"/g, '""')}"`;
+      const date = row.PaymentDate ? new Date(row.PaymentDate).toLocaleString() : '';
+      
+      csv += `${row.SaleID},${row.StoreName},${custName},${row.CustomerNo},${row.InvoicePaymentID},"${date}",${row.PaymentAmount},${row.PaymentMode},${row.InsuranceAmount},${row.NetTotal},${row.Balance},${products}\n`;
+    });
+
+    csv += '\n';
+
+    // Totals
+    const extra = this.extraData();
+    if (extra) {
+      csv += `Total Cash,${extra.TotalCash || 0}\n`;
+      csv += `Total Card,${extra.TotalCard || 0}\n`;
+      csv += `Total Payment,${extra.TotalAmount || 0}\n`;
+    }
+
+    // Download Blob
+    const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `SalesReport_${this.fromDate()}_to_${this.toDate()}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   private onPayAndPrint(): void {

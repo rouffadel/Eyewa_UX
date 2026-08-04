@@ -22,11 +22,15 @@
         @for (product of products(); track product.sku) {
           <button type="button" class="catalog-card__product" [disabled]="locked()" (click)="productSelect.emit(product)">
             <span class="catalog-card__product-image" aria-hidden="true">
-              <svg viewBox="0 0 64 32">
-                <ellipse cx="18" cy="16" rx="14" ry="10" fill="none" stroke="currentColor" stroke-width="2" />
-                <ellipse cx="46" cy="16" rx="14" ry="10" fill="none" stroke="currentColor" stroke-width="2" />
-                <path d="M32 16h0" stroke="currentColor" stroke-width="2" />
-              </svg>
+              @if (product.photoPath) {
+                <img [src]="product.photoPath" alt="" class="catalog-card__product-img" />
+              } @else {
+                <svg viewBox="0 0 64 32">
+                  <ellipse cx="18" cy="16" rx="14" ry="10" fill="none" stroke="currentColor" stroke-width="2" />
+                  <ellipse cx="46" cy="16" rx="14" ry="10" fill="none" stroke="currentColor" stroke-width="2" />
+                  <path d="M32 16h0" stroke="currentColor" stroke-width="2" />
+                </svg>
+              }
             </span>
             <span class="catalog-card__product-name">{{ product.name }}</span>
             <span class="catalog-card__product-sku">{{ product.sku }}</span>

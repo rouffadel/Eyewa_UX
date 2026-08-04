@@ -7,6 +7,7 @@ export interface Product {
   description?: string;
   price: number;
   category: CatalogCategory;
+  photoPath?: string;
 }
 
 export const CATALOG_TABS: { key: CatalogCategory; label: string }[] = [
@@ -25,6 +26,7 @@ export interface ProductOption {
   categoryName?: string;
   brandId: number;
   brandName: string;
+  photoPath?: string;
 }
 
 export interface GetProductRow {
@@ -44,6 +46,8 @@ export interface GetProductRow {
   BrandID?: number;
   brandName?: string;
   BrandName?: string;
+  photoPath?: string;
+  PhotoPath?: string;
 }
 
 export interface GetProductResponse {

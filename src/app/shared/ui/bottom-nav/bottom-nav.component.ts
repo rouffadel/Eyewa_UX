@@ -48,6 +48,12 @@ export class BottomNavComponent implements OnInit {
       label: 'Deliveries',
       shortLabel: 'Deliv',
       ariaLabel: 'Deliveries',
+    },
+    {
+      tab: 'status',
+      label: 'Order Status',
+      shortLabel: 'Status',
+      ariaLabel: 'Order Status',
     }
   ]);
 

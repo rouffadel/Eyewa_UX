@@ -16,6 +16,7 @@ import { SellSessionStore } from '../sell/services/sell-session.store';
       @if (!hideShellChrome()) {
         <app-header
           [notificationCount]="2"
+          [overrideLoyaltyPoints]="sellStore.selectedCustomer()?.loyaltyPoints ?? null"
           (notificationsClick)="onNotificationsClick()"
           (profileClick)="openProfile()"
           (customerSelected)="onCustomerSelected($event)"
@@ -39,7 +40,7 @@ import { SellSessionStore } from '../sell/services/sell-session.store';
 })
 export class PosShellComponent {
   private readonly router = inject(Router);
-  private readonly sellStore = inject(SellSessionStore);
+  protected readonly sellStore = inject(SellSessionStore);
 
   protected readonly activeTab = signal<PosTab>('sell');
   protected readonly hideShellChrome = signal(false);

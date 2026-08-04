@@ -22,6 +22,8 @@ export interface GetFramesSalesReportResponse {
     TotalInsurance: number;
     TotalNetTotal: number;
     TotalBalance: number;
+    TotalCash?: number;
+    TotalCard?: number;
   };
   qrcodeimg?: string | null;
 }

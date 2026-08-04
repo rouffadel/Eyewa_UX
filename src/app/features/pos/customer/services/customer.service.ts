@@ -32,7 +32,7 @@ export class CustomerService {
       throw new Error('Customer save is not configured.');
     }
 
-    const url = `${apiUrl}/api/sales/GetCustomerLoyaltyPoints?customerNo=${encodeURIComponent(customerNo)}`;
+    const url = `${apiUrl}/sales/GetCustomerLoyaltyPoints?customerNo=${encodeURIComponent(customerNo)}`;
 
     return firstValueFrom(this.http.get<any>(url))
       .then((response) => {
