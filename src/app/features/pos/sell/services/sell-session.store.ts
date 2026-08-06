@@ -1,4 +1,5 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../../auth/services/auth.service';
 import { CustomerSessionService } from '../../customer/services/customer-session.service';
 import { PrescriptionRecord } from '../../prescription/models/prescription.models';
@@ -69,6 +70,10 @@ export class SellSessionStore {
   readonly selectedCustomer = signal<Customer | null>(this.customerSession.sellCustomer());
   readonly prescriptionLoading = signal(false);
   readonly salesInsurance = signal<SalesInsuranceRecord | null>(null);
+  
+  readonly hasProductsAccess = signal(true);
+  readonly hasInsuranceAccess = signal(true);
+  readonly hasRedmeePointsAccess = signal(true);
 
   private readonly prescriptionsByCustomer = signal<Record<string, PrescriptionSummary>>({});
 
@@ -97,6 +102,19 @@ export class SellSessionStore {
     if (storeId) {
       void this.loadCatalogProducts(storeId);
     }
+    
+    // Fetch tenant feature access config
+    const http = inject(HttpClient);
+    http.get<any>('https://localhost:44357/api/TenantAccess/default').subscribe({
+      next: (config) => {
+        if (config) {
+          this.hasProductsAccess.set(config.hasProductsAccess);
+          this.hasInsuranceAccess.set(config.hasInsuranceAccess);
+          this.hasRedmeePointsAccess.set(config.hasRedmeePointsAccess);
+        }
+      },
+      error: (err) => console.error('Failed to load tenant access config', err)
+    });
   }
 
   async loadCatalogProducts(storeId: number): Promise<void> {
@@ -616,7 +634,10 @@ export class SellSessionStore {
       return;
     }
 
-    this.cartItems.set(prescriptionLinesToCartItems(record));
+    const nonRxItems = this.cartItems().filter(item => !isPrescriptionCartLine(item.lineId));
+    const rxItems = prescriptionLinesToCartItems(record);
+
+    this.cartItems.set([...nonRxItems, ...rxItems]);
     this.syncPaymentAmountsToPayable();
   }
 

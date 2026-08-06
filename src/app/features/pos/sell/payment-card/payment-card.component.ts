@@ -29,6 +29,8 @@ export class PaymentCardComponent {
   readonly insuranceCompanyName = input<string | null>(null);
   readonly hasSalesInsurance = input(false);
   readonly isInsuranceLocked = input(false);
+  readonly hasInsuranceAccess = input(true);
+  readonly hasRedmeePointsAccess = input(true);
 
   readonly discountChange = output<number>();
   readonly loyaltyToggle = output<boolean>();

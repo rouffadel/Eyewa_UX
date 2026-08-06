@@ -163,7 +163,8 @@
     overflow-y: auto;
   }
 
-  .sell-dashboard__panel--middle app-product-catalog-card {
+  .sell-dashboard__panel--middle app-product-catalog-card,
+  .sell-dashboard__panel--middle app-latest-prescription-summary {
     flex: 1.35 1 0;
     min-height: 0;
   }

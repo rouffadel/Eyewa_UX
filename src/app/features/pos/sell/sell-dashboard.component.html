@@ -24,26 +24,40 @@
       (redeemPoints)="onRedeemPoints()"
       (openDetail)="onOpenCustomerDetail()"
       (refresh)="onRefreshCustomer()"
+      [hasRedmeePointsAccess]="store.hasRedmeePointsAccess()"
     />
 
-    <app-latest-prescription-summary
-      [summary]="store.latestPrescription()"
-      [hasCustomer]="store.selectedCustomer() !== null"
-      [loading]="store.prescriptionLoading()"
-      (viewPrescription)="onViewPrescription()"
-      (viewHistory)="onViewHistory()"
-      (newPrescription)="onNewPrescription()"
-    />
+    @if (store.hasProductsAccess()) {
+      <app-latest-prescription-summary
+        [summary]="store.latestPrescription()"
+        [hasCustomer]="store.selectedCustomer() !== null"
+        [loading]="store.prescriptionLoading()"
+        (viewPrescription)="onViewPrescription()"
+        (viewHistory)="onViewHistory()"
+        (newPrescription)="onNewPrescription()"
+      />
+    }
   </section>
 
   <section class="sell-dashboard__panel sell-dashboard__panel--middle">
-    <app-product-catalog-card
-      [category]="store.catalogCategory()"
-      [products]="store.filteredProducts()"
-      [locked]="store.isCartLocked()"
-      (categoryChange)="onCategoryChange($event)"
-      (productSelect)="onProductSelect($event)"
-    />
+    @if (store.hasProductsAccess()) {
+      <app-product-catalog-card
+        [category]="store.catalogCategory()"
+        [products]="store.filteredProducts()"
+        [locked]="store.isCartLocked()"
+        (categoryChange)="onCategoryChange($event)"
+        (productSelect)="onProductSelect($event)"
+      />
+    } @else {
+      <app-latest-prescription-summary
+        [summary]="store.latestPrescription()"
+        [hasCustomer]="store.selectedCustomer() !== null"
+        [loading]="store.prescriptionLoading()"
+        (viewPrescription)="onViewPrescription()"
+        (viewHistory)="onViewHistory()"
+        (newPrescription)="onNewPrescription()"
+      />
+    }
 
     <app-cart-card
       [items]="store.cartItems()"
@@ -68,6 +82,8 @@
       [insuranceCompanyName]="store.salesInsurance()?.insuranceCompanyName ?? null"
       [hasSalesInsurance]="store.hasSalesInsurance()"
       [isInsuranceLocked]="store.isInsuranceLocked()"
+      [hasInsuranceAccess]="store.hasInsuranceAccess()"
+      [hasRedmeePointsAccess]="store.hasRedmeePointsAccess()"
       (discountChange)="onDiscountChange($event)"
       (loyaltyToggle)="onLoyaltyToggle($event)"
       (insuranceToggle)="onInsuranceToggle($event)"

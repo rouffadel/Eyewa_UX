@@ -59,6 +59,16 @@ export class BottomNavComponent implements OnInit {
 
   ngOnInit(): void {
     this.fetchDeliveriesCount();
+    
+    // Fetch tenant feature access config
+    this.http.get<any>('https://localhost:44357/api/TenantAccess/default').subscribe({
+      next: (config) => {
+        if (config && config.hasInsuranceAccess === false) {
+          this.items.update(items => items.filter(item => item.tab !== 'insurance'));
+        }
+      },
+      error: (err) => console.error('Failed to load tenant access config', err)
+    });
   }
 
   private fetchDeliveriesCount(): void {

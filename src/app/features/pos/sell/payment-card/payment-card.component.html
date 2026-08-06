@@ -48,7 +48,7 @@
 
     <div class="payment-card__checkout-block">
       <div class="payment-card__loyalty">
-        @if (hasSalesInsurance()) {
+        @if (hasSalesInsurance() && hasInsuranceAccess()) {
           <div class="payment-card__loyalty-row payment-card__insurance-row" style="margin-bottom: 0.5rem;">
             <label class="payment-card__loyalty-toggle" [class.payment-card__loyalty-toggle--disabled]="isInsuranceLocked()">
               <span class="payment-card__loyalty-text">Apply Insurance</span>
@@ -63,6 +63,7 @@
           </div>
         }
 
+        @if (hasRedmeePointsAccess()) {
         <div class="payment-card__loyalty-row">
           <label class="payment-card__loyalty-toggle">
             <span class="payment-card__loyalty-text">Redeem Loyalty Points</span>
@@ -86,6 +87,7 @@
             <span class="payment-card__deduction">-{{ formatMoney(totals().loyaltyDeduction) }}</span>
           }
         </div>
+        }
       </div>
 
       <div class="payment-card__payable">

@@ -13,6 +13,7 @@ export class CustomerProfileCardComponent {
 
   readonly customer = input<Customer | null>(null);
   readonly refreshing = input(false);
+  readonly hasRedmeePointsAccess = input(true);
 
   readonly redeemPoints = output<void>();
   readonly openDetail = output<void>();

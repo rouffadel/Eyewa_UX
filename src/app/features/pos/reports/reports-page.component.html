@@ -40,22 +40,17 @@
 
   <div class="reports-grid-section">
     <div class="reports-filter-row">
-      <label class="reports-filter-field">
-        <span class="reports-filter-label">From Date</span>
-        <input type="date" class="reports-filter-input" [value]="fromDate()" (change)="onFromDateChange($event)" />
-      </label>
-      <label class="reports-filter-field">
-        <span class="reports-filter-label">To Date</span>
-        <input type="date" class="reports-filter-input" [value]="toDate()" (change)="onToDateChange($event)" />
-      </label>
+      <span style="margin-right: auto; font-weight: 500; color: #475569;">
+        Showing data for today ({{ fromDate() }})
+      </span>
       <button type="button" class="reports-btn-search" (click)="loadFramesSalesReport()" [disabled]="isLoading()">
-        {{ isLoading() ? 'Loading...' : 'Search' }}
+        <svg viewBox="0 0 24 24" aria-hidden="true" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;">
+          <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        {{ isLoading() ? 'Loading...' : 'Refresh' }}
       </button>
-      <button type="button" class="reports-btn-clear" (click)="clearFramesSalesReport()" [disabled]="isLoading()">
-        Clear
-      </button>
-      <button type="button" class="reports-btn-export" (click)="exportToExcel()" [disabled]="isLoading() || reportData().length === 0">
-        Export Excel
+      <button type="button" class="reports-btn-export" (click)="exportToPdf()" [disabled]="isLoading() || reportData().length === 0">
+        Export PDF
       </button>
     </div>
 

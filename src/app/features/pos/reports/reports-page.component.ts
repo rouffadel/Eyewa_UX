@@ -1,5 +1,7 @@
 import { Component, computed, HostListener, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { Router } from '@angular/router';
 import { AuthService } from '../../auth/services/auth.service';
 import { PaymentRegisterAction } from '../sell/models/payment.models';
@@ -90,15 +92,7 @@ export class ReportsPageComponent {
     this.store.clearStatusMessages();
   }
 
-  protected onFromDateChange(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
-    this.fromDate.set(value);
-  }
 
-  protected onToDateChange(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
-    this.toDate.set(value);
-  }
 
   protected async loadFramesSalesReport(): Promise<void> {
     const storeId = this.auth.selectedStore()?.storeId;
@@ -145,42 +139,45 @@ export class ReportsPageComponent {
     this.errorMessage.set(null);
   }
 
-  protected exportToExcel(): void {
+  protected exportToPdf(): void {
     const data = this.reportData();
     if (!data || data.length === 0) return;
 
-    // CSV Headers
-    let csv = 'Sale ID,Store,Customer Name,Customer No,Invoice Payment ID,Date,Amount,Mode,Insurance,Net Total,Balance,Products\n';
-
-    // Rows
-    data.forEach(row => {
-      const products = `"${(row.Products || '').replace(/"/g, '""')}"`;
-      const custName = `"${(row.CustomerName || '').replace(/"/g, '""')}"`;
-      const date = row.PaymentDate ? new Date(row.PaymentDate).toLocaleString() : '';
-      
-      csv += `${row.SaleID},${row.StoreName},${custName},${row.CustomerNo},${row.InvoicePaymentID},"${date}",${row.PaymentAmount},${row.PaymentMode},${row.InsuranceAmount},${row.NetTotal},${row.Balance},${products}\n`;
-    });
-
-    csv += '\n';
-
-    // Totals
+    const doc = new jsPDF('landscape');
+    
+    doc.setFontSize(16);
+    doc.text(`Sales Report (${this.fromDate()})`, 14, 15);
+    
     const extra = this.extraData();
     if (extra) {
-      csv += `Total Cash,${extra.TotalCash || 0}\n`;
-      csv += `Total Card,${extra.TotalCard || 0}\n`;
-      csv += `Total Payment,${extra.TotalAmount || 0}\n`;
+      doc.setFontSize(10);
+      doc.text(`Total Cash: ${extra.TotalCash || 0} | Total Card: ${extra.TotalCard || 0} | Total Payment: ${extra.TotalAmount || 0}`, 14, 22);
     }
 
-    // Download Blob
-    const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `SalesReport_${this.fromDate()}_to_${this.toDate()}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const tableData = data.map(row => [
+      row.SaleID,
+      row.StoreName,
+      row.CustomerName,
+      row.CustomerNo,
+      row.InvoicePaymentID,
+      row.PaymentDate ? new Date(row.PaymentDate).toLocaleString() : '',
+      row.PaymentAmount,
+      row.PaymentMode,
+      row.InsuranceAmount,
+      row.NetTotal,
+      row.Balance,
+      row.Products
+    ]);
+
+    autoTable(doc, {
+      head: [['Sale ID', 'Store', 'Customer Name', 'Customer No', 'Invoice Payment ID', 'Date', 'Amount', 'Mode', 'Insurance', 'Net Total', 'Balance', 'Products']],
+      body: tableData,
+      startY: 28,
+      styles: { fontSize: 8, cellPadding: 2 },
+      headStyles: { fillColor: [37, 99, 235] }
+    });
+
+    doc.save(`SalesReport_${this.fromDate()}.pdf`);
   }
 
   private onPayAndPrint(): void {

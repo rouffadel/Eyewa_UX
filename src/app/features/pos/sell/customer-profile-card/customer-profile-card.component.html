@@ -44,9 +44,11 @@
             <span class="customer-card__loyalty-label">Loyalty Balance</span>
             <span class="customer-card__loyalty-value">{{ c.loyaltyPoints }} PTS</span>
           </div>
-          <button type="button" class="customer-card__redeem" (click)="redeemPoints.emit()">
-            Redeem Points
-          </button>
+          @if (hasRedmeePointsAccess()) {
+            <button type="button" class="customer-card__redeem" (click)="redeemPoints.emit()">
+              Redeem Points
+            </button>
+          }
         </div>
       }
 
