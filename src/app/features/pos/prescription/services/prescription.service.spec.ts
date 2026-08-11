@@ -19,7 +19,7 @@ describe('PrescriptionService', () => {
           provide: AppConfigService,
           useValue: {
             settings: {
-              apiUrl: 'https://localhost:7207/api',
+              apiUrl: 'https://localhost:44314/api',
               saveOrderLensePath: 'prescriptions/SaveOrderLense',
             },
           },
@@ -75,7 +75,7 @@ describe('PrescriptionService', () => {
     });
 
     const req = httpMock.expectOne(
-      'https://localhost:7207/api/prescriptions/SaveOrderLense',
+      'https://localhost:44314/api/prescriptions/SaveOrderLense',
     );
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({

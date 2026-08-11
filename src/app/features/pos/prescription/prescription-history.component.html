@@ -3,7 +3,7 @@
     <button type="button" class="prescription-history__back" (click)="onBackToSell()">
       ← Back to Sell
     </button>
-    <h1 class="prescription-history__title">PRESCRIPTION HISTORY</h1>
+    <h1 class="prescription-history__title">ORDER HISTORY</h1>
   </header>
 
   @if (selectedCustomer(); as customer) {
@@ -11,18 +11,47 @@
       Customer: <strong>{{ customer.displayName }}</strong>
     </p>
   } @else {
-    <p class="prescription-history__message">Select a customer from the header to view prescriptions.</p>
+    <p class="prescription-history__message">Select a customer from the header to view orders.</p>
   }
 
   @if (selectedCustomer()) {
     @if (loading()) {
-      <div class="prescription-history__empty">
-        <p>Loading prescription history…</p>
+      <div style="display: flex; flex-direction: column; gap: 16px; width: 100%;">
+        <div class="skeleton-rx">
+          <div class="skeleton-line skeleton-line--meta"></div>
+          <div class="skeleton-grid">
+            <div class="skeleton-cell"></div>
+            <div class="skeleton-cell"></div>
+            <div class="skeleton-cell"></div>
+            <div class="skeleton-cell"></div>
+            <div class="skeleton-cell"></div>
+            <div class="skeleton-cell"></div>
+            <div class="skeleton-cell"></div>
+            <div class="skeleton-cell"></div>
+            <div class="skeleton-cell"></div>
+          </div>
+          <div class="skeleton-line skeleton-line--pd"></div>
+        </div>
+        <div class="skeleton-rx">
+          <div class="skeleton-line skeleton-line--meta"></div>
+          <div class="skeleton-grid">
+            <div class="skeleton-cell"></div>
+            <div class="skeleton-cell"></div>
+            <div class="skeleton-cell"></div>
+            <div class="skeleton-cell"></div>
+            <div class="skeleton-cell"></div>
+            <div class="skeleton-cell"></div>
+            <div class="skeleton-cell"></div>
+            <div class="skeleton-cell"></div>
+            <div class="skeleton-cell"></div>
+          </div>
+          <div class="skeleton-line skeleton-line--pd"></div>
+        </div>
       </div>
     } @else if (history().length > 0) {
-      <p class="prescription-history__hint">Select a prescription to view on the Sell dashboard.</p>
+      <p class="prescription-history__hint">Select an order to view on the Sell dashboard.</p>
 
-      <div class="prescription-history__list" role="radiogroup" aria-label="Prescription history">
+      <div class="prescription-history__list" role="radiogroup" aria-label="Order history">
         @for (entry of history(); track entry.id) {
           <button
             type="button"
@@ -94,9 +123,9 @@
       </footer>
     } @else {
       <div class="prescription-history__empty">
-        <p>No saved prescriptions for this customer yet.</p>
+        <p>No saved orders for this customer yet.</p>
         <button type="button" class="prescription-history__btn" (click)="onNewPrescription()">
-          + New Prescription
+          + New Order
         </button>
       </div>
     }

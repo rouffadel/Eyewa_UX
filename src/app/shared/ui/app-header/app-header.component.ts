@@ -10,6 +10,7 @@ import {
   input,
   output,
   signal,
+  untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
@@ -111,7 +112,9 @@ export class AppHeaderComponent implements AfterViewInit {
     effect(() => {
       const loginId = this.authService.user()?.loginId;
       if (loginId != null) {
-        void this.loadStores();
+        untracked(() => {
+          void this.loadStores();
+        });
       }
     });
   }

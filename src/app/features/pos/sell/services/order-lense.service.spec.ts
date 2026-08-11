@@ -12,7 +12,7 @@ describe('OrderLenseService', () => {
 
   const appConfigStub = {
     settings: {
-      apiUrl: 'https://localhost:7207/api',
+      apiUrl: 'https://localhost:44314/api',
       getOrderLensePath: 'prescriptions/GetOrderLense',
     },
   };
@@ -35,7 +35,7 @@ describe('OrderLenseService', () => {
     const promise = service.getOrderLense(114122);
 
     const req = httpMock.expectOne(
-      'https://localhost:7207/api/prescriptions/GetOrderLense?SalesId=114122',
+      'https://localhost:44314/api/prescriptions/GetOrderLense?SalesId=114122',
     );
     expect(req.request.method).toBe('GET');
 
@@ -81,7 +81,7 @@ describe('OrderLenseService', () => {
     const promise = service.getOrderLense(114039);
 
     httpMock
-      .expectOne('https://localhost:7207/api/prescriptions/GetOrderLense?SalesId=114039')
+      .expectOne('https://localhost:44314/api/prescriptions/GetOrderLense?SalesId=114039')
       .flush({
         status: '200',
         message: 'Success',
@@ -128,7 +128,7 @@ describe('OrderLenseService', () => {
     const promise = service.getOrderLense(115042);
 
     httpMock
-      .expectOne('https://localhost:7207/api/prescriptions/GetOrderLense?SalesId=115042')
+      .expectOne('https://localhost:44314/api/prescriptions/GetOrderLense?SalesId=115042')
       .flush({
         status: '200',
         message: 'Success',

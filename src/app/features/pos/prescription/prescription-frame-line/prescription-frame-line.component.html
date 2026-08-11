@@ -156,15 +156,25 @@
     <!-- Mode A: guided category → brand → model -->
     <label class="prescription-field frame-line__field--wide">
       <span class="prescription-field__label">Category</span>
-      <select
-        class="prescription-field__input prescription-field__select"
-        formControlName="category"
-        (change)="onCategoryChange()"
-      >
-        @for (category of categories(); track category) {
-        <option [value]="category">{{ category }}</option>
+      <div class="custom-select" [class.custom-select--open]="isCategoryOpen()">
+        <button type="button" class="custom-select__trigger" (click)="toggleCategoryDropdown($event)">
+          <span>{{ currentCategoryValue() || 'Select Category' }}</span>
+          <svg class="custom-select__arrow" viewBox="0 0 20 20" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m6 8 4 4 4-4" />
+          </svg>
+        </button>
+        @if (isCategoryOpen()) {
+          <div class="custom-select__options">
+            @for (category of categories(); track category) {
+              <button type="button" class="custom-select__option" 
+                      [class.custom-select__option--selected]="currentCategoryValue() === category"
+                      (click)="selectCategoryValue(category)">
+                {{ category }}
+              </button>
+            }
+          </div>
         }
-      </select>
+      </div>
     </label>
 
     <div class="prescription-field frame-line__field--wide frame-line__brand-wrap">

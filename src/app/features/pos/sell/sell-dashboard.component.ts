@@ -1,5 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { DialogService } from '../../../services/dialog.service';
 import { AuthService } from '../../auth/services/auth.service';
 import { CustomerProfileCardComponent } from './customer-profile-card/customer-profile-card.component';
 import { LatestPrescriptionSummaryComponent } from './latest-prescription-summary/latest-prescription-summary.component';
@@ -26,6 +27,7 @@ import { SellSessionStore } from './services/sell-session.store';
 export class SellDashboardComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
+  private readonly dialogService = inject(DialogService);
   protected readonly store = inject(SellSessionStore);
 
   ngOnInit(): void {
@@ -55,8 +57,15 @@ export class SellDashboardComponent implements OnInit {
     this.store.removeItem(lineId);
   }
 
-  protected onClearCart(): void {
-    if (window.confirm('Clear all items from the cart?')) {
+  protected async onClearCart(): Promise<void> {
+    const confirmed = await this.dialogService.confirm({
+      title: 'Clear Cart',
+      message: 'Clear all items from the cart?',
+      confirmText: 'Clear',
+      cancelText: 'Cancel',
+      isDestructive: true
+    });
+    if (confirmed) {
       this.store.clearCart();
     }
   }

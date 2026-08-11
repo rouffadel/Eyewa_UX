@@ -19,7 +19,7 @@ describe('SalesDetailsService', () => {
           provide: AppConfigService,
           useValue: {
             settings: {
-              apiUrl: 'https://localhost:7207/api',
+              apiUrl: 'https://localhost:44314/api',
               getSalesDetailsGridPath: 'sales/GetSalesDetailsGrid',
             },
           },
@@ -37,7 +37,7 @@ describe('SalesDetailsService', () => {
     const promise = service.getSalesDetailsGrid(114090);
 
     const req = httpMock.expectOne(
-      'https://localhost:7207/api/sales/GetSalesDetailsGrid?SalesId=114090',
+      'https://localhost:44314/api/sales/GetSalesDetailsGrid?SalesId=114090',
     );
     expect(req.request.method).toBe('GET');
 
@@ -78,7 +78,7 @@ describe('SalesDetailsService', () => {
     const promise = service.getSalesDetailsGrid(114091);
 
     httpMock
-      .expectOne('https://localhost:7207/api/sales/GetSalesDetailsGrid?SalesId=114091')
+      .expectOne('https://localhost:44314/api/sales/GetSalesDetailsGrid?SalesId=114091')
       .flush({
         status: '200',
         message: 'Success',
@@ -107,7 +107,7 @@ describe('SalesDetailsService', () => {
     const promise = service.getSalesDetailsGrid(114092);
 
     httpMock
-      .expectOne('https://localhost:7207/api/sales/GetSalesDetailsGrid?SalesId=114092')
+      .expectOne('https://localhost:44314/api/sales/GetSalesDetailsGrid?SalesId=114092')
       .flush({
         status: '200',
         message: 'Success',
@@ -138,7 +138,7 @@ describe('SalesDetailsService', () => {
     const promise = service.getSalesDetailsGrid(114122);
 
     httpMock
-      .expectOne('https://localhost:7207/api/sales/GetSalesDetailsGrid?SalesId=114122')
+      .expectOne('https://localhost:44314/api/sales/GetSalesDetailsGrid?SalesId=114122')
       .flush({
         status: '200',
         message: 'Success',
@@ -209,7 +209,7 @@ describe('SalesDetailsService', () => {
     const promise = service.getSalesDetailsGrid(114125);
 
     httpMock
-      .expectOne('https://localhost:7207/api/sales/GetSalesDetailsGrid?SalesId=114125')
+      .expectOne('https://localhost:44314/api/sales/GetSalesDetailsGrid?SalesId=114125')
       .flush({
         status: '200',
         message: 'Success',

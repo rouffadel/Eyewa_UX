@@ -2,6 +2,8 @@ import {
   Component,
   computed,
   DestroyRef,
+  effect,
+  ElementRef,
   HostListener,
   inject,
   input,
@@ -53,6 +55,32 @@ export class PrescriptionFrameLineComponent {
   readonly categories = input<readonly string[]>(FRAME_CATEGORIES);
   readonly categoryOptions = input<readonly CategoryOption[]>([]);
   protected readonly formatMoney = formatMoney;
+
+  private readonly elementRef = inject(ElementRef);
+  protected readonly isCategoryOpen = signal(false);
+
+  protected toggleCategoryDropdown(event: Event): void {
+    event.stopPropagation();
+    this.isCategoryOpen.update((v) => !v);
+  }
+
+  protected selectCategoryValue(value: string): void {
+    this.group().get('category')?.setValue(value);
+    this.group().get('category')?.markAsDirty();
+    this.onCategoryChange();
+    this.isCategoryOpen.set(false);
+  }
+
+  protected currentCategoryValue(): string {
+    return this.group().get('category')?.value ?? '';
+  }
+
+  @HostListener('document:click', ['$event'])
+  protected onCategoryDocumentClick(event: MouseEvent): void {
+    if (!this.elementRef.nativeElement.contains(event.target)) {
+      this.isCategoryOpen.set(false);
+    }
+  }
   protected readonly isProductSearchMode = computed(
     () => this.framesTemplate() === 'productSearch',
   );
@@ -74,7 +102,10 @@ export class PrescriptionFrameLineComponent {
         void this.runBrandSearch(query);
       });
 
-    this.GetProductsByStoreId();
+    effect(() => {
+      this.GetProductsByStoreId();
+    });
+
     this.modelSearchSubject
       .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
       .subscribe((query) => {
@@ -214,6 +245,9 @@ export class PrescriptionFrameLineComponent {
   products: any[] = [];
   GetProductsByStoreId(){
     const storeId = this.storeId();
+    if (storeId == null || storeId <= 0) {
+      return;
+    }
     this.productService.getAllProductsByStoreId(storeId)
       .then((options) => {
         this.products = options;

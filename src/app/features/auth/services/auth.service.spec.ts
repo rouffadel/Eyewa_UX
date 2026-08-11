@@ -105,7 +105,7 @@ describe('AuthService persistence', () => {
           provide: AppConfigService,
           useValue: {
             settings: {
-              apiUrl: 'https://localhost:7207/api',
+              apiUrl: 'https://localhost:44314/api',
               useMockAuth: false,
             },
           },
@@ -151,7 +151,7 @@ describe('AuthService persistence', () => {
           provide: AppConfigService,
           useValue: {
             settings: {
-              apiUrl: 'https://localhost:7207/api',
+              apiUrl: 'https://localhost:44314/api',
               useMockAuth: false,
             },
           },

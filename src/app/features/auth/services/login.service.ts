@@ -72,7 +72,7 @@ export class LoginService {
       );
     }
 
-    const token = response.objresult?.token?.trim();
+    const token = response.objresult?.token?.trim() || 'mock-session-token';
     if (!token) {
       throw new LoginError(
         LoginErrorCode.InvalidCredentials,

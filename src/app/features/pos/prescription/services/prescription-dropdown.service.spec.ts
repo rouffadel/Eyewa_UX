@@ -12,7 +12,7 @@ describe('PrescriptionDropdownService', () => {
 
   const appConfigStub = {
     settings: {
-      apiUrl: 'https://localhost:7207/api',
+      apiUrl: 'https://localhost:44314/api',
       getPrescriptionDropDownsPath: 'prescriptions/GetPrescriptionDropDowns',
     },
   };
@@ -35,7 +35,7 @@ describe('PrescriptionDropdownService', () => {
     const promise = service.getDropdowns();
 
     const req = httpMock.expectOne(
-      'https://localhost:7207/api/prescriptions/GetPrescriptionDropDowns',
+      'https://localhost:44314/api/prescriptions/GetPrescriptionDropDowns',
     );
     expect(req.request.method).toBe('GET');
 

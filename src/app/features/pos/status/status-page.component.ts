@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, ElementRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -14,12 +14,39 @@ import { AppConfigService } from '../../../services/app-config.service';
 export class StatusPageComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly appConfig = inject(AppConfigService);
+  private readonly elementRef = inject(ElementRef);
 
   protected readonly statuses = signal<any[]>([]);
   protected readonly orders = signal<any[]>([]);
   protected readonly selectedOrder = signal<any | null>(null);
   protected readonly selectedStatusId = signal<number | null>(null);
   
+  protected readonly isOpen = signal(false);
+
+  protected toggleDropdown(event: Event): void {
+    event.stopPropagation();
+    this.isOpen.update((v) => !v);
+  }
+
+  protected selectStatus(id: number | null): void {
+    this.selectedStatusId.set(id);
+    this.isOpen.set(false);
+  }
+
+  protected currentStatusName(): string {
+    const id = this.selectedStatusId();
+    if (id == null) return '-- Select a Status --';
+    const statusObj = this.statuses().find((s) => s.id === id);
+    return statusObj ? statusObj.statusName : '-- Select a Status --';
+  }
+
+  @HostListener('document:click', ['$event'])
+  protected onDocumentClick(event: MouseEvent): void {
+    if (!this.elementRef.nativeElement.contains(event.target)) {
+      this.isOpen.set(false);
+    }
+  }
+
   protected readonly isLoadingStatuses = signal<boolean>(false);
   protected readonly isLoadingOrders = signal<boolean>(false);
   protected readonly isUpdating = signal<boolean>(false);
@@ -46,7 +73,7 @@ export class StatusPageComponent implements OnInit {
 
   private getPosApiUrl(): string {
     const settings = this.appConfig.settings as any;
-    return settings?.apiUrl?.replace(/\/$/, '') || 'https://localhost:7207/api';
+    return settings?.apiUrl?.replace(/\/$/, '') || 'https://localhost:44314/api';
   }
 
   private fetchStatuses() {

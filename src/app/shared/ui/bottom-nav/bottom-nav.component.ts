@@ -27,9 +27,9 @@ export class BottomNavComponent implements OnInit {
     { tab: 'sell', label: 'Sell', ariaLabel: 'Sell' },
     {
       tab: 'prescription',
-      label: 'Prescription',
-      shortLabel: 'Rx',
-      ariaLabel: 'Prescription',
+      label: 'Order',
+      shortLabel: 'Order',
+      ariaLabel: 'Order',
     },
     {
       tab: 'reports',
@@ -61,7 +61,10 @@ export class BottomNavComponent implements OnInit {
     this.fetchDeliveriesCount();
     
     // Fetch tenant feature access config
-    this.http.get<any>('https://localhost:44357/api/TenantAccess/default').subscribe({
+    const settings = this.appConfig.settings;
+    const apiUrl = settings?.apiUrl?.replace(/\/$/, '') || 'https://localhost:44314/api';
+
+    this.http.get<any>(`${apiUrl}/TenantAccess/default`).subscribe({
       next: (config) => {
         if (config && config.hasInsuranceAccess === false) {
           this.items.update(items => items.filter(item => item.tab !== 'insurance'));
@@ -74,7 +77,7 @@ export class BottomNavComponent implements OnInit {
   private fetchDeliveriesCount(): void {
     const storeId = '7'; // Fallback store id or take from store logic
     const settings = this.appConfig.settings;
-    const apiUrl = settings?.apiUrl?.replace(/\/$/, '') || 'https://localhost:7207/api';
+    const apiUrl = settings?.apiUrl?.replace(/\/$/, '') || 'https://localhost:44314/api';
 
     this.http.get<{status: string, objresult: any[]}>(`${apiUrl}/sales/GetTodayDeliveries?storeId=${storeId}`)
       .subscribe({

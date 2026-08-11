@@ -1,5 +1,7 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { AppConfigService } from '../../../../services/app-config.service';
+import { DialogService } from '../../../../services/dialog.service';
 import { AuthService } from '../../../auth/services/auth.service';
 import { CustomerSessionService } from '../../customer/services/customer-session.service';
 import { PrescriptionRecord } from '../../prescription/models/prescription.models';
@@ -66,6 +68,8 @@ export class SellSessionStore {
   private readonly auth = inject(AuthService);
   private readonly insuranceService = inject(InsuranceService);
   private readonly productService = inject(ProductService);
+  private readonly appConfig = inject(AppConfigService);
+  private readonly dialogService = inject(DialogService);
 
   readonly selectedCustomer = signal<Customer | null>(this.customerSession.sellCustomer());
   readonly prescriptionLoading = signal(false);
@@ -105,7 +109,10 @@ export class SellSessionStore {
     
     // Fetch tenant feature access config
     const http = inject(HttpClient);
-    http.get<any>('https://localhost:44357/api/TenantAccess/default').subscribe({
+    const settings = this.appConfig.settings;
+    const apiUrl = settings?.apiUrl?.replace(/\/$/, '') || 'https://localhost:44314/api';
+
+    http.get<any>(`${apiUrl}/TenantAccess/default`).subscribe({
       next: (config) => {
         if (config) {
           this.hasProductsAccess.set(config.hasProductsAccess);
@@ -1043,10 +1050,18 @@ export class SellSessionStore {
         this.paymentTotals(),
         draft,
         prescriptionRecord,
-      ) &&
-      !window.confirm(NEGATIVE_PAYMENT_CONFIRM_MESSAGE)
+      )
     ) {
-      return false;
+      const confirmed = await this.dialogService.confirm({
+        title: 'Confirm Negative Values',
+        message: NEGATIVE_PAYMENT_CONFIRM_MESSAGE,
+        confirmText: 'Continue',
+        cancelText: 'Cancel',
+        isDestructive: true
+      });
+      if (!confirmed) {
+        return false;
+      }
     }
 
     try {

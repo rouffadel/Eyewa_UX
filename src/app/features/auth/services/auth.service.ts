@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AppConfigService } from '../../../services/app-config.service';
+import { ToastService } from '../../../services/toast.service';
 import {
   AuthPermission,
   AuthSession,
@@ -32,6 +33,7 @@ export class AuthService {
   private readonly tokenRefreshService = inject(TokenRefreshService);
   private readonly customerSession = inject(CustomerSessionService);
   private readonly router = inject(Router);
+  private readonly toastService = inject(ToastService);
 
   private refreshInFlight: Promise<boolean> | null = null;
   private sessionExpiryNotified = false;
@@ -104,7 +106,7 @@ export class AuthService {
 
     this.sessionExpiryNotified = true;
     this.logout();
-    window.alert(SESSION_EXPIRED_MESSAGE);
+    this.toastService.show(SESSION_EXPIRED_MESSAGE);
     void this.router.navigate(['/login']);
   }
 

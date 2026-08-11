@@ -1,9 +1,9 @@
 <section class="prescription-page">
   <form class="prescription-card" [formGroup]="form" (ngSubmit)="onSave()" novalidate>
     <header class="prescription-card__header">
-      <h1 class="prescription-card__title">PRESCRIPTION</h1>
+      <h1 class="prescription-card__title">ORDER</h1>
       <button type="button" class="prescription-card__new-link" (click)="onNewPrescription()">
-        + New Prescription
+        + New Order
       </button>
     </header>
 
@@ -18,7 +18,7 @@
       }
     } @else {
       <p class="prescription-message prescription-message--info" role="status">
-        Select a customer from the header before saving this prescription.
+        Select a customer from the header before saving this order.
       </p>
     }
 
@@ -125,7 +125,7 @@
       }
     </section>
 
-    <h2 class="prescription-section__title prescription-section__title--rx">EYE PRESCRIPTION</h2>
+    <h2 class="prescription-section__title prescription-section__title--rx">EYE ORDER</h2>
 
     @if (successMessage()) {
       <p class="prescription-message prescription-message--success" role="status">
@@ -221,7 +221,7 @@
         class="prescription-actions__save"
         [disabled]="isSaving()"
       >
-        {{ isSaving() ? 'Saving…' : 'Save Prescription' }}
+        {{ isSaving() ? 'Saving…' : 'Save Order' }}
       </button>
 
       <div class="prescription-actions__secondary">

@@ -19,11 +19,25 @@
   <div class="lens-line__grid">
     <label class="prescription-field">
       <span class="prescription-field__label">Category</span>
-      <select class="prescription-field__input prescription-field__select" formControlName="category">
-        @for (category of categories; track category.id) {
-        <option [value]="category.value">{{ category.value }}</option>
+      <div class="custom-select" [class.custom-select--open]="isOpen()">
+        <button type="button" class="custom-select__trigger" (click)="toggleDropdown($event)">
+          <span>{{ currentCategory() || 'Select Category' }}</span>
+          <svg class="custom-select__arrow" viewBox="0 0 20 20" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m6 8 4 4 4-4" />
+          </svg>
+        </button>
+        @if (isOpen()) {
+          <div class="custom-select__options">
+            @for (category of categories; track category.id) {
+              <button type="button" class="custom-select__option" 
+                      [class.custom-select__option--selected]="currentCategory() === category.value"
+                      (click)="selectCategory(category.value)">
+                {{ category.value }}
+              </button>
+            }
+          </div>
         }
-      </select>
+      </div>
     </label>
 
     <label class="prescription-field lens-line__field--wide">

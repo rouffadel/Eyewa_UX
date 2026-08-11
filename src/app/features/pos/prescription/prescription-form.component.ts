@@ -1,5 +1,6 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { DialogService } from '../../../services/dialog.service';
 import {
   FormArray,
   FormBuilder,
@@ -64,6 +65,7 @@ export class PrescriptionFormComponent implements OnInit {
   private readonly sellStore = inject(SellSessionStore);
   private readonly appConfig = inject(AppConfigService);
   private readonly router = inject(Router);
+  private readonly dialogService = inject(DialogService);
 
   protected readonly isSaving = signal(false);
   protected readonly successMessage = signal('');
@@ -232,8 +234,8 @@ export class PrescriptionFormComponent implements OnInit {
     this.lensesExpanded.update((expanded) => !expanded);
   }
 
-  protected onNewPrescription(): void {
-    if (!this.confirmDiscardChanges()) {
+  protected async onNewPrescription(): Promise<void> {
+    if (!(await this.confirmDiscardChanges())) {
       return;
     }
 
@@ -301,8 +303,8 @@ export class PrescriptionFormComponent implements OnInit {
     });
   }
 
-  protected onCancel(): void {
-    if (!this.confirmDiscardChanges()) {
+  protected async onCancel(): Promise<void> {
+    if (!(await this.confirmDiscardChanges())) {
       return;
     }
 
@@ -557,12 +559,18 @@ export class PrescriptionFormComponent implements OnInit {
     this.form.markAsPristine();
   }
 
-  private confirmDiscardChanges(): boolean {
+  private async confirmDiscardChanges(): Promise<boolean> {
     if (!this.form.dirty) {
       return true;
     }
 
-    return window.confirm('Discard unsaved prescription changes?');
+    return this.dialogService.confirm({
+      title: 'Discard Changes',
+      message: 'Discard unsaved order changes?',
+      confirmText: 'Discard',
+      cancelText: 'Cancel',
+      isDestructive: true
+    });
   }
 
   private clearMessages(): void {

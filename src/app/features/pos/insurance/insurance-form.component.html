@@ -41,18 +41,32 @@
     <div class="insurance-card__body">
       <label class="insurance-field">
         <span class="insurance-field__label">Insurance Company</span>
-        <select
-          class="insurance-field__input insurance-field__select"
-          [class.insurance-field__input--invalid]="
-            form.controls.insuranceCompanyId.invalid && form.controls.insuranceCompanyId.touched
-          "
-          formControlName="insuranceCompanyId"
-        >
-          <option [ngValue]="null">Select</option>
-          @for (company of insuranceCompanies(); track company.id) {
-            <option [ngValue]="company.id">{{ company.name }}</option>
+        <div class="custom-select" [class.custom-select--open]="isOpen()">
+          <button type="button" class="custom-select__trigger" 
+                  [class.custom-select__trigger--invalid]="form.controls.insuranceCompanyId.invalid && form.controls.insuranceCompanyId.touched"
+                  (click)="toggleDropdown($event)">
+            <span>{{ currentCompanyName() }}</span>
+            <svg class="custom-select__arrow" viewBox="0 0 20 20" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m6 8 4 4 4-4" />
+            </svg>
+          </button>
+          @if (isOpen()) {
+            <div class="custom-select__options">
+              <button type="button" class="custom-select__option" 
+                      [class.custom-select__option--selected]="form.controls.insuranceCompanyId.value === null"
+                      (click)="selectCompany(null)">
+                Select
+              </button>
+              @for (company of insuranceCompanies(); track company.id) {
+                <button type="button" class="custom-select__option" 
+                        [class.custom-select__option--selected]="form.controls.insuranceCompanyId.value === company.id"
+                        (click)="selectCompany(company.id)">
+                  {{ company.name }}
+                </button>
+              }
+            </div>
           }
-        </select>
+        </div>
       </label>
 
       <label class="insurance-field">
@@ -95,26 +109,79 @@
         />
       </div>
 
-      <label class="insurance-field">
+      <div class="insurance-field">
         <span class="insurance-field__label">Validity Start Date</span>
-        <input
-          class="insurance-field__input"
-          type="date"
-          formControlName="validityStartDate"
-        />
-      </label>
+        <div class="custom-select" [class.custom-select--open]="isStartDateOpen()" [class.custom-select--up]="startOpenUpward()">
+          <button type="button" class="custom-select__trigger" (click)="toggleCalendar('start', $event)">
+            <span>{{ getFormattedDate('start') }}</span>
+            <svg class="custom-select__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+            </svg>
+          </button>
+          
+          @if (isStartDateOpen()) {
+            <div class="custom-calendar-popup">
+              <div class="custom-calendar-header">
+                <button type="button" class="calendar-nav-btn" (click)="prevMonth('start')">←</button>
+                <span class="calendar-title">{{ MONTHS[startMonth()] }} {{ startYear() }}</span>
+                <button type="button" class="calendar-nav-btn" (click)="nextMonth('start')">→</button>
+              </div>
+              <div class="custom-calendar-weekdays">
+                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+              </div>
+              <div class="custom-calendar-grid">
+                @for (day of getCalendarDays(startYear(), startMonth()); track day.getTime()) {
+                  <button type="button" 
+                          class="calendar-day-cell"
+                          [class.calendar-day-cell--other-month]="day.getMonth() !== startMonth()"
+                          [class.calendar-day-cell--selected]="isSelectedDate('start', day)"
+                          (click)="selectDate('start', day)">
+                    {{ day.getDate() }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
 
-      <label class="insurance-field">
+      <div class="insurance-field">
         <span class="insurance-field__label">Validity End Date</span>
-        <input
-          class="insurance-field__input"
-          [class.insurance-field__input--invalid]="
-            form.controls.validityEndDate.invalid && form.controls.validityEndDate.touched
-          "
-          type="date"
-          formControlName="validityEndDate"
-        />
-      </label>
+        <div class="custom-select" [class.custom-select--open]="isEndDateOpen()" [class.custom-select--up]="endOpenUpward()">
+          <button type="button" class="custom-select__trigger" 
+                  [class.custom-select__trigger--invalid]="form.controls.validityEndDate.invalid && form.controls.validityEndDate.touched"
+                  (click)="toggleCalendar('end', $event)">
+            <span>{{ getFormattedDate('end') }}</span>
+            <svg class="custom-select__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+            </svg>
+          </button>
+          
+          @if (isEndDateOpen()) {
+            <div class="custom-calendar-popup">
+              <div class="custom-calendar-header">
+                <button type="button" class="calendar-nav-btn" (click)="prevMonth('end')">←</button>
+                <span class="calendar-title">{{ MONTHS[endMonth()] }} {{ endYear() }}</span>
+                <button type="button" class="calendar-nav-btn" (click)="nextMonth('end')">→</button>
+              </div>
+              <div class="custom-calendar-weekdays">
+                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+              </div>
+              <div class="custom-calendar-grid">
+                @for (day of getCalendarDays(endYear(), endMonth()); track day.getTime()) {
+                  <button type="button" 
+                          class="calendar-day-cell"
+                          [class.calendar-day-cell--other-month]="day.getMonth() !== endMonth()"
+                          [class.calendar-day-cell--selected]="isSelectedDate('end', day)"
+                          (click)="selectDate('end', day)">
+                    {{ day.getDate() }}
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
     </div>
 
     <footer class="insurance-card__actions">

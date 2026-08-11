@@ -5,18 +5,32 @@
     @for (field of fields; track field) {
       <label class="prescription-grid__field">
         <span class="prescription-grid__label">{{ labelFor(field) }}</span>
-        <select
-          class="prescription-grid__input prescription-grid__select"
-          [class.prescription-grid__input--invalid]="
-            group().get(field)?.invalid && group().get(field)?.touched
-          "
-          [formControlName]="field"
-        >
-          <option [ngValue]="null">Select</option>
-          @for (option of optionsFor(field); track option.value) {
-            <option [ngValue]="option.value">{{ option.label }}</option>
+        <div class="custom-select" [class.custom-select--open]="openField() === field">
+          <button type="button" class="custom-select__trigger" 
+                  [class.custom-select__trigger--invalid]="group().get(field)?.invalid && group().get(field)?.touched"
+                  (click)="toggleDropdown(field, $event)">
+            <span>{{ currentLabel(field) }}</span>
+            <svg class="custom-select__arrow" viewBox="0 0 20 20" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m6 8 4 4 4-4" />
+            </svg>
+          </button>
+          @if (openField() === field) {
+            <div class="custom-select__options">
+              <button type="button" class="custom-select__option" 
+                      [class.custom-select__option--selected]="group().get(field)?.value === null"
+                      (click)="selectOption(field, null)">
+                Select
+              </button>
+              @for (option of optionsFor(field); track option.value) {
+                <button type="button" class="custom-select__option" 
+                        [class.custom-select__option--selected]="group().get(field)?.value === option.value"
+                        (click)="selectOption(field, option.value)">
+                  {{ option.label }}
+                </button>
+              }
+            </div>
           }
-        </select>
+        </div>
       </label>
     }
   </div>

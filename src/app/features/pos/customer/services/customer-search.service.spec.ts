@@ -12,7 +12,7 @@ describe('CustomerSearchService', () => {
 
   const appConfigStub = {
     settings: {
-      apiUrl: 'https://localhost:7207/api',
+      apiUrl: 'https://localhost:44314/api',
       customerSearchPath: 'sales/customersearchfilter',
     },
   };
@@ -35,7 +35,7 @@ describe('CustomerSearchService', () => {
     const promise = service.search('96');
 
     const req = httpMock.expectOne(
-      'https://localhost:7207/api/sales/customersearchfilter?mobileNumber=96',
+      'https://localhost:44314/api/sales/customersearchfilter?mobileNumber=96',
     );
     expect(req.request.method).toBe('GET');
 
@@ -81,7 +81,7 @@ describe('CustomerSearchService', () => {
 
     httpMock
       .expectOne(
-        'https://localhost:7207/api/sales/customersearchfilter?mobileNumber=966',
+        'https://localhost:44314/api/sales/customersearchfilter?mobileNumber=966',
       )
       .error(new ProgressEvent('error'), { status: 0 });
 

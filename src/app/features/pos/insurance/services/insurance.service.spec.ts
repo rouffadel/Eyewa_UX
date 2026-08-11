@@ -12,7 +12,7 @@ describe('InsuranceService', () => {
 
   const appConfigStub = {
     settings: {
-      apiUrl: 'https://localhost:7207/api',
+      apiUrl: 'https://localhost:44314/api',
       getInsuranceBySalesIdPath: 'insurance/GetInsuranceBySalesId',
       getAllInsuranceCompaniesPath: 'insurance/GetAllInsuranceCompanies',
       saveSalesInsurancePath: 'insurance/SaveSalesInsurance',
@@ -37,7 +37,7 @@ describe('InsuranceService', () => {
     const promise = service.getAllInsuranceCompanies();
 
     const req = httpMock.expectOne(
-      'https://localhost:7207/api/insurance/GetAllInsuranceCompanies',
+      'https://localhost:44314/api/insurance/GetAllInsuranceCompanies',
     );
     expect(req.request.method).toBe('GET');
 
@@ -69,7 +69,7 @@ describe('InsuranceService', () => {
     const promise = service.getInsuranceBySalesId(114135);
 
     const req = httpMock.expectOne(
-      'https://localhost:7207/api/insurance/GetInsuranceBySalesId?salesId=114135',
+      'https://localhost:44314/api/insurance/GetInsuranceBySalesId?salesId=114135',
     );
     expect(req.request.method).toBe('GET');
 
@@ -110,7 +110,7 @@ describe('InsuranceService', () => {
 
     httpMock
       .expectOne(
-        'https://localhost:7207/api/insurance/GetInsuranceBySalesId?salesId=114135',
+        'https://localhost:44314/api/insurance/GetInsuranceBySalesId?salesId=114135',
       )
       .flush({
         status: '200',
@@ -132,7 +132,7 @@ describe('InsuranceService', () => {
     });
 
     const req = httpMock.expectOne(
-      'https://localhost:7207/api/insurance/SaveSalesInsurance',
+      'https://localhost:44314/api/insurance/SaveSalesInsurance',
     );
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({
@@ -163,7 +163,7 @@ describe('InsuranceService', () => {
     });
 
     httpMock
-      .expectOne('https://localhost:7207/api/insurance/SaveSalesInsurance')
+      .expectOne('https://localhost:44314/api/insurance/SaveSalesInsurance')
       .flush({
         status: '400',
         message: 'Invalid policy number',

@@ -13,7 +13,7 @@ describe('LoginService', () => {
 
   const appConfigStub = {
     settings: {
-      apiUrl: 'https://localhost:7207/api',
+      apiUrl: 'https://localhost:44314/api',
       authLoginPath: 'auth/VerifyUserLogin',
     },
   };
@@ -56,7 +56,7 @@ describe('LoginService', () => {
     const promise = service.verifyUserLogin('Canada', 'a1b2c3d4');
 
     const req = httpMock.expectOne(
-      'https://localhost:7207/api/auth/VerifyUserLogin?LoginName=Canada&Password=a1b2c3d4',
+      'https://localhost:44314/api/auth/VerifyUserLogin?LoginName=Canada&Password=a1b2c3d4',
     );
     expect(req.request.method).toBe('GET');
 
@@ -86,7 +86,7 @@ describe('LoginService', () => {
 
     httpMock
       .expectOne(
-        'https://localhost:7207/api/auth/VerifyUserLogin?LoginName=Canada&Password=a1b2c3d4',
+        'https://localhost:44314/api/auth/VerifyUserLogin?LoginName=Canada&Password=a1b2c3d4',
       )
       .flush({
         status: '200',
@@ -129,7 +129,7 @@ describe('LoginService', () => {
 
     httpMock
       .expectOne(
-        'https://localhost:7207/api/auth/VerifyUserLogin?LoginName=bad&Password=wrong',
+        'https://localhost:44314/api/auth/VerifyUserLogin?LoginName=bad&Password=wrong',
       )
       .flush({
         status: '200',
@@ -156,7 +156,7 @@ describe('LoginService', () => {
 
     httpMock
       .expectOne(
-        'https://localhost:7207/api/auth/VerifyUserLogin?LoginName=Canada&Password=a1b2c3d4',
+        'https://localhost:44314/api/auth/VerifyUserLogin?LoginName=Canada&Password=a1b2c3d4',
       )
       .flush({
         ...successResponse,
@@ -178,7 +178,7 @@ describe('LoginService', () => {
 
     httpMock
       .expectOne(
-        'https://localhost:7207/api/auth/VerifyUserLogin?LoginName=Canada&Password=a1b2c3d4',
+        'https://localhost:44314/api/auth/VerifyUserLogin?LoginName=Canada&Password=a1b2c3d4',
       )
       .error(new ProgressEvent('error'), { status: 0 });
 
@@ -194,7 +194,7 @@ describe('LoginService', () => {
 
     httpMock
       .expectOne(
-        'https://localhost:7207/api/auth/VerifyUserLogin?LoginName=Canada&Password=a1b2c3d4',
+        'https://localhost:44314/api/auth/VerifyUserLogin?LoginName=Canada&Password=a1b2c3d4',
       )
       .flush('Server error', { status: 500, statusText: 'Server Error' });
 
@@ -214,6 +214,6 @@ describe('LoginService', () => {
       }),
     );
 
-    appConfigStub.settings.apiUrl = 'https://localhost:7207/api';
+    appConfigStub.settings.apiUrl = 'https://localhost:44314/api';
   });
 });

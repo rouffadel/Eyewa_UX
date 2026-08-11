@@ -104,12 +104,29 @@
 
       <div class="form-group">
         <label>New Status</label>
-        <select [(ngModel)]="selectedStatusId" class="form-select">
-          <option [ngValue]="null" disabled>-- Select a Status --</option>
-          <option *ngFor="let status of statuses()" [ngValue]="status.id">
-            {{ status.statusName }}
-          </option>
-        </select>
+        <div class="custom-select" [class.custom-select--open]="isOpen()">
+          <button type="button" class="custom-select__trigger" (click)="toggleDropdown($event)">
+            <span>{{ currentStatusName() }}</span>
+            <svg class="custom-select__arrow" viewBox="0 0 20 20" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m6 8 4 4 4-4" />
+            </svg>
+          </button>
+          @if (isOpen()) {
+            <div class="custom-select__options">
+              <button type="button" class="custom-select__option" 
+                      [class.custom-select__option--selected]="selectedStatusId() === null"
+                      (click)="selectStatus(null)">
+                -- Select a Status --
+              </button>
+              <button type="button" *ngFor="let status of statuses()"
+                      class="custom-select__option" 
+                      [class.custom-select__option--selected]="selectedStatusId() === status.id"
+                      (click)="selectStatus(status.id)">
+                {{ status.statusName }}
+              </button>
+            </div>
+          }
+        </div>
       </div>
     </div>
 

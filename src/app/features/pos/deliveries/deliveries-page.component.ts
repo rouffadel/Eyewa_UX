@@ -45,7 +45,7 @@ export class DeliveriesPageComponent implements OnInit {
     const storeId = '7'; // Fallback store id or take from store logic
     
     const settings = this.appConfig.settings;
-    const apiUrl = settings?.apiUrl?.replace(/\/$/, '') || 'https://localhost:7207/api';
+    const apiUrl = settings?.apiUrl?.replace(/\/$/, '') || 'https://localhost:44314/api';
 
     // Using environment api url
     this.http.get<{status: string, objresult: DeliveryRecord[]}>(`${apiUrl}/sales/GetTodayDeliveries?storeId=${storeId}`)

@@ -12,7 +12,7 @@ describe('CategoryService', () => {
 
   const appConfigStub = {
     settings: {
-      apiUrl: 'https://localhost:7207/api',
+      apiUrl: 'https://localhost:44314/api',
       fillCategoryPath: 'products/FillCategory',
     },
   };
@@ -34,7 +34,7 @@ describe('CategoryService', () => {
   it('should load categories from FillCategory API', async () => {
     const promise = service.getCategories();
 
-    const req = httpMock.expectOne('https://localhost:7207/api/products/FillCategory');
+    const req = httpMock.expectOne('https://localhost:44314/api/products/FillCategory');
     expect(req.request.method).toBe('GET');
 
     req.flush({
@@ -55,7 +55,7 @@ describe('CategoryService', () => {
   it('should support objresult.table shape', async () => {
     const promise = service.getCategories();
 
-    const req = httpMock.expectOne('https://localhost:7207/api/products/FillCategory');
+    const req = httpMock.expectOne('https://localhost:44314/api/products/FillCategory');
     req.flush({
       status: '200',
       message: 'Success',
