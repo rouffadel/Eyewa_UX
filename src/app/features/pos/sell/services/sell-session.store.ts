@@ -163,11 +163,23 @@ export class SellSessionStore {
     }
 
     const summary = this.prescriptionsByCustomer()[customer.id] ?? null;
-    if (!summary || !hasPrescriptionSummaryRxData(summary)) {
-      return null;
+    if (summary) {
+      return summary;
     }
 
-    return summary;
+    const selectedId = this.selectedPrescriptionId();
+    if (selectedId) {
+      return {
+        date: '—',
+        doctorName: '—',
+        od: { sph: '—', cyl: '—', axis: '—' },
+        os: { sph: '—', cyl: '—', axis: '—' },
+        pd: '—',
+        nearPd: '—'
+      };
+    }
+
+    return null;
   });
 
   readonly hasPrescription = computed(() => this.latestPrescription() !== null);
@@ -473,7 +485,7 @@ export class SellSessionStore {
       }));
     }
 
-    if (result.prescription && hasPrescriptionSummaryRxData(result.prescription)) {
+    if (result.prescription) {
       this.applySalesDetailsPrescription(customer.id, salesId, result.prescription);
     }
 
@@ -1227,7 +1239,7 @@ export class SellSessionStore {
     this.paymentDraft.update((current) => ({ ...current, ...amounts }));
   }
 
-  private resolvePrescriptionRecord(
+  resolvePrescriptionRecord(
     customerId: string,
     prescriptionId: string,
   ): PrescriptionRecord | null {
@@ -1467,9 +1479,7 @@ export class SellSessionStore {
       [record.customerId]: record,
     }));
 
-    if (!hasPrescriptionRxData(record)) {
-      return;
-    }
+
 
     const summary = toPrescriptionSummary(record);
     const item: SavedPrescriptionListItem = { id: record.id, summary };

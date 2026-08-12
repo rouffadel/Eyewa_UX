@@ -66,7 +66,7 @@
   align-items: center;
   justify-content: center;
   flex: 1;
-  padding: 3rem 1rem;
+  padding: 1rem 1rem;
   color: var(--color-text-muted);
 }
 
@@ -98,7 +98,7 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 0 1rem 1rem;
+  padding: 1rem 1rem;
 }
 
 .cart-card__table {
@@ -109,9 +109,6 @@
 }
 
 .cart-card__table thead th {
-  position: sticky;
-  top: 0;
-  z-index: 1;
   padding: 0.625rem 0.5rem;
   background: #f8fafc;
   color: var(--color-text-muted);
@@ -136,11 +133,9 @@
 @keyframes cartRowEntrance {
   from {
     opacity: 0;
-    transform: translateY(8px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 

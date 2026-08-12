@@ -523,7 +523,7 @@ export class PrescriptionFormComponent implements OnInit {
     const selectedId = this.sellStore.selectedPrescriptionId();
     const record =
       (selectedId
-        ? this.prescriptionStorage.getById(customer.id, selectedId)
+        ? this.sellStore.resolvePrescriptionRecord(customer.id, selectedId)
         : null) ?? this.prescriptionStorage.getLatest(customer.id);
 
     if (!record) {
