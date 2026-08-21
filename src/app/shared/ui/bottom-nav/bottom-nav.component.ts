@@ -66,8 +66,11 @@ export class BottomNavComponent implements OnInit {
 
     this.http.get<any>(`${apiUrl}/TenantAccess/default`).subscribe({
       next: (config) => {
-        if (config && config.hasInsuranceAccess === false) {
-          this.items.update(items => items.filter(item => item.tab !== 'insurance'));
+        if (config) {
+          const insurance = config.hasInsuranceAccess !== undefined ? config.hasInsuranceAccess : config.HasInsuranceAccess;
+          if (insurance === false) {
+            this.items.update(items => items.filter(item => item.tab !== 'insurance'));
+          }
         }
       },
       error: (err) => console.error('Failed to load tenant access config', err)

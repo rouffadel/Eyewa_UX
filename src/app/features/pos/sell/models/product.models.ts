@@ -8,6 +8,7 @@ export interface Product {
   price: number;
   category: CatalogCategory;
   photoPath?: string;
+  productId?: number;
 }
 
 export const CATALOG_TABS: { key: CatalogCategory; label: string }[] = [

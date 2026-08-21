@@ -37,4 +37,5 @@ export interface InvoiceViewModel {
   storeName?: string;
   storeAddress?: string;
   qrcodeImg?: string | null;
+  paymentMethod?: string;
 }

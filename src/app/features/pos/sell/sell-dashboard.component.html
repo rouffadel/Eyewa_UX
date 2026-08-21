@@ -84,6 +84,9 @@
       [isInsuranceLocked]="store.isInsuranceLocked()"
       [hasInsuranceAccess]="store.hasInsuranceAccess()"
       [hasRedmeePointsAccess]="store.hasRedmeePointsAccess()"
+      [hasOffersAccess]="store.hasOffersAccess()"
+      [coupons]="store.eligibleOffers()"
+      [selectedCoupon]="store.selectedCoupon()"
       (discountChange)="onDiscountChange($event)"
       (loyaltyToggle)="onLoyaltyToggle($event)"
       (insuranceToggle)="onInsuranceToggle($event)"
@@ -95,6 +98,8 @@
       (pay)="onPay()"
       (payAndPrint)="onPayAndPrint()"
       (printReceipt)="onPrintReceipt()"
+      (couponSelect)="store.applyCoupon($event)"
+      (couponRemove)="store.removeCoupon()"
     />
   </section>
 </div>

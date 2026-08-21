@@ -121,6 +121,7 @@ export class PrescriptionFormComponent implements OnInit {
     void this.loadFrameCategories();
     void this.loadPrescriptionDropdowns();
     this.loadSavedPrescriptionForCustomer();
+    void this.sellStore.loadActiveOffers();
   }
 
   private async loadFrameCategories(): Promise<void> {
@@ -242,7 +243,7 @@ export class PrescriptionFormComponent implements OnInit {
     this.resetToDefaults(true);
   }
 
-  protected onSave(): void {
+  protected async onSave(): Promise<void> {
     this.clearMessages();
 
     const selectedCustomer = this.selectedCustomer();
@@ -263,11 +264,21 @@ export class PrescriptionFormComponent implements OnInit {
     try {
       const payload = this.toPayload();
       const isFramesOnly = payload.frames.length > 0 && !hasPrescriptionLensData(payload);
-      const record = this.prescriptionStorage.save({
+      
+      const recordData = {
         ...payload,
         customerId: selectedCustomer.id,
         salesId: selectedCustomer.salesId,
-      });
+      };
+
+      let record: PrescriptionRecord;
+      if (!isFramesOnly) {
+        record = await this.prescriptionService.save(recordData);
+      } else {
+        record = this.prescriptionStorage.save(recordData);
+      }
+
+      this.prescriptionStorage.save(record);
 
       if (isFramesOnly) {
         this.sellStore.applyFramesOnlyToCart(record);

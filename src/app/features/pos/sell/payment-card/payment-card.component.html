@@ -21,6 +21,46 @@
           />
         </dd>
       </div>
+
+      @if (hasOffersAccess() && coupons().length > 0 && !selectedCoupon()) {
+        <div class="payment-card__promo-banner">
+          <span class="payment-card__promo-banner-icon">🎉</span>
+          <span>Available offer: Apply <strong>{{ coupons()[0].offerCode }}</strong> to save!</span>
+        </div>
+      }
+
+      @if (hasOffersAccess() && coupons().length > 0) {
+        <div class="payment-card__coupon-row">
+          <label class="payment-card__coupon-label">Apply Coupon</label>
+          <div class="payment-card__custom-dropdown" (click)="toggleCouponDropdown()">
+            <div class="payment-card__custom-dropdown-selected" [class.payment-card__custom-dropdown-selected--disabled]="orderFullyPaid()">
+              <span>{{ selectedCoupon() ? selectedCoupon().offerCode + ' - ' + selectedCoupon().offerName : '-- No Coupon Selected --' }}</span>
+              <svg class="payment-card__custom-dropdown-arrow" [class.payment-card__custom-dropdown-arrow--open]="isCouponDropdownOpen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </div>
+            
+            @if (isCouponDropdownOpen) {
+              <ul class="payment-card__custom-dropdown-list">
+                <li class="payment-card__custom-dropdown-item" [class.payment-card__custom-dropdown-item--selected]="!selectedCoupon()" (click)="selectCoupon(null); $event.stopPropagation()">
+                  -- No Coupon Selected --
+                </li>
+                @for (coupon of coupons(); track coupon.offerCode) {
+                  <li class="payment-card__custom-dropdown-item" [class.payment-card__custom-dropdown-item--selected]="selectedCoupon()?.offerCode === coupon.offerCode" (click)="selectCoupon(coupon); $event.stopPropagation()">
+                    <div>
+                      <span class="payment-card__custom-dropdown-code">{{ coupon.offerCode }}</span>
+                      <span class="payment-card__custom-dropdown-name"> - {{ coupon.offerName }}</span>
+                    </div>
+                    <span class="payment-card__custom-dropdown-badge">
+                      {{ coupon.offerType === 'Discount' ? (coupon.discountType === 'Percentage' ? coupon.discountValue + '%' : coupon.discountValue + ' SAR') : 'Buy ' + coupon.buyQuantity + ' Get ' + coupon.getQuantity + ' Free' }}
+                    </span>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        </div>
+      }
       <div class="payment-card__row">
         <dt>VAT (0%)</dt>
         <dd>{{ formatMoney(totals().vat) }} SAR</dd>

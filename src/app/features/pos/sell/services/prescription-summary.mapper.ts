@@ -54,6 +54,7 @@ function formatEyeValues(eye: EyePrescription): PrescriptionEyeValues {
     sph: formatRxValue(eye.sph),
     cyl: formatRxValue(eye.cyl),
     axis: eye.axis === null ? '—' : String(eye.axis),
+    add: formatRxValue(eye.add),
   };
 }
 

@@ -12,16 +12,83 @@
 
 @media (min-width: 768px), (min-width: 600px) and (min-height: 500px) {
   .prescription-history-page {
-    max-width: min(720px, 100%);
+    max-width: 100%;
     margin-inline: auto;
     padding: 1.25rem 1rem 1.5rem;
   }
 }
 
-.prescription-history__header {
-  display: grid;
+.prescription-history__header-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .prescription-history__header-container {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+}
+
+.prescription-history__header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.prescription-history__header-right {
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
-  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.header-stat-card {
+  display: flex;
+  flex-direction: column;
+  padding: 0.375rem 0.75rem;
+  background-color: #f8fafc;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  min-width: 100px;
+}
+
+.stat-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.stat-value {
+  font-size: 0.875rem;
+  font-weight: 800;
+  color: var(--color-text-heading);
+}
+
+.header-bulk-pay-btn {
+  min-height: 38px;
+  padding: 0 1rem;
+  background-color: var(--color-pos-accent);
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.header-bulk-pay-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.header-bulk-pay-btn:not(:disabled):hover {
+  opacity: 0.9;
 }
 
 .prescription-history__back {
@@ -33,11 +100,12 @@
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
+  align-self: flex-start;
 }
 
 .prescription-history__title {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.125rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--color-text-heading);
@@ -217,3 +285,344 @@
     padding-left: 2.25rem;
   }
 }
+
+.prescription-history__orders-section,
+.prescription-history__rx-section {
+  margin-bottom: 2rem;
+  width: 100%;
+}
+
+.prescription-history__section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text-heading);
+  margin: 0 0 1rem;
+  padding-bottom: 0.375rem;
+  border-bottom: 2px solid var(--color-border);
+}
+
+.orders-grid-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.orders-grid-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.orders-grid-table th,
+.orders-grid-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.orders-grid-table th {
+  background-color: #f8fafc;
+  color: var(--color-text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+}
+
+.orders-grid-table tr:last-child td {
+  border-bottom: none;
+}
+
+.orders-grid-table tr:hover td {
+  background-color: #f1f5f9;
+}
+
+.text-right {
+  text-align: right !important;
+}
+
+.text-center {
+  text-align: center !important;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.text-danger {
+  color: #ef4444;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 6px;
+  line-height: 1;
+}
+
+.status-badge--ordered,
+.status-badge--completed {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.status-badge--draft,
+.status-badge--pending {
+  background-color: #fef9c3;
+  color: #a16207;
+}
+
+.status-badge--cancelled {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.orders-grid__action-btn {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #fff;
+  background-color: var(--color-pos-accent);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.orders-grid__action-btn:hover {
+  opacity: 0.9;
+}
+
+.text-success {
+  color: #10b981;
+}
+
+.prescription-history__layout-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .prescription-history__layout-grid {
+    grid-template-columns: 1fr 280px;
+    align-items: start;
+  }
+}
+
+.prescription-history__sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background-color: #f8fafc;
+  padding: 1.25rem;
+  border-radius: 16px;
+  border: 1px solid var(--color-border);
+}
+
+.history-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 1rem;
+  background-color: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+}
+
+.history-summary-card__label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  letter-spacing: 0.05em;
+}
+
+.history-summary-card__value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-text-heading);
+}
+
+.history-summary__bulk-pay-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px;
+  background-color: var(--color-pos-accent);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.875rem;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.history-summary__bulk-pay-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.history-summary__bulk-pay-btn:not(:disabled):hover {
+  opacity: 0.9;
+}
+
+/* Bulk Payment Modal */
+.bulk-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(8px);
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.bulk-modal-content {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 440px;
+  border: 1px solid rgba(241, 245, 249, 1);
+  display: flex;
+  flex-direction: column;
+  animation: modalEnter 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalEnter {
+  from {
+    transform: scale(0.9) translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+.bulk-modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.bulk-modal__header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text-heading);
+}
+
+.bulk-modal__close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.bulk-modal__body {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.bulk-modal__description {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.bulk-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bulk-modal__field label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-body);
+}
+
+.bulk-modal__input {
+  min-height: 40px;
+  padding: 0 0.75rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: var(--color-text-heading);
+  outline: none;
+}
+
+.bulk-modal__input:focus {
+  border-color: var(--color-pos-accent);
+}
+
+.bulk-modal__hint {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 0.25rem;
+}
+
+.bulk-modal__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid var(--color-border);
+  background-color: #f8fafc;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+
+.bulk-modal__cancel-btn {
+  padding: 0.625rem 1rem;
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text-body);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bulk-modal__submit-btn {
+  padding: 0.625rem 1rem;
+  background-color: var(--color-pos-accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bulk-modal__submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+

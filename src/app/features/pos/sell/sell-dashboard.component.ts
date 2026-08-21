@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, effect } from '@angular/core';
 import { Router } from '@angular/router';
 import { DialogService } from '../../../services/dialog.service';
 import { AuthService } from '../../auth/services/auth.service';
@@ -30,11 +30,27 @@ export class SellDashboardComponent implements OnInit {
   private readonly dialogService = inject(DialogService);
   protected readonly store = inject(SellSessionStore);
 
+  constructor() {
+    effect(() => {
+      const msg = this.store.statusMessage();
+      const blockedMsg = this.store.addToCartBlockedMessage();
+      if (msg || blockedMsg) {
+        const timer = setTimeout(() => {
+          this.store.clearStatusMessages();
+        }, 4000);
+        // Clear timer on cleanup to avoid memory leaks
+        return () => clearTimeout(timer);
+      }
+      return;
+    });
+  }
+
   ngOnInit(): void {
     const customer = this.store.selectedCustomer();
     if (customer?.salesId != null) {
       void this.store.loadSalesInsurance(customer);
     }
+    void this.store.loadActiveOffers();
   }
 
   protected onCategoryChange(category: CatalogCategory): void {

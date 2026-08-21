@@ -1,21 +1,47 @@
 <section class="prescription-history-page">
-  <header class="prescription-history__header">
-    <button type="button" class="prescription-history__back" (click)="onBackToSell()">
-      ← Back to Sell
-    </button>
-    <h1 class="prescription-history__title">ORDER HISTORY</h1>
-  </header>
+  <div class="prescription-history__header-container">
+    <div class="prescription-history__header-left">
+      <button type="button" class="prescription-history__back" (click)="onBackToSell()">
+        ← Back to Sell
+      </button>
+      <h1 class="prescription-history__title">ORDER HISTORY</h1>
+      @if (selectedCustomer(); as customer) {
+        <p class="prescription-history__customer">
+          Customer: <strong>{{ customer.displayName }}</strong>
+        </p>
+      } @else {
+        <p class="prescription-history__message">Select a customer from the header to view orders.</p>
+      }
+    </div>
 
-  @if (selectedCustomer(); as customer) {
-    <p class="prescription-history__customer">
-      Customer: <strong>{{ customer.displayName }}</strong>
-    </p>
-  } @else {
-    <p class="prescription-history__message">Select a customer from the header to view orders.</p>
-  }
+    @if (selectedCustomer() && !loading() && !isLoadingOrders() && customerOrders().length > 0) {
+      <div class="prescription-history__header-right">
+        <div class="header-stat-card balance-stat">
+          <span class="stat-label">Total Balance</span>
+          <span class="stat-value text-danger">{{ totalBalance().toFixed(2) }} SAR</span>
+        </div>
+        <div class="header-stat-card total-stat">
+          <span class="stat-label">Total Amt</span>
+          <span class="stat-value">{{ totalAmt().toFixed(2) }} SAR</span>
+        </div>
+        <div class="header-stat-card paid-stat">
+          <span class="stat-label">Total Paid</span>
+          <span class="stat-value text-success">{{ totalPaid().toFixed(2) }} SAR</span>
+        </div>
+        <button
+          type="button"
+          class="header-bulk-pay-btn"
+          [disabled]="totalBalance() <= 0"
+          (click)="onMakeBulkPayment()"
+        >
+          Bulk Payment
+        </button>
+      </div>
+    }
+  </div>
 
   @if (selectedCustomer()) {
-    @if (loading()) {
+    @if (loading() || isLoadingOrders()) {
       <div style="display: flex; flex-direction: column; gap: 16px; width: 100%;">
         <div class="skeleton-rx">
           <div class="skeleton-line skeleton-line--meta"></div>
@@ -32,102 +58,120 @@
           </div>
           <div class="skeleton-line skeleton-line--pd"></div>
         </div>
-        <div class="skeleton-rx">
-          <div class="skeleton-line skeleton-line--meta"></div>
-          <div class="skeleton-grid">
-            <div class="skeleton-cell"></div>
-            <div class="skeleton-cell"></div>
-            <div class="skeleton-cell"></div>
-            <div class="skeleton-cell"></div>
-            <div class="skeleton-cell"></div>
-            <div class="skeleton-cell"></div>
-            <div class="skeleton-cell"></div>
-            <div class="skeleton-cell"></div>
-            <div class="skeleton-cell"></div>
-          </div>
-          <div class="skeleton-line skeleton-line--pd"></div>
-        </div>
       </div>
-    } @else if (history().length > 0) {
-      <p class="prescription-history__hint">Select an order to view on the Sell dashboard.</p>
-
-      <div class="prescription-history__list" role="radiogroup" aria-label="Order history">
-        @for (entry of history(); track entry.id) {
-          <button
-            type="button"
-            class="prescription-history__item"
-            [class.prescription-history__item--selected]="selectedId() === entry.id"
-            role="radio"
-            [attr.aria-checked]="selectedId() === entry.id"
-            (click)="onSelect(entry.id)"
-          >
-            <span class="prescription-history__select-indicator" aria-hidden="true"></span>
-
-            <div class="prescription-history__meta">
-              <span>{{ entry.summary.date }}</span>
-              <span>{{ entry.summary.doctorName }}</span>
-            </div>
-
-            <div class="prescription-history__grid-wrap responsive-table-wrap">
-            <table class="prescription-history__grid">
-              <thead>
-                <tr>
-                  <th></th>
-                  <th>OD</th>
-                  <th>OS</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <th>SPH</th>
-                  <td>{{ entry.summary.od.sph }}</td>
-                  <td>{{ entry.summary.os.sph }}</td>
-                </tr>
-                <tr>
-                  <th>CYL</th>
-                  <td>{{ entry.summary.od.cyl }}</td>
-                  <td>{{ entry.summary.os.cyl }}</td>
-                </tr>
-                <tr>
-                  <th>AXIS</th>
-                  <td>{{ entry.summary.od.axis }}</td>
-                  <td>{{ entry.summary.os.axis }}</td>
-                </tr>
-                @if (entry.summary.od.add || entry.summary.os.add) {
+    } @else {
+      <div class="prescription-history__main-area">
+        @if (customerOrders().length > 0) {
+          <div class="prescription-history__orders-section">
+            <h2 class="prescription-history__section-title">Customer Invoices & Orders</h2>
+            <div class="orders-grid-container">
+              <table class="orders-grid-table">
+                <thead>
                   <tr>
-                    <th>ADD</th>
-                    <td>{{ entry.summary.od.add ?? '—' }}</td>
-                    <td>{{ entry.summary.os.add ?? '—' }}</td>
+                    <th>Invoice No</th>
+                    <th class="text-right">Total Amt</th>
+                    <th class="text-right">Discount</th>
+                    <th class="text-right">Amt Paid</th>
+                    <th class="text-right">Balance Amt</th>
+                    <th>Status</th>
+                    <th class="text-center">Action</th>
                   </tr>
-                }
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  @for (order of customerOrders(); track order.salesId) {
+                    <tr>
+                      <td class="font-semibold">{{ order.invoiceNo }}</td>
+                      <td class="text-right font-semibold">{{ order.grossTotal.toFixed(2) }} SAR</td>
+                      <td class="text-right text-muted">{{ order.discountAmount.toFixed(2) }} SAR</td>
+                      <td class="text-right text-success font-semibold">{{ order.paidAmount.toFixed(2) }} SAR</td>
+                      <td class="text-right font-semibold" [class.text-danger]="order.balance > 0">
+                        {{ order.balance.toFixed(2) }} SAR
+                      </td>
+                      <td>
+                        <span class="status-badge" [class]="'status-badge--' + order.statusName?.toLowerCase().replace(' ', '-')">
+                          {{ order.statusName || '—' }}
+                        </span>
+                      </td>
+                      <td class="text-center">
+                        <button type="button" class="orders-grid__action-btn" (click)="onViewOrder(order)">
+                          View Order
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
             </div>
+          </div>
+        }
 
-            <p class="prescription-history__pd">
-              PD: {{ entry.summary.pd }} · Near PD: {{ entry.summary.nearPd }}
-            </p>
-          </button>
+        @if (customerOrders().length === 0) {
+          <div class="prescription-history__empty">
+            <p>No saved orders or invoices for this customer yet.</p>
+            <button type="button" class="prescription-history__btn" (click)="onNewPrescription()">
+              + New Order
+            </button>
+          </div>
         }
       </div>
-
-      <footer class="prescription-history__footer">
-        <button
-          type="button"
-          class="prescription-history__view-btn"
-          [disabled]="!selectedId()"
-          (click)="onViewSelected()"
-        >
-          View on Sell Dashboard
-        </button>
-      </footer>
-    } @else {
-      <div class="prescription-history__empty">
-        <p>No saved orders for this customer yet.</p>
-        <button type="button" class="prescription-history__btn" (click)="onNewPrescription()">
-          + New Order
-        </button>
-      </div>
     }
+  }
+
+  <!-- Bulk Payment Modal -->
+  @if (showBulkPaymentModal()) {
+    <div class="bulk-modal-overlay" (click)="onCloseBulkModal()">
+      <div class="bulk-modal-content" (click)="$event.stopPropagation()">
+        <header class="bulk-modal__header">
+          <h3>Record Bulk Payment</h3>
+          <button type="button" class="bulk-modal__close-btn" (click)="onCloseBulkModal()">×</button>
+        </header>
+
+        <div class="bulk-modal__body">
+          <p class="bulk-modal__description">
+            This payment will be applied to the customer's oldest outstanding balances first.
+          </p>
+
+          <div class="bulk-modal__field">
+            <label for="bulkAmount">Payment Amount (SAR)</label>
+            <input
+              id="bulkAmount"
+              type="number"
+              class="bulk-modal__input"
+              [value]="bulkPaymentAmount()"
+              (input)="bulkPaymentAmount.set($any($event.target).valueAsNumber)"
+              min="0.01"
+              [max]="totalBalance()"
+              step="0.01"
+            />
+            <span class="bulk-modal__hint">Remaining Unpaid: {{ totalBalance().toFixed(2) }} SAR</span>
+          </div>
+
+          <div class="bulk-modal__field">
+            <label for="bulkMode">Payment Mode</label>
+            <select
+              id="bulkMode"
+              class="bulk-modal__input"
+              [value]="bulkPaymentMode()"
+              (change)="bulkPaymentMode.set($any($event.target).value)"
+            >
+              <option value="Cash">Cash</option>
+              <option value="Card">Card</option>
+            </select>
+          </div>
+        </div>
+
+        <footer class="bulk-modal__footer">
+          <button type="button" class="bulk-modal__cancel-btn" (click)="onCloseBulkModal()">Cancel</button>
+          <button
+            type="button"
+            class="bulk-modal__submit-btn"
+            [disabled]="!bulkPaymentAmount() || bulkPaymentAmount() <= 0"
+            (click)="onSubmitBulkPayment()"
+          >
+            Submit Payment
+          </button>
+        </footer>
+      </div>
+    </div>
   }
 </section>

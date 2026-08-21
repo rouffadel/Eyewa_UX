@@ -34,6 +34,7 @@ function toCartItem(line: SalesDetailsGridLineItem): CartLineItem {
     price: line.productValue,
     category: 'frames',
     description: line.categoryName,
+    productId: line.productId,
   };
 
   return {

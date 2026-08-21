@@ -21,7 +21,7 @@ export function buildSaveOrderLensePayload(payload: PrescriptionPayload): SaveOr
       toPrescriptionDetail(payload.rightEye),
       toPrescriptionDetail(payload.leftEye),
     ],
-    PrescriptionIpd: toPrescriptionIpd(payload.rightEye, payload.leftEye),
+    PrescriptionIpd: toPrescriptionIpd(payload.rightEye, payload.leftEye, payload.pd, payload.nearPd, payload.vd),
     SalesId: payload.salesId,
   };
 }
@@ -60,12 +60,15 @@ function toPrescriptionDetail(
 function toPrescriptionIpd(
   rightEye: EyePrescription,
   leftEye: EyePrescription,
+  pd: number | null,
+  nearPd: number | null,
+  vd: number | null,
 ): SaveOrderLensePayload['PrescriptionIpd'] {
   return {
-    sphtext: toIpdFlag(rightEye.sph, leftEye.sph),
-    cyltext: toIpdFlag(rightEye.cyl, leftEye.cyl),
-    axistext: toIpdFlag(rightEye.axis, leftEye.axis),
-    addtext: toIpdFlag(rightEye.add, leftEye.add),
+    sphtext: pd !== null ? String(pd) : '',
+    cyltext: vd !== null ? String(vd) : '',
+    axistext: '',
+    addtext: nearPd !== null ? String(nearPd) : '',
   };
 }
 

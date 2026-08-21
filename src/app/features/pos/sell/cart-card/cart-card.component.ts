@@ -1,6 +1,7 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, inject, signal, effect } from '@angular/core';
 import { CartLineItem, lineTotal } from '../models/cart.models';
 import { formatMoney } from '../services/payment.service';
+import { SellSessionStore } from '../services/sell-session.store';
 
 @Component({
   selector: 'app-cart-card',
@@ -9,8 +10,25 @@ import { formatMoney } from '../services/payment.service';
   host: { class: 'cart-card-host' },
 })
 export class CartCardComponent {
+  protected readonly store = inject(SellSessionStore);
   readonly items = input<CartLineItem[]>([]);
   readonly locked = input(false);
+  protected readonly showLockedBanner = signal(false);
+
+  constructor() {
+    effect(() => {
+      if (this.locked()) {
+        this.showLockedBanner.set(true);
+        const timer = setTimeout(() => {
+          this.showLockedBanner.set(false);
+        }, 5000);
+        return () => clearTimeout(timer);
+      } else {
+        this.showLockedBanner.set(false);
+        return () => {};
+      }
+    });
+  }
 
   readonly qtyChange = output<{ lineId: string; qty: number }>();
   readonly removeItem = output<string>();

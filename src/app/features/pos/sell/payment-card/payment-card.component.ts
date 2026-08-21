@@ -31,6 +31,9 @@ export class PaymentCardComponent {
   readonly isInsuranceLocked = input(false);
   readonly hasInsuranceAccess = input(true);
   readonly hasRedmeePointsAccess = input(true);
+  readonly hasOffersAccess = input(true);
+  readonly coupons = input<any[]>([]);
+  readonly selectedCoupon = input<any | null>(null);
 
   readonly discountChange = output<number>();
   readonly loyaltyToggle = output<boolean>();
@@ -43,6 +46,37 @@ export class PaymentCardComponent {
   readonly pay = output<void>();
   readonly payAndPrint = output<void>();
   readonly printReceipt = output<void>();
+  readonly couponSelect = output<any>();
+  readonly couponRemove = output<void>();
+
+  protected isCouponDropdownOpen = false;
+
+  protected toggleCouponDropdown(): void {
+    if (this.orderFullyPaid()) return;
+    this.isCouponDropdownOpen = !this.isCouponDropdownOpen;
+  }
+
+  protected selectCoupon(coupon: any): void {
+    this.isCouponDropdownOpen = false;
+    if (!coupon) {
+      this.couponRemove.emit();
+    } else {
+      this.couponSelect.emit(coupon);
+    }
+  }
+
+  protected onCouponChange(event: Event): void {
+    const select = event.target as HTMLSelectElement;
+    const code = select.value;
+    if (!code) {
+      this.couponRemove.emit();
+    } else {
+      const match = this.coupons().find(c => c.offerCode === code);
+      if (match) {
+        this.couponSelect.emit(match);
+      }
+    }
+  }
 
   protected formatMoney = formatMoney;
 

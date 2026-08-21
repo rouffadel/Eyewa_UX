@@ -52,11 +52,9 @@ export function buildSaveSalesDetailsPayload({
     throw new Error('Select a product for each frame before paying.');
   }
 
-  const grossTotal = roundMoney(
-    record.frames.reduce((sum, line) => sum + (line.sellingPrice ?? 0) * Math.max(1, line.quantity ?? 1), 0),
-  );
-  const discount = roundMoney(grids.reduce((sum, line) => sum + line.Discount, 0));
-  const netTotal = roundMoney(grids.reduce((sum, line) => sum + Number(line.SellingPrice), 0));
+  const discount = draft.discountAmount;
+  const netTotal = payable;
+  const grossTotal = roundMoney(payable + discount + (insuranceAmount ?? 0));
   const paymentAmounts = resolveSaveSalesPaymentAmounts(netTotal, draft, orderPayment, payable);
   const resolvedInsuranceAmount =
     insuranceAmount != null && Number.isFinite(insuranceAmount) && insuranceAmount > 0

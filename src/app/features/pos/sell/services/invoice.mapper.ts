@@ -99,6 +99,7 @@ export function buildInvoiceViewModel(input: BuildInvoiceInput): InvoiceViewMode
     user: input.staffName,
     storeName: input.storeName,
     storeAddress: input.storeAddress,
+    paymentMethod: input.paymentDraft?.method ? (input.paymentDraft.method.charAt(0).toUpperCase() + input.paymentDraft.method.slice(1)) : 'Cash',
   };
 }
 
@@ -287,13 +288,13 @@ function resolvePrescription(
       sph: parseSummaryValue(summary.od.sph),
       cyl: parseSummaryValue(summary.od.cyl),
       axis: parseSummaryValue(summary.od.axis),
-      add: null,
+      add: summary.od.add ? parseSummaryValue(summary.od.add) : null,
     },
     leftEye: {
       sph: parseSummaryValue(summary.os.sph),
       cyl: parseSummaryValue(summary.os.cyl),
       axis: parseSummaryValue(summary.os.axis),
-      add: null,
+      add: summary.os.add ? parseSummaryValue(summary.os.add) : null,
     },
     pd: summary.pd,
   };

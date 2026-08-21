@@ -81,20 +81,38 @@
 }
 
 .sell-dashboard__status {
+  position: fixed;
+  top: 1.5rem;
+  right: 1.5rem;
+  z-index: 1000000;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  grid-column: 1 / -1;
+  width: calc(100vw - 3rem);
+  max-width: 380px;
   margin: 0;
-  padding: 0.75rem 0.75rem 0.75rem 1rem;
-  border: 1px solid #bfdbfe;
+  padding: 1rem 1rem 1rem 1.25rem;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid var(--color-pos-accent);
   border-radius: 12px;
-  background: linear-gradient(90deg, #eff6ff 0%, #f8fafc 100%);
-  color: var(--color-pos-accent);
+  background: #ffffff;
+  color: var(--color-text-heading);
   font-size: 0.875rem;
-  font-weight: 500;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.08);
+  font-weight: 600;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+  animation: toastSlideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes toastSlideIn {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 .sell-dashboard__status-text {
@@ -161,9 +179,7 @@
     overflow: hidden;
   }
 
-  .sell-dashboard:has(.sell-dashboard__status) {
-    grid-template-rows: auto minmax(0, 1fr);
-  }
+
 
   .sell-dashboard__panel--left {
     grid-column: 1 / span 3;

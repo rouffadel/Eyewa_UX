@@ -14,7 +14,7 @@
 
   </div>
 
-  @if (locked()) {
+  @if (showLockedBanner()) {
   <p class="cart-card__locked-banner" role="status">
     This order has a payment on record. The cart cannot be changed.
   </p>
@@ -70,5 +70,31 @@
       </tbody>
     </table>
   </div>
+  }
+
+  @if (store.hasOffersAccess() && store.activeOffers().length > 0) {
+    <div class="cart-card__offers-ticker">
+      <div class="cart-card__ticker-label">🔥 RUNNING OFFERS:</div>
+      <div class="cart-card__ticker-wrap">
+        <div class="cart-card__ticker-content">
+          @for (offer of store.activeOffers(); track offer.offerCode) {
+            <span class="cart-card__ticker-item">
+              <span class="cart-card__ticker-badge" [class.cart-card__ticker-badge--bogo]="offer.offerType === 'BuyXGetY'">
+                {{ offer.offerType === 'Discount' ? (offer.discountType === 'Percentage' ? offer.discountValue + '%' : offer.discountValue + ' SAR') : 'BOGO' }}
+              </span>
+              <strong class="cart-card__ticker-code">{{ offer.offerCode }}</strong>: {{ offer.offerName }}
+            </span>
+          }
+          @for (offer of store.activeOffers(); track offer.offerCode + '_dup') {
+            <span class="cart-card__ticker-item">
+              <span class="cart-card__ticker-badge" [class.cart-card__ticker-badge--bogo]="offer.offerType === 'BuyXGetY'">
+                {{ offer.offerType === 'Discount' ? (offer.discountType === 'Percentage' ? offer.discountValue + '%' : offer.discountValue + ' SAR') : 'BOGO' }}
+              </span>
+              <strong class="cart-card__ticker-code">{{ offer.offerCode }}</strong>: {{ offer.offerName }}
+            </span>
+          }
+        </div>
+      </div>
+    </div>
   }
 </section>

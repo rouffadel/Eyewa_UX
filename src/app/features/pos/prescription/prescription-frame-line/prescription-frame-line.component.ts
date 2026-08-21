@@ -7,11 +7,12 @@ import {
   HostListener,
   inject,
   input,
+  OnInit,
   output,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormGroup, FormArray, FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { BrandOption } from '../../sell/models/brand.models';
@@ -20,6 +21,7 @@ import { ProductOption } from '../../sell/models/product.models';
 import { BrandService } from '../../sell/services/brand.service';
 import { ProductService } from '../../sell/services/product.service';
 import { formatMoney } from '../../sell/services/payment.service';
+import { SellSessionStore } from '../../sell/services/sell-session.store';
 import {
   calculateFrameLineTotals,
   FRAME_CATEGORIES,
@@ -35,7 +37,7 @@ export type PrescriptionFramesTemplate = 'guided' | 'productSearch';
   templateUrl: './prescription-frame-line.component.html',
   styleUrl: './prescription-frame-line.component.css',
 })
-export class PrescriptionFrameLineComponent {
+export class PrescriptionFrameLineComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly brandService = inject(BrandService);
   private readonly productService = inject(ProductService);
@@ -111,6 +113,15 @@ export class PrescriptionFrameLineComponent {
       .subscribe((query) => {
         void this.runModelSearch(query);
       });
+  }
+
+  ngOnInit(): void {
+    const initialProductId = this.group().get('productId')?.value;
+    if (initialProductId) {
+      setTimeout(() => {
+        this.applyBogoDiscountIfEligible(initialProductId);
+      }, 100);
+    }
   }
 
   @HostListener('document:click', ['$event'])
@@ -232,6 +243,114 @@ export class PrescriptionFrameLineComponent {
     this.group().get('discountPercent')?.updateValueAndValidity();
     this.closeModelSearch();
     this.modelSearchRequestId += 1;
+
+    this.applyBogoDiscountIfEligible(product.productId);
+  }
+
+  private readonly sellStore = inject(SellSessionStore);
+  private readonly fb = inject(FormBuilder);
+
+  protected readonly activeProductOffer = computed(() => {
+    const productId = this.group().get('productId')?.value;
+    if (!productId) return null;
+
+    return this.sellStore.activeOffers().find((offer: any) => 
+      (offer.selectedBuyProductIds && offer.selectedBuyProductIds.includes(productId)) ||
+      (offer.selectedGetProductIds && offer.selectedGetProductIds.includes(productId))
+    ) || null;
+  });
+
+  protected readonly isBuyProductOfOffer = computed(() => {
+    const offer = this.activeProductOffer();
+    const productId = this.group().get('productId')?.value;
+    if (!offer || !productId) return false;
+    return offer.selectedBuyProductIds && offer.selectedBuyProductIds.includes(productId);
+  });
+
+  protected readonly isGetProductOfOffer = computed(() => {
+    const offer = this.activeProductOffer();
+    const productId = this.group().get('productId')?.value;
+    if (!offer || !productId) return false;
+    return offer.selectedGetProductIds && offer.selectedGetProductIds.includes(productId);
+  });
+
+  private applyBogoDiscountIfEligible(productId: number): void {
+    const parentArray = this.group().parent as FormArray;
+    if (!parentArray) return;
+
+    const offers = this.sellStore.activeOffers();
+
+    for (const offer of offers) {
+      if (offer.offerType !== 'BuyXGetY') continue;
+
+      let buyCount = 0;
+      parentArray.controls.forEach(ctrl => {
+        const pid = ctrl.get('productId')?.value;
+        if (offer.selectedBuyProductIds && offer.selectedBuyProductIds.includes(pid)) {
+          buyCount += ctrl.get('quantity')?.value ?? 1;
+        }
+      });
+
+      const requiredBuyQty = offer.buyQuantity ?? 1;
+
+      if (buyCount >= requiredBuyQty) {
+        const hasGetProduct = parentArray.controls.some(ctrl => {
+          const pid = ctrl.get('productId')?.value;
+          return offer.selectedGetProductIds && offer.selectedGetProductIds.includes(pid);
+        });
+
+        if (!hasGetProduct && offer.selectedGetProductDetails && offer.selectedGetProductDetails.length > 0) {
+          const getProduct = offer.selectedGetProductDetails[0];
+          if (getProduct) {
+            const frameGroup = this.fb.group({
+              category: [getProduct.categoryName || ''],
+              categoryId: [getProduct.categoryId],
+              brandId: [getProduct.brandId],
+              brandName: [getProduct.brandName || ''],
+              productId: [getProduct.productId],
+              modelNo: [getProduct.productName],
+              sellingPrice: [getProduct.productValue],
+              quantity: [1],
+              maxDiscount: [100],
+              discountPercent: [100],
+            });
+            parentArray.push(frameGroup);
+            return;
+          }
+        }
+      }
+
+      const isGet = offer.selectedGetProductIds && offer.selectedGetProductIds.includes(productId);
+      if (isGet) {
+        const hasBuyProduct = parentArray.controls.some(ctrl => {
+          if (ctrl === this.group()) return false;
+          const pid = ctrl.get('productId')?.value;
+          return offer.selectedBuyProductIds && offer.selectedBuyProductIds.includes(pid);
+        });
+
+        if (hasBuyProduct) {
+          this.group().patchValue({ discountPercent: 100 });
+          this.group().get('discountPercent')?.updateValueAndValidity();
+          this.salePrice.set(0);
+          return;
+        }
+      }
+
+      const isBuy = offer.selectedBuyProductIds && offer.selectedBuyProductIds.includes(productId);
+      if (isBuy) {
+        const getLine = parentArray.controls.find(ctrl => {
+          if (ctrl === this.group()) return false;
+          const pid = ctrl.get('productId')?.value;
+          return offer.selectedGetProductIds && offer.selectedGetProductIds.includes(pid);
+        });
+
+        if (getLine) {
+          getLine.patchValue({ discountPercent: 100 });
+          getLine.get('discountPercent')?.updateValueAndValidity();
+          return;
+        }
+      }
+    }
   }
 
   protected onSalePriceInput(event: Event): void {

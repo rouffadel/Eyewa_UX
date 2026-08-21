@@ -1,6 +1,11 @@
 <article class="frame-line" [formGroup]="group()">
   <header class="frame-line__header">
     <h3 class="frame-line__title">Frame {{ index() + 1 }}</h3>
+    @if (activeProductOffer(); as offer) {
+      <span class="frame-line__offer-badge" [class.frame-line__offer-badge--get]="isGetProductOfOffer()">
+        {{ offer.offerName }} ({{ isBuyProductOfOffer() ? 'BOGO Buy Item' : 'BOGO Free Item' }})
+      </span>
+    }
     @if (canRemove()) {
     <button type="button" class="frame-line__remove" aria-label="Remove frame" (click)="remove.emit()">
       <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">

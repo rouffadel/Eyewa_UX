@@ -366,3 +366,20 @@
   color: var(--color-primary, #7c3aed) !important;
   font-weight: 600;
 }
+
+.frame-line__offer-badge {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 0.125rem 0.5rem;
+  background-color: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+  border-radius: 9999px;
+  margin-left: 0.75rem;
+}
+
+.frame-line__offer-badge--get {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}

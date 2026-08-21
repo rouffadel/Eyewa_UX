@@ -52,6 +52,7 @@ export function cartItemsFromPrescription(record: PrescriptionRecord): CartLineI
       price: line.sellingPrice ?? 0,
       category: 'frames',
       description: line.category,
+      productId: line.productId ?? undefined,
     };
 
     items.push({

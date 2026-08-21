@@ -52,6 +52,7 @@ import { InsuranceService } from '../../insurance/services/insurance.service';
 import { CustomerService } from '../../customer/services/customer.service';
 import { InsertSalesPayload, formatInvoiceDate } from '../../customer/models/customer-sales.models';
 import { ProductService } from './product.service';
+import { OfferService } from './offer.service';
 
 @Injectable({ providedIn: 'root' })
 export class SellSessionStore {
@@ -70,6 +71,7 @@ export class SellSessionStore {
   private readonly productService = inject(ProductService);
   private readonly appConfig = inject(AppConfigService);
   private readonly dialogService = inject(DialogService);
+  private readonly offerService = inject(OfferService);
 
   readonly selectedCustomer = signal<Customer | null>(this.customerSession.sellCustomer());
   readonly prescriptionLoading = signal(false);
@@ -78,6 +80,7 @@ export class SellSessionStore {
   readonly hasProductsAccess = signal(true);
   readonly hasInsuranceAccess = signal(true);
   readonly hasRedmeePointsAccess = signal(true);
+  readonly hasOffersAccess = signal(true);
 
   private readonly prescriptionsByCustomer = signal<Record<string, PrescriptionSummary>>({});
 
@@ -106,6 +109,8 @@ export class SellSessionStore {
     if (storeId) {
       void this.loadCatalogProducts(storeId);
     }
+
+    void this.loadActiveOffers();
     
     // Fetch tenant feature access config
     const http = inject(HttpClient);
@@ -115,9 +120,15 @@ export class SellSessionStore {
     http.get<any>(`${apiUrl}/TenantAccess/default`).subscribe({
       next: (config) => {
         if (config) {
-          this.hasProductsAccess.set(config.hasProductsAccess);
-          this.hasInsuranceAccess.set(config.hasInsuranceAccess);
-          this.hasRedmeePointsAccess.set(config.hasRedmeePointsAccess);
+          const products = config.hasProductsAccess !== undefined ? config.hasProductsAccess : config.HasProductsAccess;
+          const insurance = config.hasInsuranceAccess !== undefined ? config.hasInsuranceAccess : config.HasInsuranceAccess;
+          const redmee = config.hasRedmeePointsAccess !== undefined ? config.hasRedmeePointsAccess : config.HasRedmeePointsAccess;
+          const offers = config.hasOffersAccess !== undefined ? config.hasOffersAccess : config.HasOffersAccess;
+
+          this.hasProductsAccess.set(products !== false);
+          this.hasInsuranceAccess.set(insurance !== false);
+          this.hasRedmeePointsAccess.set(redmee !== false);
+          this.hasOffersAccess.set(offers !== false);
         }
       },
       error: (err) => console.error('Failed to load tenant access config', err)
@@ -152,6 +163,7 @@ export class SellSessionStore {
       name: option.productName,
       price: option.productValue,
       category,
+      productId: option.productId,
       ...(option.photoPath ? { photoPath: option.photoPath } : {}),
     };
   }
@@ -218,6 +230,151 @@ export class SellSessionStore {
   readonly addToCartBlockedMessage = signal('');
   readonly isPaying = signal(false);
   readonly lastInvoice = signal<InvoiceViewModel | null>(null);
+  readonly activeOffers = signal<any[]>([]);
+  readonly selectedCoupon = signal<any | null>(null);
+
+  async loadActiveOffers(): Promise<void> {
+    try {
+      const offers = await this.offerService.getActiveOffers();
+      this.activeOffers.set(offers);
+    } catch (err) {
+      console.error('Failed to load active offers', err);
+    }
+  }
+
+  readonly eligibleOffers = computed(() => {
+    const items = this.cartItems();
+    if (items.length === 0) return [];
+
+    const active = this.activeOffers();
+    const eligible: any[] = [];
+
+    for (const offer of active) {
+      if (offer.offerType === 'Discount') {
+        if (offer.selectedBuyProductIds && offer.selectedBuyProductIds.length > 0) {
+          const hasMatch = items.some(item => {
+            const pid = item.product.productId ?? (item.product.sku.startsWith('product-') ? Number(item.product.sku.replace('product-', '')) : (item.product.sku.startsWith('sales-product-') ? Number(item.product.sku.replace('sales-product-', '')) : NaN));
+            return offer.selectedBuyProductIds.includes(pid);
+          });
+          if (!hasMatch) continue;
+        }
+        eligible.push(offer);
+      } else if (offer.offerType === 'BuyXGetY') {
+        console.log('Checking BuyXGetY offer:', offer.offerCode, 'selectedBuyProductIds:', offer.selectedBuyProductIds);
+        if (offer.selectedBuyProductIds && offer.selectedBuyProductIds.length > 0) {
+          const matchingBuyQty = items.reduce((sum, item) => {
+            const pid = item.product.productId ?? (item.product.sku.startsWith('product-') ? Number(item.product.sku.replace('product-', '')) : (item.product.sku.startsWith('sales-product-') ? Number(item.product.sku.replace('sales-product-', '')) : NaN));
+            console.log('Cart item SKU:', item.product.sku, 'productId:', item.product.productId, 'resolved pid:', pid, 'matches:', offer.selectedBuyProductIds.includes(pid));
+            if (offer.selectedBuyProductIds.includes(pid)) {
+              return sum + item.qty;
+            }
+            return sum;
+          }, 0);
+          console.log('matchingBuyQty:', matchingBuyQty, 'buyQuantity required:', offer.buyQuantity);
+
+          if (matchingBuyQty >= (offer.buyQuantity || 1)) {
+            eligible.push(offer);
+          }
+        }
+      }
+    }
+
+    console.log('Final eligible offers:', eligible);
+    return eligible;
+  });
+
+  applyCoupon(coupon: any): void {
+    // If there is an existing coupon, remove it first
+    if (this.selectedCoupon()) {
+      this.removeCoupon();
+    }
+
+    this.selectedCoupon.set(coupon);
+
+    if (coupon.offerType === 'Discount') {
+      let discountAmount = 0;
+      const eligibleItems = this.cartItems().filter(item => {
+        if (!coupon.selectedBuyProductIds || coupon.selectedBuyProductIds.length === 0) return true;
+        const pid = item.product.productId ?? (item.product.sku.startsWith('product-') ? Number(item.product.sku.replace('product-', '')) : (item.product.sku.startsWith('sales-product-') ? Number(item.product.sku.replace('sales-product-', '')) : NaN));
+        return coupon.selectedBuyProductIds.includes(pid);
+      });
+
+      const eligibleSubtotal = eligibleItems.reduce((sum, item) => sum + lineTotal(item), 0);
+
+      if (coupon.discountType === 'Percentage') {
+        discountAmount = (eligibleSubtotal * coupon.discountValue) / 100;
+      } else {
+        discountAmount = Math.min(eligibleSubtotal, coupon.discountValue);
+      }
+
+      this.paymentDraft.update(draft => ({
+        ...draft,
+        discountAmount: Math.round(discountAmount * 100) / 100
+      }));
+    } else if (coupon.offerType === 'BuyXGetY') {
+      const getProductIds = coupon.selectedGetProductIds || [];
+      if (getProductIds.length > 0) {
+        const inCartGet = this.cartItems().find(item => {
+          const pid = item.product.productId ?? (item.product.sku.startsWith('product-') ? Number(item.product.sku.replace('product-', '')) : (item.product.sku.startsWith('sales-product-') ? Number(item.product.sku.replace('sales-product-', '')) : NaN));
+          return getProductIds.includes(pid);
+        });
+
+        if (inCartGet) {
+          this.cartItems.update(items => items.map(item => {
+            if (item.lineId === inCartGet.lineId) {
+              const freeQty = coupon.getQuantity || 1;
+              const discount = Math.min(item.qty, freeQty) * item.unitPrice;
+              return { ...item, discount };
+            }
+            return item;
+          }));
+        } else {
+          const targetGetProductId = getProductIds[0];
+          const catalogProd = this.catalogProducts().find(p => p.sku === `product-${targetGetProductId}`);
+          if (catalogProd) {
+            const freeItem: CartLineItem = {
+              lineId: `bogo-reward-${Date.now()}`,
+              product: {
+                ...catalogProd,
+                price: catalogProd.price
+              },
+              qty: coupon.getQuantity || 1,
+              unitPrice: catalogProd.price,
+              discount: catalogProd.price * (coupon.getQuantity || 1),
+              variantLabel: 'Free Reward'
+            };
+
+            this.cartItems.update(items => [...items, freeItem]);
+          }
+        }
+      }
+    }
+  }
+
+  removeCoupon(): void {
+    const coupon = this.selectedCoupon();
+    this.selectedCoupon.set(null);
+    if (!coupon) return;
+
+    if (coupon.offerType === 'Discount') {
+      this.paymentDraft.update(draft => ({
+        ...draft,
+        discountAmount: 0
+      }));
+    } else if (coupon.offerType === 'BuyXGetY') {
+      this.cartItems.update(items => {
+        let updated = items.filter(item => !item.lineId.startsWith('bogo-reward-'));
+        updated = updated.map(item => {
+          const pid = item.product.productId ?? (item.product.sku.startsWith('product-') ? Number(item.product.sku.replace('product-', '')) : (item.product.sku.startsWith('sales-product-') ? Number(item.product.sku.replace('sales-product-', '')) : NaN));
+          if (coupon.selectedGetProductIds && coupon.selectedGetProductIds.includes(pid)) {
+            return { ...item, discount: 0 };
+          }
+          return item;
+        });
+        return updated;
+      });
+    }
+  }
 
   readonly filteredProducts = computed(() => {
     const search = this.catalogSearch().trim().toLowerCase();
@@ -315,6 +472,7 @@ export class SellSessionStore {
     customer: Customer | null,
     options: { freshSale?: boolean } = {},
   ): void {
+    void this.loadActiveOffers();
     const previousId = this.selectedCustomer()?.id;
     this.selectedCustomer.set(customer);
     this.resetLoyaltyRedemption();
@@ -335,6 +493,7 @@ export class SellSessionStore {
       this.loadedSalesInvoiceDate.set(null);
       this.loadedSalesQrcodeImg.set(null);
       this.salesInsurance.set(null);
+      this.selectedCoupon.set(null);
     }
 
     if (!customer?.id) {
@@ -805,6 +964,10 @@ export class SellSessionStore {
   }
 
   addProductToCart(product: Product): void {
+    if (this.activeOffers().length === 0) {
+      void this.loadActiveOffers();
+    }
+
     if (this.isCartLocked()) {
       this.addToCartBlockedMessage.set(this.cartLockedMessage());
       return;
@@ -1035,6 +1198,30 @@ export class SellSessionStore {
     if (validationMessage) {
       this.statusMessage.set(validationMessage);
       return false;
+    }
+
+    if (this.selectedCoupon()) {
+      const coupon = this.selectedCoupon();
+      if (coupon.offerType === 'Discount') {
+        const eligibleItems = this.cartItems().filter(item => {
+          if (!coupon.selectedBuyProductIds || coupon.selectedBuyProductIds.length === 0) return true;
+          const pid = item.product.productId ?? (item.product.sku.startsWith('product-') ? Number(item.product.sku.replace('product-', '')) : (item.product.sku.startsWith('sales-product-') ? Number(item.product.sku.replace('sales-product-', '')) : NaN));
+          return coupon.selectedBuyProductIds.includes(pid);
+        });
+        const eligibleSubtotal = eligibleItems.reduce((sum, item) => sum + (item.qty * item.unitPrice - item.discount), 0);
+        let expectedDiscount = 0;
+        if (coupon.discountType === 'Percentage') {
+          expectedDiscount = (eligibleSubtotal * coupon.discountValue) / 100;
+        } else {
+          expectedDiscount = Math.min(eligibleSubtotal, coupon.discountValue);
+        }
+        expectedDiscount = Math.round(expectedDiscount * 100) / 100;
+
+        if (Math.abs(draft.discountAmount - expectedDiscount) > 0.05) {
+          this.statusMessage.set('Coupon validation failed: manual discount mismatch.');
+          return false;
+        }
+      }
     }
 
     const customer = this.selectedCustomer()!;

@@ -7,56 +7,81 @@
     <h1 class="invoice-preview__title">INVOICE</h1>
   </header>
 
-  <article class="invoice-preview">
-
-
-    <div class="invoice-preview__header-banner">
-      <div class="invoice-preview__brand">
-        <div class="invoice-preview__logo-wrap">
-          <img src="/Eyewa_img.png" alt="Store Logo" class="invoice-preview__logo" onerror="this.style.display='none'" />
+  <article class="invoice-preview-container">
+    <div class="nb-receipt">
+      <!-- 1. Header Banner -->
+      <div class="nb-receipt__header">
+        <div class="nb-receipt__header-left">
+          <div class="nb-receipt__contact-item">
+            <svg viewBox="0 0 24 24" class="icon"><path fill="currentColor" d="M6.62 10.79a15.15 15.15 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.27c1.12.37 2.33.57 3.57.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.24.2 2.45.57 3.57a1 1 0 0 1-.26 1.02z"/></svg>
+            <span>013 5883617</span>
+          </div>
+          <div class="nb-receipt__contact-item">
+            <svg viewBox="0 0 24 24" class="icon"><path fill="currentColor" d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+            <span>nb.optical@hotmail.com</span>
+          </div>
         </div>
-        <div class="invoice-preview__shop-info">
-          <h2>{{ data.storeName || 'Eyewa Store' }}</h2>
-          @if (data.storeAddress) {
-          <p>{{ data.storeAddress }}</p>
-          }
+        
+        <div class="nb-receipt__header-middle">
+          <svg viewBox="0 0 100 60" class="nb-receipt__logo">
+            <circle cx="35" cy="32" r="13" fill="none" stroke="#e0b034" stroke-width="2.5" />
+            <circle cx="65" cy="32" r="13" fill="none" stroke="#e0b034" stroke-width="2.5" />
+            <path d="M48 32 H52" stroke="#e0b034" stroke-width="2.5" stroke-linecap="round" />
+            <text x="50" y="16" fill="#e0b034" font-size="12" font-family="'Outfit', sans-serif" font-weight="900" text-anchor="middle">NB</text>
+            <text x="50" y="55" fill="#e0b034" font-size="4.2" font-family="'Outfit', sans-serif" font-weight="700" text-anchor="middle">NAIMAT AL BASAR OPTICAL</text>
+          </svg>
+        </div>
+
+        <div class="nb-receipt__header-right">
+          <div class="nb-receipt__arabic-title">نظارات نعمة البصر</div>
+          <div class="nb-receipt__english-title">NAIMAT AL BASAR OPTICAL</div>
+          <div class="nb-receipt__vat-no">الرقم المميز : ٣١٠٢٥٤٦٥٩٧٠٠٠٠٣</div>
+          <div class="nb-receipt__invoice-type">
+            Simplified Tax Invoice &nbsp; فاتورة ضريبية مبسطة
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="invoice-preview__number-banner">
-      <div class="invoice-preview__number-item">
-        <span class="invoice-preview__number-label">Invoice#</span>
-        <span class="invoice-preview__number-value">{{ data.invoiceNo }}</span>
+      <!-- 2. Metadata Section -->
+      <div class="nb-receipt__metadata">
+        <div class="nb-receipt__meta-row">
+          <div class="nb-receipt__meta-col">
+            <span class="label">Inv No</span>
+            <span class="separator">:</span>
+            <span class="value">{{ data.invoiceNo }}</span>
+          </div>
+          <div class="nb-receipt__meta-col">
+            <span class="label">Name</span>
+            <span class="separator">:</span>
+            <span class="value">{{ data.customerName }}</span>
+          </div>
+        </div>
+        <div class="nb-receipt__meta-row">
+          <div class="nb-receipt__meta-col">
+            <span class="label">Date</span>
+            <span class="separator">:</span>
+            <span class="value">{{ data.invoiceDate }}</span>
+          </div>
+          <div class="nb-receipt__meta-col">
+            <span class="label">Number</span>
+            <span class="separator">:</span>
+            <span class="value">{{ data.contactNo }}</span>
+          </div>
+        </div>
       </div>
-      <div class="invoice-preview__number-item invoice-preview__number-item--right">
-        <span class="invoice-preview__number-label">Date</span>
-        <span class="invoice-preview__number-value">{{ data.invoiceDate }}</span>
-      </div>
-    </div>
 
-    <div class="invoice-preview__customer-info">
-      <div class="invoice-preview__customer-row">
-        <span class="invoice-preview__customer-label">Customer name:</span>
-        <span class="invoice-preview__customer-value">{{ data.customerName }}</span>
-      </div>
-      <div class="invoice-preview__customer-row">
-        <span class="invoice-preview__customer-label">Contact No:</span>
-        <span class="invoice-preview__customer-value">{{ data.contactNo }}</span>
-      </div>
-    </div>
-
-    <div class="invoice-preview__section">
-      <h2 class="invoice-preview__section-title">Products</h2>
-      <div class="invoice-preview__table-wrap">
-        <table class="invoice-preview__table">
+      <!-- 3. Products Table -->
+      <div class="nb-receipt__table-wrap">
+        <table class="nb-receipt__table">
           <thead>
             <tr>
               <th>Category</th>
               <th>Brand</th>
-              <th>Model No</th>
-              <th>Selling Price</th>
-              <th>Quantity</th>
+              <th>Model</th>
+              <th>Price</th>
+              <th>Qty</th>
+              <th>VAT</th>
+              <th>Discount</th>
               <th>Total</th>
             </tr>
           </thead>
@@ -68,108 +93,109 @@
               <td>{{ line.modelNo }}</td>
               <td>{{ line.sellingPrice }}</td>
               <td>{{ line.quantity }}</td>
+              <td>0</td>
+              <td>0</td>
               <td>{{ line.total }}</td>
             </tr>
             } @empty {
             <tr>
-              <td colspan="6" class="invoice-preview__empty-row">No line items</td>
+              <td colspan="8" class="empty">No line items</td>
             </tr>
             }
           </tbody>
         </table>
       </div>
-    </div>
 
-    <div class="invoice-preview__section">
-      <h2 class="invoice-preview__section-title">Order</h2>
-      <table class="invoice-preview__grid">
-        <thead>
-          <tr>
-            <th></th>
-            <th>SPH</th>
-            <th>CYL</th>
-            <th>AXIS</th>
-            <th>ADD</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of data.rxRows; track row.label) {
-          <tr>
-            <th>{{ row.label }}</th>
-            <td>{{ row.sph }}</td>
-            <td>{{ row.cyl }}</td>
-            <td>{{ row.axis }}</td>
-            <td>{{ row.add }}</td>
-          </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-
-    <div class="invoice-preview__footer">
-      <div class="invoice-preview__details">
-        @if (data.qrcodeImg) {
-        <div class="invoice-preview__qr">
-          <span class="invoice-preview__qr-label">Invoice QR Code</span>
-          <img class="invoice-preview__qr-image" [src]="data.qrcodeImg" alt="Invoice QR code" width="180" height="180" />
-        </div>
-        }
+      <!-- 4. Prescription Table -->
+      <div class="nb-receipt__prescription-wrap">
+        <table class="nb-receipt__prescription-table">
+          <thead>
+            <tr>
+              <th style="width: 40%">Prescription Details</th>
+              <th>SPH</th>
+              <th>CYL</th>
+              <th>AXIS</th>
+              <th>ADD</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of data.rxRows; track row.label) {
+              @if (row.label !== 'IPD') {
+                <tr>
+                  <th class="label-cell">{{ row.label }}</th>
+                  <td>{{ row.sph }}</td>
+                  <td>{{ row.cyl }}</td>
+                  <td>{{ row.axis }}</td>
+                  <td>{{ row.add }}</td>
+                </tr>
+              } @else {
+                <tr>
+                  <th class="label-cell">IPD</th>
+                  <td>{{ row.sph }}</td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
       </div>
 
-      <dl class="invoice-preview__totals">
-        <div class="invoice-preview__total-row">
-          <dt>Subtotal</dt>
-          <dd>{{ data.subtotal }}</dd>
+      <!-- 5. Footer Details & Totals -->
+      <div class="nb-receipt__footer-row">
+        <div class="nb-receipt__qr-block">
+          @if (data.qrcodeImg) {
+            <img [src]="data.qrcodeImg" alt="Invoice QR code" />
+          }
         </div>
-        <div class="invoice-preview__total-row">
-          <dt>Discount</dt>
-          <dd>{{ data.discount }}</dd>
+        
+        <div class="nb-receipt__totals-block">
+          <table class="nb-receipt__totals-table">
+            <tbody>
+              <tr>
+                <th class="label-cell">Details:</th>
+                <td class="middle-cell"></td>
+                <th class="title-cell">Total Amount:</th>
+                <td class="value-cell font-bold">{{ data.total }}</td>
+              </tr>
+              <tr>
+                <th class="label-cell">Payment Mode</th>
+                <td class="middle-cell value-cell">{{ data.paymentMethod || 'Cash' }}</td>
+                <th class="title-cell">Amount Paid:</th>
+                <td class="value-cell font-bold">{{ data.amountPaid }}</td>
+              </tr>
+              <tr>
+                <th class="label-cell"></th>
+                <td class="middle-cell"></td>
+                <th class="title-cell">Total VAT:</th>
+                <td class="value-cell font-bold">{{ data.vat }}</td>
+              </tr>
+              <tr>
+                <th class="label-cell"></th>
+                <td class="middle-cell"></td>
+                <th class="title-cell">Balance:</th>
+                <td class="value-cell font-bold text-red">{{ data.balance }}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <div class="invoice-preview__total-row">
-          <dt>VAT (15%)</dt>
-          <dd>{{ data.vat }}</dd>
+      </div>
+
+      <!-- 6. Bottom Banner Notes & Address -->
+      <div class="nb-receipt__bottom">
+        <div class="nb-receipt__notes">
+          <div class="arabic">ملاحظة : سياسة الإرجاع (في نفس اليوم) والاستبدال (خلال ٣ أيام) - (النظارات الشمسية فقط)</div>
+          <div class="english">Note : Return Policy (Same Day) & Exchange (with in 3 days)-( ONLY SUNGLASSES )</div>
         </div>
-        <div class="invoice-preview__total-row invoice-preview__total-row--strong">
-          <dt>Total</dt>
-          <dd>{{ data.total }}</dd>
+        <div class="nb-receipt__address">
+          <div class="arabic">الأحساء - الهفوف - الخالدية - خلف مستوصف المحيش - مقابل جامعة الملك فيصل</div>
+          <div class="english">Al-Ahsa Al Hofuf - Khalediyah - Behind Al-Muhaish Clinic - Opp TO King Faisal University</div>
         </div>
-        @if (data.previouslyPaid) {
-        <div class="invoice-preview__total-row">
-          <dt>Previously Paid</dt>
-          <dd>{{ data.previouslyPaid }}</dd>
-        </div>
-        }
-        @if (data.paidThisTime) {
-        <div class="invoice-preview__total-row">
-          <dt>Paid This Time</dt>
-          <dd>{{ data.paidThisTime }}</dd>
-        </div>
-        }
-        @if (data.insuranceAmount) {
-        <div class="invoice-preview__total-row">
-          <dt>Insurance</dt>
-          <dd>{{ data.insuranceAmount }}</dd>
-        </div>
-        }
-        @if (data.partialAmount) {
-        <div class="invoice-preview__total-row">
-          <dt>Partial Amount</dt>
-          <dd>{{ data.partialAmount }}</dd>
-        </div>
-        }
-        <div class="invoice-preview__total-row">
-          <dt>Amount Paid</dt>
-          <dd>{{ data.amountPaid }}</dd>
-        </div>
-        <div class="invoice-preview__total-row invoice-preview__total-row--balance">
-          <dt>Balance</dt>
-          <dd>{{ data.balance }}</dd>
-        </div>
-      </dl>
+      </div>
     </div>
 
-
-
+    <!-- Actions Panel -->
     <footer class="invoice-preview__actions">
       <button type="button" class="invoice-preview__btn invoice-preview__btn--secondary" (click)="onCancel()">
         Cancel

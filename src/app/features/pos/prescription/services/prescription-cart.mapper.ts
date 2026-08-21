@@ -108,6 +108,7 @@ function toFrameCartItem(line: PrescriptionFrameLine, index: number): CartLineIt
     name: formatFrameName(line),
     price: line.sellingPrice ?? 0,
     category: 'frames',
+    productId: line.productId ?? undefined,
   };
 
   return {
