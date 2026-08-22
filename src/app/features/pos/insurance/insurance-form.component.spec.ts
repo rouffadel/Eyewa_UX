@@ -22,7 +22,9 @@ describe('InsuranceFormComponent', () => {
     insuranceCompanyName: 'Tawuniya',
     taxRegistrationNumber: '300123456789',
     policyNumber: 'POL-987654321',
-    discountPercentage: 15.5,
+    compensation: 15.5,
+    compensationType: 'percentage',
+    validityStartDate: null,
     validityEndDate: '2027-12-31T00:00:00',
     isActive: true,
   };
@@ -97,7 +99,9 @@ describe('InsuranceFormComponent', () => {
     expect(component['form'].value).toEqual({
       insuranceCompanyId: 1,
       policyNumber: 'POL-987654321',
-      discountPercentage: 15.5,
+      compensation: 15.5,
+      compensationType: 'percentage',
+      validityStartDate: null,
       validityEndDate: '2027-12-31',
     });
     expect(component['insuranceCompanies']()).toEqual(mockCompanies);
@@ -126,7 +130,9 @@ describe('InsuranceFormComponent', () => {
     component['form'].setValue({
       insuranceCompanyId: 1,
       policyNumber: 'POL-987654321',
-      discountPercentage: 15.5,
+      compensation: 15.5,
+      compensationType: 'percentage',
+      validityStartDate: null,
       validityEndDate: '2027-12-31',
     });
 
@@ -138,7 +144,9 @@ describe('InsuranceFormComponent', () => {
       SalesId: TEST_CUSTOMER.salesId!,
       InsuranceCompanyId: 1,
       PolicyNumber: 'POL-987654321',
-      DiscountPercentage: 15.5,
+      Compensation: 15.5,
+      CompensationType: 'percentage',
+      ValidityStartDate: null,
       ValidityEndDate: '2027-12-31T00:00:00',
     });
     expect(component['successMessage']()).toBe('Insurance saved');

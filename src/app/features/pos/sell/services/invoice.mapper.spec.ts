@@ -27,7 +27,8 @@ describe('buildInvoiceViewModel', () => {
         total: 250,
         loyaltyDeduction: 0,
         insuranceAmount: 0,
-        insurancePercentage: 0,
+        insuranceCompensation: 0,
+        insuranceCompensationType: null,
         payable: 250,
       },
       paymentDraft: {
@@ -35,6 +36,7 @@ describe('buildInvoiceViewModel', () => {
         method: 'cash',
         cashAmount: 250,
         cardAmount: 0,
+        partialAmount: 250,
       },
       prescriptionRecord: null,
       latestPrescription: null,
@@ -64,7 +66,8 @@ describe('buildInvoiceViewModel', () => {
         total: 250,
         loyaltyDeduction: 0,
         insuranceAmount: 0,
-        insurancePercentage: 0,
+        insuranceCompensation: 0,
+        insuranceCompensationType: null,
         payable: 250,
       },
       paymentDraft: {
@@ -72,6 +75,7 @@ describe('buildInvoiceViewModel', () => {
         method: 'mixed',
         cashAmount: 650,
         cardAmount: 60,
+        partialAmount: 710,
       },
       prescriptionRecord: {
         id: 'rx-1',
@@ -117,12 +121,13 @@ describe('buildInvoiceFromExistingOrder', () => {
   const paymentTotals = {
     subtotal: 480,
     discount: 0,
-    vat: 72,
-    total: 552,
+    vat: 0,
+    total: 480,
     loyaltyDeduction: 0,
     insuranceAmount: 0,
-    insurancePercentage: 0,
-    payable: 552,
+    insuranceCompensation: 0,
+    insuranceCompensationType: null,
+    payable: 480,
   };
 
   it('should build a zero-balance receipt from loaded sales details', () => {
@@ -150,12 +155,14 @@ describe('buildInvoiceFromExistingOrder', () => {
         balance: 0,
         totalTax: 0,
         paidAmount: 480,
+        insuranceAmount: 0,
       },
       paymentTotals,
       paymentDraft: {
         ...DEFAULT_PAYMENT_DRAFT,
         method: 'cash',
         cashAmount: 480,
+        partialAmount: 480,
       },
       prescriptionRecord: null,
       latestPrescription: null,
@@ -167,8 +174,8 @@ describe('buildInvoiceFromExistingOrder', () => {
     expect(invoice.invoiceNo).toBe('NAB-14072026-28766');
     expect(invoice.invoiceDate).toBe('2026-07-14');
     expect(invoice.subtotal).toBe('480.00');
-    expect(invoice.vat).toBe('72.00');
-    expect(invoice.total).toBe('552.00');
+    expect(invoice.vat).toBe('0.00');
+    expect(invoice.total).toBe('480.00');
     expect(invoice.amountPaid).toBe('480.00');
     expect(invoice.balance).toBe('0.00');
     expect(invoice.productLines[0].brand).toBe('Bono BNS1073');
@@ -187,21 +194,24 @@ describe('buildInvoiceFromExistingOrder', () => {
         balance: 0,
         totalTax: 0,
         paidAmount: 580,
+        insuranceAmount: 0,
       },
       paymentTotals: {
-        subtotal: 780,
+        subtotal: 380,
         discount: 0,
-        vat: 117,
-        total: 897,
+        vat: 0,
+        total: 380,
         loyaltyDeduction: 0,
         insuranceAmount: 0,
-        insurancePercentage: 0,
-        payable: 897,
+        insuranceCompensation: 0,
+        insuranceCompensationType: null,
+        payable: 380,
       },
       paymentDraft: {
         ...DEFAULT_PAYMENT_DRAFT,
         method: 'cash',
-        cashAmount: 897,
+        cashAmount: 380,
+        partialAmount: 380,
       },
       prescriptionRecord: null,
       latestPrescription: null,
@@ -224,12 +234,24 @@ describe('buildInvoiceFromExistingOrder', () => {
         balance: 180,
         totalTax: 0,
         paidAmount: 300,
+        insuranceAmount: 0,
       },
-      paymentTotals,
+      paymentTotals: {
+        subtotal: 480,
+        discount: 0,
+        vat: 0,
+        total: 480,
+        loyaltyDeduction: 0,
+        insuranceAmount: 0,
+        insuranceCompensation: 0,
+        insuranceCompensationType: null,
+        payable: 480,
+      },
       paymentDraft: {
         ...DEFAULT_PAYMENT_DRAFT,
         method: 'cash',
         cashAmount: 300,
+        partialAmount: 300,
       },
       prescriptionRecord: null,
       latestPrescription: null,

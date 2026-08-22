@@ -29,6 +29,7 @@ describe('prescriptionRecordFromApiSale', () => {
         netTotal: 480,
         balance: 180,
         totalTax: 0,
+        insuranceAmount: 0,
       },
       prescription: null,
       lineItems: [

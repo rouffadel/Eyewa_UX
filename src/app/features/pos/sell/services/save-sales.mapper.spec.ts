@@ -49,7 +49,6 @@ describe('buildSaveSalesDetailsPayload', () => {
       payable: 1000,
       draft: {
         ...DEFAULT_PAYMENT_DRAFT,
-        payPartial: true,
         partialAmount: 500,
       },
     });
@@ -95,6 +94,7 @@ describe('buildSaveSalesDetailsPayload', () => {
       balance: 364,
       totalTax: 0,
       paidAmount: 500,
+      insuranceAmount: 0,
     };
 
     const payload = buildSaveSalesDetailsPayload({
@@ -144,7 +144,6 @@ describe('buildSaveSalesDetailsPayload', () => {
       payable: 864,
       draft: {
         ...DEFAULT_PAYMENT_DRAFT,
-        payFull: true,
         settleRemainingBalance: true,
         method: 'cash',
         cashAmount: 364,
@@ -206,7 +205,6 @@ describe('buildSaveSalesDetailsPayload', () => {
       payable: 480,
       draft: {
         ...DEFAULT_PAYMENT_DRAFT,
-        payFull: true,
         method: 'cash',
         cashAmount: 480,
         cardAmount: 0,
@@ -226,6 +224,7 @@ describe('buildSaveSalesDetailsPayload', () => {
       balance: 280,
       totalTax: 0,
       paidAmount: 200,
+      insuranceAmount: 0,
     };
 
     const payload = buildSaveSalesDetailsPayload({
@@ -274,7 +273,6 @@ describe('buildSaveSalesDetailsPayload', () => {
       payable: 280,
       draft: {
         ...DEFAULT_PAYMENT_DRAFT,
-        payFull: true,
         settleRemainingBalance: true,
         method: 'cash',
         cashAmount: 280,

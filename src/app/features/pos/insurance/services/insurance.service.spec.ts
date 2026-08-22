@@ -84,7 +84,8 @@ describe('InsuranceService', () => {
           InsuranceCompanyName: 'Tawuniya',
           TaxRegistrationNumber: '300123456789',
           PolicyNumber: 'POL-987654321',
-          DiscountPercentage: 15.5,
+          Compensation: 15.5,
+          CompensationType: 'percentage',
           ValidityEndDate: '2027-12-31T00:00:00',
           IsActive: true,
         },
@@ -99,7 +100,9 @@ describe('InsuranceService', () => {
       insuranceCompanyName: 'Tawuniya',
       taxRegistrationNumber: '300123456789',
       policyNumber: 'POL-987654321',
-      discountPercentage: 15.5,
+      compensation: 15.5,
+      compensationType: 'percentage',
+      validityStartDate: null,
       validityEndDate: '2027-12-31T00:00:00',
       isActive: true,
     });
@@ -127,7 +130,9 @@ describe('InsuranceService', () => {
       SalesId: 114130,
       InsuranceCompanyId: 1,
       PolicyNumber: 'POL-987654321',
-      DiscountPercentage: 15.5,
+      Compensation: 15.5,
+      CompensationType: 'percentage',
+      ValidityStartDate: null,
       ValidityEndDate: '2027-12-31T00:00:00',
     });
 
@@ -139,7 +144,9 @@ describe('InsuranceService', () => {
       SalesId: 114130,
       InsuranceCompanyId: 1,
       PolicyNumber: 'POL-987654321',
-      DiscountPercentage: 15.5,
+      Compensation: 15.5,
+      CompensationType: 'percentage',
+      ValidityStartDate: null,
       ValidityEndDate: '2027-12-31T00:00:00',
     });
 
@@ -158,7 +165,9 @@ describe('InsuranceService', () => {
       SalesId: 114130,
       InsuranceCompanyId: 1,
       PolicyNumber: 'POL-1',
-      DiscountPercentage: 10,
+      Compensation: 10,
+      CompensationType: 'percentage',
+      ValidityStartDate: null,
       ValidityEndDate: '2027-12-31T00:00:00',
     });
 

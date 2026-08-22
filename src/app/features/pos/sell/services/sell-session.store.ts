@@ -105,7 +105,7 @@ export class SellSessionStore {
       this.loadLocalPrescription(customer.id);
     }
 
-    const storeId = this.auth.selectedStore()?.storeId;
+    const storeId = typeof this.auth?.selectedStore === 'function' ? this.auth.selectedStore()?.storeId : null;
     if (storeId) {
       void this.loadCatalogProducts(storeId);
     }
@@ -164,6 +164,9 @@ export class SellSessionStore {
       price: option.productValue,
       category,
       productId: option.productId,
+      brandName: option.brandName,
+      modelNo: option.productName,
+      categoryName: option.categoryName,
       ...(option.photoPath ? { photoPath: option.photoPath } : {}),
     };
   }

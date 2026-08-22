@@ -47,10 +47,12 @@ describe('PaymentService', () => {
         loyaltyPoints: 0,
       },
       5,
+      'percentage',
     );
 
     expect(totals.total).toBeCloseTo(100, 2);
-    expect(totals.insurancePercentage).toBe(5);
+    expect(totals.insuranceCompensation).toBe(5);
+    expect(totals.insuranceCompensationType).toBe('percentage');
     expect(totals.insuranceAmount).toBeCloseTo(5, 2);
     expect(totals.payable).toBeCloseTo(95, 2);
   });
@@ -76,10 +78,10 @@ describe('PaymentService', () => {
       method: 'cash',
       cashAmount: 0,
       cardAmount: 0,
-      payPartial: false,
       partialAmount: 0,
-      payFull: true,
+      applyInsurance: true,
       settleRemainingBalance: false,
+      deliveryDate: null,
     });
   });
 
@@ -87,11 +89,13 @@ describe('PaymentService', () => {
     expect(service.syncAmountsForMethod(1165, 'cash', DEFAULT_PAYMENT_DRAFT)).toEqual({
       cashAmount: 1165,
       cardAmount: 0,
+      partialAmount: 0,
     });
 
     expect(service.syncAmountsForMethod(1165, 'card', DEFAULT_PAYMENT_DRAFT)).toEqual({
       cashAmount: 0,
       cardAmount: 1165,
+      partialAmount: 0,
     });
   });
 
@@ -166,7 +170,6 @@ describe('PaymentService', () => {
   it('should allow a valid partial payment with remaining balance', () => {
     const draft = {
       ...DEFAULT_PAYMENT_DRAFT,
-      payPartial: true,
       partialAmount: 500,
     };
 
@@ -182,6 +185,7 @@ describe('PaymentService', () => {
       balance: 180,
       totalTax: 0,
       paidAmount: 300,
+      insuranceAmount: 0,
     };
     const draft = {
       ...DEFAULT_PAYMENT_DRAFT,
@@ -268,6 +272,7 @@ describe('PaymentService', () => {
         balance: 180,
         totalTax: 0,
         paidAmount: 300,
+        insuranceAmount: 0,
       }),
     ).toEqual({
       previouslyPaid: 300,
@@ -288,6 +293,7 @@ describe('PaymentService', () => {
           balance: 0,
           totalTax: 0,
           paidAmount: 580,
+          insuranceAmount: 0,
         },
       }),
     ).toEqual({
@@ -307,6 +313,7 @@ describe('PaymentService', () => {
         balance: 0,
         totalTax: 0,
         paidAmount: 580,
+        insuranceAmount: 0,
       }),
     ).toBe(380);
   });

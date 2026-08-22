@@ -9,6 +9,9 @@ export interface Product {
   category: CatalogCategory;
   photoPath?: string;
   productId?: number;
+  brandName?: string;
+  modelNo?: string;
+  categoryName?: string;
 }
 
 export const CATALOG_TABS: { key: CatalogCategory; label: string }[] = [

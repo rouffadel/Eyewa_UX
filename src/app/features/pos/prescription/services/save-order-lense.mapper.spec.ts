@@ -26,6 +26,7 @@ describe('save-order-lense.mapper', () => {
     expect(payload).toEqual({
       OrderLenses: [
         {
+          OrderLenseId: 0,
           CategoryId: 'CR39',
           Brand: 'Biua',
           Price: '100',

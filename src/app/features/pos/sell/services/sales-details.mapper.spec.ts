@@ -44,6 +44,7 @@ describe('sales-details.mapper', () => {
       balance: 180,
       totalTax: 0,
       paidAmount: 300,
+      insuranceAmount: 0,
     };
 
     expect(paymentDraftFromSalesDetails(payment)).toEqual({
@@ -62,6 +63,7 @@ describe('sales-details.mapper', () => {
         balance: 180,
         totalTax: 0,
         paidAmount: 300,
+        insuranceAmount: 0,
       }),
     ).toBeTrue();
   });
@@ -75,6 +77,7 @@ describe('sales-details.mapper', () => {
         balance: 480,
         totalTax: 0,
         paidAmount: null,
+        insuranceAmount: 0,
       }),
     ).toBeFalse();
   });
@@ -88,6 +91,7 @@ describe('sales-details.mapper', () => {
         balance: 0,
         totalTax: 0,
         paidAmount: 480,
+        insuranceAmount: 0,
       }),
     ).toBeTrue();
   });
@@ -101,6 +105,7 @@ describe('sales-details.mapper', () => {
         balance: 180,
         totalTax: 0,
         paidAmount: 300,
+        insuranceAmount: 0,
       }),
     ).toBeFalse();
   });
@@ -113,6 +118,7 @@ describe('sales-details.mapper', () => {
       balance: 0,
       totalTax: 0,
       paidAmount: 480,
+      insuranceAmount: 0,
     };
 
     expect(paymentDraftFromSalesDetails(payment)).toEqual({

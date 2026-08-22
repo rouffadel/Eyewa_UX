@@ -201,6 +201,7 @@ describe('SalesDetailsService', () => {
       balance: 180,
       totalTax: 0,
       paidAmount: null,
+      insuranceAmount: 0,
     });
     expect(result.qrcodeImg).toBeNull();
   });

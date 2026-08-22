@@ -194,14 +194,20 @@ function buildProductLines(
     return fromPrescription;
   }
 
-  return cartItems.map((item) => ({
-    category: formatCatalogCategory(item.product.category),
-    brand: item.product.name,
-    modelNo: item.product.sku,
-    sellingPrice: formatMoney(item.unitPrice),
-    quantity: String(item.qty),
-    total: formatMoney(lineTotal(item)),
-  }));
+  return cartItems.map((item) => {
+    const category = item.product.categoryName || item.variantLabel || formatCatalogCategory(item.product.category);
+    const brand = item.product.brandName || item.product.name;
+    const modelNo = item.product.modelNo && item.product.modelNo !== item.product.brandName ? item.product.modelNo : '—';
+
+    return {
+      category,
+      brand,
+      modelNo,
+      sellingPrice: formatMoney(item.unitPrice),
+      quantity: String(item.qty),
+      total: formatMoney(lineTotal(item)),
+    };
+  });
 }
 
 function buildProductLinesFromPrescription(

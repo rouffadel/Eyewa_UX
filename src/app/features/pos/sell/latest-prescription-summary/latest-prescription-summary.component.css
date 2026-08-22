@@ -130,6 +130,10 @@
   color: var(--color-text-muted);
   font-weight: 700;
   font-size: 0.75rem;
+  position: sticky;
+  top: 0;
+  background: #f8fafc;
+  z-index: 2;
 }
 
 .rx-summary__grid tbody th {
