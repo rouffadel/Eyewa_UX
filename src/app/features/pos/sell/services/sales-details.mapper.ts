@@ -60,9 +60,16 @@ function formatLineName(line: SalesDetailsGridLineItem): string {
 
 function calculateLineDiscount(line: SalesDetailsGridLineItem): number {
   const subtotal = line.productValue * line.quantity;
-  const percent = Math.max(0, line.discountPercent);
+  const disc = Math.max(0, line.discountPercent);
 
-  return subtotal * (percent / 100);
+  if (disc <= 0) return 0;
+
+  // If disc >= subtotal or disc > 100, the API value is an absolute discount amount in SAR (e.g. 420 SAR for a free item)
+  if (disc >= subtotal || disc > 100) {
+    return Math.min(subtotal, disc);
+  }
+
+  return Math.min(subtotal, subtotal * (disc / 100));
 }
 
 export function isSalesCartLine(lineId: string): boolean {

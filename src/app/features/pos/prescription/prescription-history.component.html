@@ -71,6 +71,9 @@
                     <th>Invoice No</th>
                     <th class="text-right">Total Amt</th>
                     <th class="text-right">Discount</th>
+                    @if (store.hasTaxAccess()) {
+                      <th class="text-right">Tax / VAT</th>
+                    }
                     <th class="text-right">Amt Paid</th>
                     <th class="text-right">Balance Amt</th>
                     <th>Status</th>
@@ -83,6 +86,9 @@
                       <td class="font-semibold">{{ order.invoiceNo }}</td>
                       <td class="text-right font-semibold">{{ order.grossTotal.toFixed(2) }} SAR</td>
                       <td class="text-right text-muted">{{ order.discountAmount.toFixed(2) }} SAR</td>
+                      @if (store.hasTaxAccess()) {
+                        <td class="text-right text-muted">{{ order.taxAmount.toFixed(2) }} SAR</td>
+                      }
                       <td class="text-right text-success font-semibold">{{ order.paidAmount.toFixed(2) }} SAR</td>
                       <td class="text-right font-semibold" [class.text-danger]="order.balance > 0">
                         {{ order.balance.toFixed(2) }} SAR

@@ -32,6 +32,7 @@ export class PaymentCardComponent {
   readonly hasInsuranceAccess = input(true);
   readonly hasRedmeePointsAccess = input(true);
   readonly hasOffersAccess = input(true);
+  readonly hasTaxAccess = input(true);
   readonly coupons = input<any[]>([]);
   readonly selectedCoupon = input<any | null>(null);
 

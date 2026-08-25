@@ -77,6 +77,7 @@ export class PrescriptionHistoryComponent implements OnInit {
               balance: bal,
               insuranceAmount: o.InsuranceAmount || o.insuranceAmount || 0,
               discountAmount: o.DiscountAmount || o.discountAmount || o.Discount || o.discount || 0,
+              taxAmount: o.TaxAmount || o.taxAmount || o.VatAmount || o.vatAmount || o.Vat || o.vat || 0,
               orderStatusId: o.OrderStatusId || o.orderStatusId,
               statusName: status
             };

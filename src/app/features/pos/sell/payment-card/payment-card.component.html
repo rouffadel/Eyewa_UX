@@ -61,10 +61,12 @@
           </div>
         </div>
       }
-      <div class="payment-card__row">
-        <dt>VAT (0%)</dt>
-        <dd>{{ formatMoney(totals().vat) }} SAR</dd>
-      </div>
+      @if (hasTaxAccess()) {
+        <div class="payment-card__row">
+          <dt>VAT (0%)</dt>
+          <dd>{{ formatMoney(totals().vat) }} SAR</dd>
+        </div>
+      }
       <div class="payment-card__row payment-card__row--strong">
         <dt>Total</dt>
         <dd>{{ formatMoney(totals().total) }}</dd>

@@ -81,6 +81,7 @@ export class SellSessionStore {
   readonly hasInsuranceAccess = signal(true);
   readonly hasRedmeePointsAccess = signal(true);
   readonly hasOffersAccess = signal(true);
+  readonly hasTaxAccess = signal(true);
 
   private readonly prescriptionsByCustomer = signal<Record<string, PrescriptionSummary>>({});
 
@@ -124,11 +125,13 @@ export class SellSessionStore {
           const insurance = config.hasInsuranceAccess !== undefined ? config.hasInsuranceAccess : config.HasInsuranceAccess;
           const redmee = config.hasRedmeePointsAccess !== undefined ? config.hasRedmeePointsAccess : config.HasRedmeePointsAccess;
           const offers = config.hasOffersAccess !== undefined ? config.hasOffersAccess : config.HasOffersAccess;
+          const tax = config.hasTaxAccess !== undefined ? config.hasTaxAccess : config.HasTaxAccess;
 
           this.hasProductsAccess.set(products !== false);
           this.hasInsuranceAccess.set(insurance !== false);
           this.hasRedmeePointsAccess.set(redmee !== false);
           this.hasOffersAccess.set(offers !== false);
+          this.hasTaxAccess.set(tax !== false);
         }
       },
       error: (err) => console.error('Failed to load tenant access config', err)
@@ -400,9 +403,13 @@ export class SellSessionStore {
     this.cartItems().reduce((sum, item) => sum + item.qty, 0),
   );
 
-  readonly cartSubtotal = computed(() =>
-    this.cartItems().reduce((sum, item) => sum + lineTotal(item), 0),
-  );
+  readonly cartSubtotal = computed(() => {
+    const summary = this.orderPaymentSummary();
+    if (summary && summary.grossTotal > 0 && isOrderCartLocked(summary)) {
+      return summary.grossTotal;
+    }
+    return this.cartItems().reduce((sum, item) => sum + lineTotal(item), 0);
+  });
 
   readonly paymentTotals = computed(() =>
     this.payment.calculateTotals(
@@ -440,7 +447,7 @@ export class SellSessionStore {
       return false;
     }
     
-    return this.outstandingBalance() <= 0.01;
+    return summary.balance <= 0.01 && this.outstandingBalance() <= 0.01;
   });
 
   readonly canPrintReceipt = computed(() => {
@@ -460,6 +467,10 @@ export class SellSessionStore {
   readonly outstandingBalance = computed(() => {
     const summary = this.orderPaymentSummary();
     if (!summary) return 0;
+    
+    if (summary.balance > 0.01) {
+      return summary.balance;
+    }
     
     const alreadyPaid = orderAmountAlreadyPaid(summary);
     const newPayable = this.paymentTotals().payable;
