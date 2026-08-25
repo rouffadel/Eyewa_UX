@@ -404,10 +404,6 @@ export class SellSessionStore {
   );
 
   readonly cartSubtotal = computed(() => {
-    const summary = this.orderPaymentSummary();
-    if (summary && summary.grossTotal > 0 && isOrderCartLocked(summary)) {
-      return summary.grossTotal;
-    }
     return this.cartItems().reduce((sum, item) => sum + lineTotal(item), 0);
   });
 
@@ -467,10 +463,6 @@ export class SellSessionStore {
   readonly outstandingBalance = computed(() => {
     const summary = this.orderPaymentSummary();
     if (!summary) return 0;
-    
-    if (summary.balance > 0.01) {
-      return summary.balance;
-    }
     
     const alreadyPaid = orderAmountAlreadyPaid(summary);
     const newPayable = this.paymentTotals().payable;
