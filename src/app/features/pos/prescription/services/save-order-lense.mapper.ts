@@ -32,7 +32,7 @@ function toOrderLensLine(line: PrescriptionLensLine): SaveOrderLensePayload['Ord
   const originalQuantity = line.originalQuantity ?? 0;
   const delta = quantity - originalQuantity;
 
-  if (delta === 0 && line.orderLenseId) {
+  if (delta === 0) {
     return null;
   }
 

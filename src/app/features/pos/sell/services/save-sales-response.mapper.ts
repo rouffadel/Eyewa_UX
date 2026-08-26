@@ -84,10 +84,10 @@ function buildRxRowsFromSalesDetails(
     },
     {
       label: 'IPD',
-      sph: formatIpdCell(row.SPH_IPD),
-      cyl: formatRxCell(row.CYL_IPD),
-      axis: formatRxCell(row.AXIS_IPD),
-      add: formatRxCell(row.ADD_IPD),
+      sph: formatIpdCombinedCell(row.SPH_IPD, (row.ADD_IPD && `${row.ADD_IPD}`.trim() !== '' && `${row.ADD_IPD}`.trim() !== '—') ? row.ADD_IPD : row.CYL_IPD),
+      cyl: '—',
+      axis: '—',
+      add: '—',
     },
   ];
 }
@@ -100,11 +100,21 @@ function formatRxCell(value: string | null | undefined): string {
   return `${value}`.trim();
 }
 
-function formatIpdCell(value: string | null | undefined): string {
-  const formatted = formatRxCell(value);
-  if (formatted === '—') {
-    return formatted;
-  }
+function formatIpdCombinedCell(
+  pd: string | null | undefined,
+  nearPd: string | null | undefined,
+): string {
+  const pdVal = pd != null && `${pd}`.trim() !== '' && `${pd}`.trim() !== '—' ? `${pd}`.trim() : '';
+  const nearPdVal = nearPd != null && `${nearPd}`.trim() !== '' && `${nearPd}`.trim() !== '—' ? `${nearPd}`.trim() : '';
 
-  return `${formatted} mc`;
+  if (pdVal && nearPdVal) {
+    return `${pdVal}/${nearPdVal} mc`;
+  }
+  if (pdVal) {
+    return `${pdVal} mc`;
+  }
+  if (nearPdVal) {
+    return `${nearPdVal} mc`;
+  }
+  return '—';
 }

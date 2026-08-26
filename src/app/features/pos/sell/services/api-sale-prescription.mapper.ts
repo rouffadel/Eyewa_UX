@@ -34,7 +34,11 @@ export function prescriptionRecordFromApiSale(input: ApiSalePrescriptionInput): 
     rightEye: buildRightEye(row, orderResult.od),
     leftEye: buildLeftEye(row, orderResult.os),
     pd: parseNumericInput(row?.sphIpd ?? null),
-    nearPd: parseNumericInput(row?.addIpd ?? null),
+    nearPd: parseNumericInput(
+      row?.addIpd && `${row.addIpd}`.trim() !== '' && `${row.addIpd}`.trim() !== '—'
+        ? row.addIpd
+        : (row?.cylIpd ?? null)
+    ),
     vd: null,
     notes: '',
     createdAt: existingRecord?.createdAt ?? now,

@@ -271,6 +271,8 @@ type ResolvedPrescription = {
   rightEye: EyePrescription | null;
   leftEye: EyePrescription | null;
   pd: string;
+  cyl: string;
+  nearPd: string;
 };
 
 function resolvePrescription(
@@ -282,11 +284,13 @@ function resolvePrescription(
       rightEye: record.rightEye,
       leftEye: record.leftEye,
       pd: formatMeasurement(record.pd),
+      cyl: formatMeasurement(record.vd),
+      nearPd: formatMeasurement(record.nearPd),
     };
   }
 
   if (!summary) {
-    return { rightEye: null, leftEye: null, pd: '—' };
+    return { rightEye: null, leftEye: null, pd: '—', cyl: '—', nearPd: '—' };
   }
 
   return {
@@ -303,6 +307,8 @@ function resolvePrescription(
       add: summary.os.add ? parseSummaryValue(summary.os.add) : null,
     },
     pd: summary.pd,
+    cyl: '—',
+    nearPd: summary.nearPd || '—',
   };
 }
 
@@ -316,6 +322,22 @@ function parseSummaryValue(value: string): number | null {
 }
 
 function buildRxRows(prescription: ResolvedPrescription): InvoiceRxRow[] {
+  const pdVal = prescription.pd === '—' ? '' : prescription.pd;
+  let nearPdVal = prescription.nearPd === '—' ? '' : prescription.nearPd;
+
+  if (!nearPdVal && prescription.cyl && prescription.cyl !== '—') {
+    nearPdVal = prescription.cyl;
+  }
+
+  let ipdText = '—';
+  if (pdVal && nearPdVal) {
+    ipdText = `${pdVal}/${nearPdVal}`;
+  } else if (pdVal) {
+    ipdText = pdVal;
+  } else if (nearPdVal) {
+    ipdText = nearPdVal;
+  }
+
   return [
     {
       label: 'Right Eye',
@@ -333,7 +355,7 @@ function buildRxRows(prescription: ResolvedPrescription): InvoiceRxRow[] {
     },
     {
       label: 'IPD',
-      sph: prescription.pd === '—' ? '—' : `${prescription.pd} mc`,
+      sph: ipdText === '—' ? '—' : `${ipdText} mc`,
       cyl: '—',
       axis: '—',
       add: '—',

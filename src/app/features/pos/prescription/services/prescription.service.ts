@@ -131,9 +131,15 @@ export class PrescriptionService {
     result: SaveOrderLenseResult,
   ): PrescriptionRecord {
     const now = new Date().toISOString();
+    const lenses = payload.lenses.map((lens) => ({
+      ...lens,
+      originalQuantity: lens.quantity,
+    }));
+
     const record: PrescriptionRecord = {
       ...payload,
       id: String(result.id || payload.salesId),
+      lenses,
       createdAt: now,
       updatedAt: now,
     };
