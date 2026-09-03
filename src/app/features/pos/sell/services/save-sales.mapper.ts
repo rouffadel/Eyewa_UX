@@ -19,6 +19,7 @@ interface BuildSaveSalesPayloadOptions {
   loginId: number;
   salesManId: number;
   payable: number;
+  vat?: number | null;
   draft: PaymentDraft;
   orderPayment?: SalesDetailsPaymentSummary | null;
   /** Coverage amount already deducted from payable; empty string when none. */
@@ -33,6 +34,7 @@ export function buildSaveSalesDetailsPayload({
   loginId,
   salesManId,
   payable,
+  vat = null,
   draft,
   orderPayment = null,
   insuranceAmount = null,
@@ -68,7 +70,7 @@ export function buildSaveSalesDetailsPayload({
     SalesGrids: grids,
     GrossTotal: grossTotal,
     Discount: discount,
-    Tax: '0',
+    Tax: vat != null && vat > 0 ? formatAmount(vat) : '0',
     NetTotal: formatAmount(netTotal),
     Balance: formatAmount(paymentAmounts.balance),
     CustomerName: customer.displayName,

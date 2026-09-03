@@ -23,6 +23,7 @@ export interface PaymentDraft {
 export interface PaymentTotals {
   subtotal: number;
   discount: number;
+  vatRate: number;
   vat: number;
   total: number;
   loyaltyDeduction: number;

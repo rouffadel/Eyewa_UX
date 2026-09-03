@@ -63,7 +63,7 @@
       }
       @if (hasTaxAccess()) {
         <div class="payment-card__row">
-          <dt>VAT (0%)</dt>
+          <dt>VAT ({{ (totals().vatRate * 100) }}%)</dt>
           <dd>{{ formatMoney(totals().vat) }} SAR</dd>
         </div>
       }
@@ -334,11 +334,23 @@
     </div>
 
     <div class="payment-card__footer">
-      <div class="payment-card__actions payment-card__actions--single">
+      <div
+        class="payment-card__actions"
+        [class.payment-card__actions--single]="!canViewInvoice()"
+      >
+        @if (canViewInvoice()) {
+          <button
+            type="button"
+            class="payment-card__pay-secondary"
+            (click)="viewInvoice.emit()"
+          >
+            VIEW INVOICE
+          </button>
+        }
         @if (orderFullyPaid()) {
           <button
             type="button"
-            class="payment-card__pay payment-card__pay--full"
+            class="payment-card__pay"
             [disabled]="!canPrintReceipt()"
             (click)="printReceipt.emit()"
           >
@@ -347,7 +359,7 @@
         } @else {
           <button
             type="button"
-            class="payment-card__pay payment-card__pay--full"
+            class="payment-card__pay"
             [disabled]="!canPay() || isPaying()"
             (click)="pay.emit()"
           >

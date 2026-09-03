@@ -21,6 +21,7 @@ export class PaymentCardComponent {
   readonly draft = input.required<PaymentDraft>();
   readonly canPay = input(false);
   readonly canPrintReceipt = input(false);
+  readonly canViewInvoice = input(false);
   readonly orderFullyPaid = input(false);
   readonly isPaying = input(false);
   readonly settleFullRemaining = input(false);
@@ -47,6 +48,7 @@ export class PaymentCardComponent {
   readonly pay = output<void>();
   readonly payAndPrint = output<void>();
   readonly printReceipt = output<void>();
+  readonly viewInvoice = output<void>();
   readonly couponSelect = output<any>();
   readonly couponRemove = output<void>();
 

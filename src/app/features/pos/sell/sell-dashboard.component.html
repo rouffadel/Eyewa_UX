@@ -74,6 +74,7 @@
       [draft]="store.paymentDraft()"
       [canPay]="store.canPay()"
       [canPrintReceipt]="store.canPrintReceipt()"
+      [canViewInvoice]="store.canViewInvoice()"
       [orderFullyPaid]="store.orderFullyPaid()"
       [isPaying]="store.isPaying()"
       [settleFullRemaining]="store.isSettlingRemainingBalance()"
@@ -99,6 +100,7 @@
       (pay)="onPay()"
       (payAndPrint)="onPayAndPrint()"
       (printReceipt)="onPrintReceipt()"
+      (viewInvoice)="onViewInvoice()"
       (couponSelect)="store.applyCoupon($event)"
       (couponRemove)="store.removeCoupon()"
     />

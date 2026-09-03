@@ -53,6 +53,7 @@ import { CustomerService } from '../../customer/services/customer.service';
 import { InsertSalesPayload, formatInvoiceDate } from '../../customer/models/customer-sales.models';
 import { ProductService } from './product.service';
 import { OfferService } from './offer.service';
+import { TaxService } from './tax.service';
 
 @Injectable({ providedIn: 'root' })
 export class SellSessionStore {
@@ -72,10 +73,12 @@ export class SellSessionStore {
   private readonly appConfig = inject(AppConfigService);
   private readonly dialogService = inject(DialogService);
   private readonly offerService = inject(OfferService);
+  private readonly taxService = inject(TaxService);
 
   readonly selectedCustomer = signal<Customer | null>(this.customerSession.sellCustomer());
   readonly prescriptionLoading = signal(false);
   readonly salesInsurance = signal<SalesInsuranceRecord | null>(null);
+  readonly activeVatRate = signal<number>(this.appConfig.settings?.vatRate ?? 0.15);
   
   readonly hasProductsAccess = signal(true);
   readonly hasInsuranceAccess = signal(true);
@@ -98,6 +101,8 @@ export class SellSessionStore {
   private readonly loadedSalesQrcodeImg = signal<string | null>(null);
 
   constructor() {
+    void this.taxService.getDefaultTaxRate().then(rate => this.activeVatRate.set(rate));
+
     const customer = this.selectedCustomer();
     if (customer?.salesId != null) {
       this.loadSalesDetails(customer, { forceApplyFromApi: true, persistToLocalStorage: true });
@@ -417,6 +422,7 @@ export class SellSessionStore {
       this.paymentDraft().applyInsurance
         ? this.salesInsurance()?.compensationType ?? null
         : null,
+      this.activeVatRate(),
     ),
   );
 
@@ -452,6 +458,11 @@ export class SellSessionStore {
     }
 
     return this.selectedCustomer() !== null && this.cartItems().length > 0;
+  });
+
+  readonly canViewInvoice = computed(() => {
+    if (this.selectedCustomer() === null) return false;
+    return this.amountAlreadyPaid() > 0 || this.lastInvoice() !== null;
   });
 
   readonly isCartLocked = computed(() => isOrderCartLocked(this.orderPaymentSummary()));
@@ -1166,6 +1177,18 @@ export class SellSessionStore {
     return true;
   }
 
+  viewInvoice(staffName: string): boolean {
+    if (!this.canViewInvoice()) {
+      return false;
+    }
+
+    this.clearStatusMessages();
+    if (this.orderPaymentSummary() || !this.lastInvoice()) {
+      this.syncReceiptInvoice(staffName);
+    }
+    return true;
+  }
+
   redeemPointsStub(): void {
     this.statusMessage.set('Redeem points is not connected yet.');
   }
@@ -1288,6 +1311,7 @@ export class SellSessionStore {
           loginId: this.auth.user()?.loginId ?? 0,
           salesManId: this.auth.user()?.loginId ?? 0,
           payable,
+          vat: this.paymentTotals().vat,
           draft,
           orderPayment: this.orderPaymentSummary(),
           insuranceAmount: this.paymentTotals().insuranceAmount,

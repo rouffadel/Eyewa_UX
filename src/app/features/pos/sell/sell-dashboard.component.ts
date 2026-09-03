@@ -150,6 +150,14 @@ export class SellDashboardComponent implements OnInit {
     }
   }
 
+  protected onViewInvoice(): void {
+    const staffName = this.auth.currentSession()?.displayName ?? '—';
+
+    if (this.store.viewInvoice(staffName)) {
+      void this.router.navigate(['/home/sell/invoice']);
+    }
+  }
+
   protected onNewPrescription(): void {
     void this.store.startNewSaleIfLocked().then(() => {
       void this.router.navigate(['/home/prescription']);

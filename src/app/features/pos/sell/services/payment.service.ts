@@ -26,11 +26,14 @@ export class PaymentService {
     draft: PaymentDraft,
     insuranceCompensation: number | null = null,
     insuranceCompensationType: 'percentage' | 'amount' | null = null,
+    customVatRate?: number | null,
   ): PaymentTotals {
     const discount = Math.max(0, draft.discountAmount);
     const afterDiscount = Math.max(0, subtotal - discount);
-    const vatRate = 0; // Temporarily forced to 0% as requested
-    const vat = afterDiscount * vatRate;
+    const vatRate = customVatRate != null && Number.isFinite(customVatRate)
+      ? customVatRate
+      : (this.appConfig.settings?.vatRate ?? 0.15);
+    const vat = Math.round(afterDiscount * vatRate * 100) / 100;
     const total = afterDiscount + vat;
     const loyaltyDeduction =
       draft.redeemLoyalty && draft.loyaltyPoints > 0
@@ -55,6 +58,7 @@ export class PaymentService {
     return {
       subtotal,
       discount,
+      vatRate,
       vat,
       total,
       loyaltyDeduction,
