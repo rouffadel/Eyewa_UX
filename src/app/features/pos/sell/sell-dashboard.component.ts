@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, effect } from '@angular/core';
+import { Component, inject, OnInit, effect, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { DialogService } from '../../../services/dialog.service';
 import { AuthService } from '../../auth/services/auth.service';
@@ -11,6 +11,8 @@ import { CatalogCategory } from './models/product.models';
 import { PaymentMethod } from './models/payment.models';
 import { Product } from './models/product.models';
 import { SellSessionStore } from './services/sell-session.store';
+import { OffersBannerComponent } from './offers-banner/offers-banner.component';
+import { DashboardHeroBannerComponent } from '../dashboard/dashboard-hero-banner.component';
 
 @Component({
   selector: 'app-sell-dashboard',
@@ -20,6 +22,8 @@ import { SellSessionStore } from './services/sell-session.store';
     ProductCatalogCardComponent,
     CartCardComponent,
     PaymentCardComponent,
+    OffersBannerComponent,
+    DashboardHeroBannerComponent,
   ],
   templateUrl: './sell-dashboard.component.html',
   styleUrl: './sell-dashboard.component.css',

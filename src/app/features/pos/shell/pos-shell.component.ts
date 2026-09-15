@@ -1,6 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import {
+  NavigationCancel,
+  NavigationEnd,
+  NavigationError,
+  NavigationStart,
+  Router,
+  RouterOutlet,
+} from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { PosTab, posTabFromUrlSegment } from '../../../shared/models/pos-tab';
 import { AppHeaderComponent } from '../../../shared/ui/app-header/app-header.component';
@@ -10,9 +17,14 @@ import { SellSessionStore } from '../sell/services/sell-session.store';
 
 @Component({
   selector: 'app-pos-shell',
+  standalone: true,
   imports: [AppHeaderComponent, BottomNavComponent, RouterOutlet],
   template: `
     <div class="pos-shell">
+      @if (isPageLoading()) {
+        <div class="pos-shell__progress-bar"></div>
+      }
+
       @if (!hideShellChrome()) {
         <app-header
           [notificationCount]="2"
@@ -28,6 +40,14 @@ import { SellSessionStore } from '../sell/services/sell-session.store';
         class="pos-shell__content"
         [class.pos-shell__content--full]="hideShellChrome()"
       >
+        @if (isPageLoading()) {
+          <div class="pos-shell__loading-overlay" role="status" aria-label="Loading page data">
+            <div class="pos-shell__loading-card">
+              <div class="pos-shell__spinner"></div>
+              <span class="pos-shell__loading-text">Loading Page...</span>
+            </div>
+          </div>
+        }
         <router-outlet />
       </main>
 
@@ -44,16 +64,27 @@ export class PosShellComponent {
 
   protected readonly activeTab = signal<PosTab>('sell');
   protected readonly hideShellChrome = signal(false);
+  protected readonly isPageLoading = signal<boolean>(false);
 
   constructor() {
     this.syncFromUrl(this.router.url);
 
     this.router.events
-      .pipe(
-        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-        takeUntilDestroyed(),
-      )
-      .subscribe((event) => this.syncFromUrl(event.urlAfterRedirects));
+      .pipe(takeUntilDestroyed())
+      .subscribe((event) => {
+        if (event instanceof NavigationStart) {
+          this.isPageLoading.set(true);
+        } else if (
+          event instanceof NavigationEnd ||
+          event instanceof NavigationCancel ||
+          event instanceof NavigationError
+        ) {
+          this.syncFromUrl(event instanceof NavigationEnd ? event.urlAfterRedirects : this.router.url);
+          setTimeout(() => {
+            this.isPageLoading.set(false);
+          }, 250);
+        }
+      });
   }
 
   protected onTabChange(tab: PosTab): void {

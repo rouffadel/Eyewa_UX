@@ -243,6 +243,32 @@ export class SellSessionStore {
   readonly lastInvoice = signal<InvoiceViewModel | null>(null);
   readonly activeOffers = signal<any[]>([]);
   readonly selectedCoupon = signal<any | null>(null);
+  readonly isOffersBannerOpen = signal<boolean>(true);
+  readonly isDashboardHeroOpen = signal<boolean>(false);
+
+  toggleOffersBanner(): void {
+    this.isOffersBannerOpen.update(v => !v);
+  }
+
+  closeOffersBanner(): void {
+    this.isOffersBannerOpen.set(false);
+  }
+
+  openOffersBanner(): void {
+    this.isOffersBannerOpen.set(true);
+  }
+
+  toggleDashboardHero(): void {
+    this.isDashboardHeroOpen.update(v => !v);
+  }
+
+  closeDashboardHero(): void {
+    this.isDashboardHeroOpen.set(false);
+  }
+
+  openDashboardHero(): void {
+    this.isDashboardHeroOpen.set(true);
+  }
 
   async loadActiveOffers(): Promise<void> {
     try {

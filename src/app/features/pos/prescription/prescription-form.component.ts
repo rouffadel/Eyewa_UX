@@ -449,12 +449,12 @@ export class PrescriptionFormComponent implements OnInit {
       const rightEye = this.rightEyeGroup.getRawValue() as EyePrescription;
       const leftEye = this.leftEyeGroup.getRawValue() as EyePrescription;
 
-      const odError = this.validateEyeValues(rightEye, 'right eye (OD)');
+      const odError = this.validateEyeValues(rightEye, 'R (Right Eye)');
       if (odError) {
         return odError;
       }
 
-      const osError = this.validateEyeValues(leftEye, 'left eye (OS)');
+      const osError = this.validateEyeValues(leftEye, 'L (Left Eye)');
       if (osError) {
         return osError;
       }

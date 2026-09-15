@@ -1,3 +1,19 @@
+@if (store.hasOffersAccess()) {
+  <app-offers-banner
+    [offers]="store.activeOffers()"
+    [selectedCoupon]="store.selectedCoupon()"
+    [isOpen]="store.isOffersBannerOpen()"
+    (applyOffer)="store.applyCoupon($event)"
+    (removeOffer)="store.removeCoupon()"
+    (closeBanner)="store.closeOffersBanner()"
+    (toggleBanner)="store.toggleOffersBanner()"
+  />
+}
+
+@if (store.isDashboardHeroOpen()) {
+  <app-dashboard-hero-banner activeTab="sell" />
+}
+
 <div class="sell-dashboard">
   @if (store.statusMessage() || store.addToCartBlockedMessage()) {
     <div class="sell-dashboard__status" role="status">

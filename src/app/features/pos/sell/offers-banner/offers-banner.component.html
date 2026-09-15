@@ -1,0 +1,102 @@
+<!-- Top Floating Banner Overlay (shown on top of all content when isOpen is true) -->
+<div 
+  class="offers-banner-overlay"
+  [class.offers-banner-overlay--visible]="isOpen"
+  (mouseenter)="onMouseEnter()"
+  (mouseleave)="onMouseLeave()"
+>
+  <div class="offers-banner">
+    <div class="offers-banner__header">
+      <div class="offers-banner__header-title">
+        <span class="offers-banner__flame">🔥</span>
+        <span class="offers-banner__header-text">SPECIAL RUNNING OFFERS</span>
+        <span class="offers-banner__live-pill">LIVE</span>
+      </div>
+
+      <div class="offers-banner__header-actions">
+        @if (displayOffers().length > 1) {
+          <div class="offers-banner__controls">
+            <button 
+              type="button" 
+              class="offers-banner__nav-btn" 
+              (click)="prevSlide()" 
+              title="Previous Offer" 
+              aria-label="Previous Offer"
+            >
+              ‹
+            </button>
+            <span class="offers-banner__counter">
+              {{ activeIndex() + 1 }} / {{ displayOffers().length }}
+            </span>
+            <button 
+              type="button" 
+              class="offers-banner__nav-btn" 
+              (click)="nextSlide()" 
+              title="Next Offer" 
+              aria-label="Next Offer"
+            >
+              ›
+            </button>
+          </div>
+        }
+
+        <button 
+          type="button" 
+          class="offers-banner__close-btn" 
+          (click)="onClose($event)" 
+          title="Minimize/Close Offer Banner" 
+          aria-label="Close Offer Banner"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+
+    <div class="offers-banner__viewport">
+      <div 
+        class="offers-banner__track" 
+        [style.transform]="'translateX(-' + (activeIndex() * 100) + '%)'"
+      >
+        @for (offer of displayOffers(); track offer.offerCode + '_' + $index) {
+          <div 
+            class="offers-banner__slide" 
+            [class.offers-banner__slide--crimson]="offer.theme === 'crimson'"
+            [class.offers-banner__slide--emerald]="offer.theme === 'emerald'"
+            [class.offers-banner__slide--royal]="offer.theme === 'royal'"
+          >
+            <div class="offers-banner__slide-content">
+              <div class="offers-banner__badge">
+                {{ offer.badgeText }}
+              </div>
+              
+              <div class="offers-banner__info">
+                <h3 class="offers-banner__title">
+                  <span class="offers-banner__code">{{ offer.offerCode }}</span>
+                  <span class="offers-banner__separator">•</span>
+                  <span class="offers-banner__name">{{ offer.offerName }}</span>
+                </h3>
+                @if (offer.description) {
+                  <p class="offers-banner__desc">{{ offer.description }}</p>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    @if (displayOffers().length > 1) {
+      <div class="offers-banner__dots">
+        @for (offer of displayOffers(); track $index) {
+          <button 
+            type="button" 
+            class="offers-banner__dot"
+            [class.offers-banner__dot--active]="$index === activeIndex()"
+            (click)="goToSlide($index)"
+            [attr.aria-label]="'Go to offer slide ' + ($index + 1)"
+          ></button>
+        }
+      </div>
+    }
+  </div>
+</div>

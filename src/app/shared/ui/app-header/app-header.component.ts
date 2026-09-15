@@ -21,6 +21,7 @@ import { AuthService } from '../../../features/auth/services/auth.service';
 import { StoreService } from '../../../features/auth/services/store.service';
 import { CustomerSearchService } from '../../../features/pos/customer/services/customer-search.service';
 import { Customer } from '../../../features/pos/sell/models/customer.models';
+import { SellSessionStore } from '../../../features/pos/sell/services/sell-session.store';
 
 @Component({
   selector: 'app-header',
@@ -34,6 +35,7 @@ export class AppHeaderComponent implements AfterViewInit {
   private readonly authService = inject(AuthService);
   private readonly storeService = inject(StoreService);
   private readonly customerSearchService = inject(CustomerSearchService);
+  protected readonly sellStore = inject(SellSessionStore);
   private readonly searchSubject = new Subject<string>();
   private searchRequestId = 0;
 
@@ -171,12 +173,30 @@ export class AppHeaderComponent implements AfterViewInit {
 
   protected onSearchInput(value: string): void {
     this.searchQuery.set(value);
+    const trimmed = value.trim();
+    if (trimmed.length > 0) {
+      this.searchOpen.set(true);
+      if (trimmed.length < 2) {
+        this.searchLoading.set(false);
+        this.searchError.set('Enter at least 2 characters to search.');
+        this.searchResults.set([]);
+      } else {
+        this.searchLoading.set(true);
+        this.searchError.set(null);
+      }
+    } else {
+      this.closeSearchDropdown();
+    }
     this.searchSubject.next(value);
   }
 
   protected onSearchFocus(): void {
-    if (this.searchResults().length > 0 || this.searchError() || this.searchLoading()) {
+    const query = this.searchQuery().trim();
+    if (query.length > 0) {
       this.searchOpen.set(true);
+      if (query.length >= 2 && this.searchResults().length === 0 && !this.searchLoading() && !this.searchError()) {
+        void this.runCustomerSearch(query);
+      }
     }
   }
 

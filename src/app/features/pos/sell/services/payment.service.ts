@@ -30,11 +30,9 @@ export class PaymentService {
   ): PaymentTotals {
     const discount = Math.max(0, draft.discountAmount);
     const afterDiscount = Math.max(0, subtotal - discount);
-    const vatRate = customVatRate != null && Number.isFinite(customVatRate)
-      ? customVatRate
-      : (this.appConfig.settings?.vatRate ?? 0.15);
-    const vat = Math.round(afterDiscount * vatRate * 100) / 100;
-    const total = afterDiscount + vat;
+    const vatRate = 0;
+    const vat = 0;
+    const total = afterDiscount;
     const loyaltyDeduction =
       draft.redeemLoyalty && draft.loyaltyPoints > 0
         ? Math.min(draft.loyaltyPoints, total)
@@ -369,8 +367,26 @@ export function mixedAmountPaid(draft: PaymentDraft): number {
   return Math.max(0, draft.cashAmount) + Math.max(0, draft.cardAmount);
 }
 
+export function normalizeBalanceThreshold(balance: number): number {
+  if (!Number.isFinite(balance) || balance <= 0) {
+    return 0;
+  }
+  // If total remaining balance is less than 0.5, it is NOT considered as remaining balance (0)
+  if (balance < 0.5) {
+    return 0;
+  }
+  // If decimal fraction part (balance % 1) is less than 0.5, drop the fraction
+  const integerPart = Math.floor(balance);
+  const decimalPart = balance - integerPart;
+  if (decimalPart < 0.5) {
+    return integerPart;
+  }
+  return Math.round(balance * 100) / 100;
+}
+
 export function mixedBalanceRemaining(payable: number, draft: PaymentDraft): number {
-  return Math.max(0, Math.max(0, payable) - mixedAmountPaid(draft));
+  const raw = Math.max(0, Math.max(0, payable) - mixedAmountPaid(draft));
+  return normalizeBalanceThreshold(raw);
 }
 
 export function paymentAmountPaid(
@@ -384,7 +400,7 @@ export function paymentAmountPaid(
 
   if (draft.settleRemainingBalance && orderPayment) {
     const previouslyPaid = orderAmountAlreadyPaid(orderPayment);
-    const due = Math.max(0, orderPayment.balance);
+    const due = normalizeBalanceThreshold(Math.max(0, orderPayment.balance));
     const amountToPayThisTime = Math.min(amount, due);
     return previouslyPaid + amountToPayThisTime;
   }
@@ -397,7 +413,8 @@ export function paymentBalanceRemaining(
   draft: PaymentDraft,
   orderPayment?: SalesDetailsPaymentSummary | null,
 ): number {
-  return Math.max(0, Math.max(0, payable) - paymentAmountPaid(payable, draft, orderPayment));
+  const raw = Math.max(0, Math.max(0, payable) - paymentAmountPaid(payable, draft, orderPayment));
+  return normalizeBalanceThreshold(raw);
 }
 
 export function parsePaymentAmount(value: string | number): number {

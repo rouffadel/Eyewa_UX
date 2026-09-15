@@ -2,6 +2,7 @@ export interface StoreOption {
   storeId: number;
   storeName: string;
   isDefault?: boolean;
+  isActive?: boolean;
 }
 
 export interface FillStoreRow {
@@ -13,6 +14,8 @@ export interface FillStoreRow {
   storeName?: string;
   IsDefault?: boolean;
   isDefault?: boolean;
+  IsActive?: boolean | number | string;
+  isActive?: boolean | number | string;
 }
 
 export interface Product {

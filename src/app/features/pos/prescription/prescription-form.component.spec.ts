@@ -146,8 +146,8 @@ describe('PrescriptionFormComponent', () => {
   it('should render prescription headings and action buttons', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('PRESCRIPTION');
-    expect(compiled.textContent).toContain('RIGHT EYE (OD)');
-    expect(compiled.textContent).toContain('LEFT EYE (OS)');
+    expect(compiled.textContent).toContain('R (Right Eye)');
+    expect(compiled.textContent).toContain('L (Left Eye)');
     expect(compiled.textContent).toContain('Save Prescription');
     expect(compiled.textContent).toContain('Print');
     expect(compiled.textContent).toContain('Cancel');

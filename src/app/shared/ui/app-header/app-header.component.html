@@ -88,9 +88,44 @@
         }
       </div>
 
-      <button type="button" class="app-header__new-customer" (click)="onNewCustomer()">
+      <button
+        type="button"
+        class="app-header__new-customer"
+        (click)="onNewCustomer()"
+      >
         + New Customer
       </button>
+
+      <button
+        type="button"
+        class="app-header__icon-btn app-header__icon-btn--dashboard"
+        [class.app-header__icon-btn--active]="sellStore.isDashboardHeroOpen()"
+        title="Toggle POS Dashboard Quick Access"
+        aria-label="Toggle POS Dashboard Quick Access"
+        (click)="sellStore.toggleDashboardHero()"
+      >
+        <span class="app-header__dashboard-icon">📊</span>
+      </button>
+
+      @if (sellStore.hasOffersAccess()) {
+        <button
+          type="button"
+          class="app-header__icon-btn app-header__icon-btn--offers"
+          [class.app-header__icon-btn--active]="sellStore.isOffersBannerOpen()"
+          title="Active Running Offers & Coupons (%)"
+          aria-label="Active Running Offers & Coupons (%)"
+          (click)="sellStore.toggleOffersBanner()"
+        >
+          <span class="app-header__offers-percent">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+              <path d="M19 5L5 19M7.5 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm9 9a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+            </svg>
+          </span>
+          @if (sellStore.activeOffers().length > 0) {
+            <span class="app-header__badge-count app-header__badge-count--offers">{{ sellStore.activeOffers().length }}</span>
+          }
+        </button>
+      }
     </div>
 
     <div class="app-header__right">

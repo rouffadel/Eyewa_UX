@@ -42,17 +42,18 @@ export class StoreService {
     const rows = this.extractRows(response?.objresult);
 
     return rows
-      .filter((row) => row.storeId != null && row.storeName)
+      .filter((row) => row.storeId != null && row.storeName && row.isActive !== false)
       .map((row) => ({
         storeId: row.storeId,
         storeName: row.storeName,
         isDefault: row.isDefault === true,
+        isActive: row.isActive,
       }));
   }
 
   private extractRows(
     objresult: FillStoreResponse['objresult'] | undefined,
-  ): Array<{ storeId: number; storeName: string; isDefault: boolean }> {
+  ): Array<{ storeId: number; storeName: string; isDefault: boolean; isActive: boolean }> {
     if (!objresult) {
       return [];
     }
@@ -61,12 +62,12 @@ export class StoreService {
 
     return rows
       .map((row) => this.mapRow(row))
-      .filter((row): row is { storeId: number; storeName: string; isDefault: boolean } => row != null);
+      .filter((row): row is { storeId: number; storeName: string; isDefault: boolean; isActive: boolean } => row != null && row.isActive !== false);
   }
 
   private mapRow(
     row: FillStoreRow,
-  ): { storeId: number; storeName: string; isDefault: boolean } | null {
+  ): { storeId: number; storeName: string; isDefault: boolean; isActive: boolean } | null {
     const storeId = Number(
       row.StoreID ?? row.StoreId ?? row.storeID ?? row.storeId,
     );
@@ -76,10 +77,14 @@ export class StoreService {
       return null;
     }
 
+    const rawActive = row.IsActive ?? row.isActive;
+    const isActive = rawActive === undefined || rawActive === null || rawActive === true || rawActive === 1 || rawActive === '1' || rawActive === 'Y' || rawActive === 'true' || rawActive === 'True';
+
     return {
       storeId,
       storeName,
       isDefault: row.IsDefault === true || row.isDefault === true,
+      isActive,
     };
   }
 

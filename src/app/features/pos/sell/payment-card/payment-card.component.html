@@ -61,12 +61,6 @@
           </div>
         </div>
       }
-      @if (hasTaxAccess()) {
-        <div class="payment-card__row">
-          <dt>VAT ({{ (totals().vatRate * 100) }}%)</dt>
-          <dd>{{ formatMoney(totals().vat) }} SAR</dd>
-        </div>
-      }
       <div class="payment-card__row payment-card__row--strong">
         <dt>Total</dt>
         <dd>{{ formatMoney(totals().total) }}</dd>

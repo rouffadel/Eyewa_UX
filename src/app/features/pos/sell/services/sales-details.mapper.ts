@@ -101,5 +101,5 @@ export function isOrderFullyPaid(payment: SalesDetailsPaymentSummary | null): bo
   const netTotal = Math.max(0, payment.netTotal);
   const balance = Math.max(0, payment.balance);
 
-  return netTotal > 0 && balance <= 0.01;
+  return netTotal > 0 && balance < 0.5;
 }

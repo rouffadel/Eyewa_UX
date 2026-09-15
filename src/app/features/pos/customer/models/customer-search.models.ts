@@ -58,17 +58,19 @@ export function validateCustomerSearchQuery(raw: string): CustomerSearchValidati
   return { valid: true, message: null, query };
 }
 
-export function mapCustomerSearchRow(row: CustomerSearchRow): Customer {
+export function mapCustomerSearchRow(row: any): Customer {
+  const name = row.CustomerName || row.Name || row.CustomerNo || row.CustomerCode || 'Customer';
+  const phone = row.CustomerNo || row.MobileNo || row.Phone || row.ContactNo || '';
   return {
-    id: String(row.ID),
-    displayName: row.CustomerName,
-    initials: initialsFromName(row.CustomerName),
-    phoneMasked: row.CustomerNo,
-    phone: row.CustomerNo,
-    loyaltyPoints: 0,
+    id: String(row.ID ?? row.Id ?? row.id ?? Math.random()),
+    displayName: name,
+    initials: initialsFromName(name),
+    phoneMasked: phone,
+    phone: phone,
+    loyaltyPoints: Number(row.LoyaltyPoints ?? row.loyaltyPoints ?? 0),
     lastVisit: '—',
-    invoiceNo: row.InvoiceNo,
-    salesId: row.ID,
+    invoiceNo: row.InvoiceNo || row.invoiceNo || '',
+    salesId: Number(row.ID ?? row.salesId ?? 0),
   };
 }
 

@@ -2,7 +2,6 @@ import { Component, input, output, inject, signal, effect } from '@angular/core'
 import { CartLineItem, lineTotal } from '../models/cart.models';
 import { formatMoney } from '../services/payment.service';
 import { SellSessionStore } from '../services/sell-session.store';
-
 @Component({
   selector: 'app-cart-card',
   templateUrl: './cart-card.component.html',

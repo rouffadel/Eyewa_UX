@@ -29,17 +29,16 @@ describe('PaymentService', () => {
     });
 
     expect(totals.subtotal).toBe(1100);
-    expect(totals.vat).toBeCloseTo(165, 2);
-    expect(totals.total).toBeCloseTo(1265, 2);
+    expect(totals.vat).toBe(0);
+    expect(totals.total).toBe(1100);
     expect(totals.loyaltyDeduction).toBe(100);
     expect(totals.insuranceAmount).toBe(0);
-    expect(totals.payable).toBeCloseTo(1165, 2);
+    expect(totals.payable).toBe(1000);
   });
 
   it('should deduct insurance percentage from payable when insurance is present', () => {
-    // Bill total after VAT = 100, insurance 5% => deduct 5, payable 95
     const totals = service.calculateTotals(
-      100 / 1.15,
+      100,
       {
         ...DEFAULT_PAYMENT_DRAFT,
         discountAmount: 0,
@@ -50,14 +49,14 @@ describe('PaymentService', () => {
       'percentage',
     );
 
-    expect(totals.total).toBeCloseTo(100, 2);
+    expect(totals.total).toBe(100);
     expect(totals.insuranceCompensation).toBe(5);
     expect(totals.insuranceCompensationType).toBe('percentage');
-    expect(totals.insuranceAmount).toBeCloseTo(5, 2);
-    expect(totals.payable).toBeCloseTo(95, 2);
+    expect(totals.insuranceAmount).toBe(5);
+    expect(totals.payable).toBe(95);
   });
 
-  it('should apply discount before VAT', () => {
+  it('should apply discount directly without additional tax at payment time', () => {
     const totals = service.calculateTotals(1100, {
       ...DEFAULT_PAYMENT_DRAFT,
       discountAmount: 100,
@@ -66,8 +65,8 @@ describe('PaymentService', () => {
     });
 
     expect(totals.discount).toBe(100);
-    expect(totals.vat).toBeCloseTo(150, 2);
-    expect(totals.total).toBeCloseTo(1150, 2);
+    expect(totals.vat).toBe(0);
+    expect(totals.total).toBe(1000);
   });
 
   it('should default loyalty redemption to off with zero points', () => {
@@ -123,8 +122,8 @@ describe('PaymentService', () => {
       cardAmount: 60,
     };
 
-    expect(service.calculateTotals(1100, draft).payable).toBeCloseTo(1265, 2);
-    expect(mixedBalanceRemaining(1265, draft)).toBeCloseTo(555, 2);
+    expect(service.calculateTotals(1100, draft).payable).toBe(1100);
+    expect(mixedBalanceRemaining(1100, draft)).toBeCloseTo(390, 2);
   });
 
   it('should validate payment completion by method', () => {

@@ -1,0 +1,332 @@
+:host {
+  display: contents;
+}
+
+/* Top Floating Banner Overlay (Positioned on top of all content) */
+.offers-banner-overlay {
+  position: fixed;
+  top: calc(var(--header-height-total, 64px) + 12px);
+  left: 50%;
+  transform: translate(-50%, -140%);
+  width: 90%;
+  max-width: 920px;
+  z-index: 100001;
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+}
+
+.offers-banner-overlay--visible {
+  transform: translate(-50%, 0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.offers-banner {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  box-sizing: border-box;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18), 0 2px 6px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.offers-banner__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.625rem;
+}
+
+.offers-banner__header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.offers-banner__flame {
+  font-size: 1rem;
+  animation: flamePulse 2s ease-in-out infinite;
+}
+
+@keyframes flamePulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.25);
+  }
+}
+
+.offers-banner__header-text {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #0f172a;
+  text-transform: uppercase;
+}
+
+.offers-banner__live-pill {
+  font-size: 0.5625rem;
+  font-weight: 800;
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.offers-banner__live-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  animation: liveBlink 1.4s ease-in-out infinite;
+}
+
+@keyframes liveBlink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.2;
+  }
+}
+
+.offers-banner__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.offers-banner__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.offers-banner__nav-btn {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9375rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.offers-banner__nav-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #94a3b8;
+}
+
+.offers-banner__counter {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #64748b;
+  min-width: 2.5rem;
+  text-align: center;
+}
+
+.offers-banner__close-btn {
+  border: none;
+  background: #f1f5f9;
+  color: #64748b;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.offers-banner__close-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* Slide Viewport & Track */
+.offers-banner__viewport {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 10px;
+  position: relative;
+}
+
+.offers-banner__track {
+  display: flex;
+  width: 100%;
+  transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.offers-banner__slide {
+  min-width: 100%;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Slide Gradient Themes */
+.offers-banner__slide--emerald {
+  background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.offers-banner__slide--crimson {
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.offers-banner__slide--royal {
+  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.offers-banner__slide-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.offers-banner__badge {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 0.3125rem 0.625rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.offers-banner__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.offers-banner__title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.offers-banner__code {
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.25);
+  padding: 0.0625rem 0.4375rem;
+  border-radius: 4px;
+}
+
+.offers-banner__separator {
+  opacity: 0.6;
+}
+
+.offers-banner__name {
+  font-weight: 600;
+}
+
+.offers-banner__desc {
+  margin: 0.1875rem 0 0 0;
+  font-size: 0.75rem;
+  opacity: 0.9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.offers-banner__cta {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.4375rem 0.875rem;
+  border-radius: 6px;
+  border: none;
+  background: #ffffff;
+  color: #0f172a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.offers-banner__cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+  background: #f8fafc;
+}
+
+.offers-banner__cta--applied {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.offers-banner__cta--applied:hover {
+  background: #059669;
+}
+
+.offers-banner__cta-icon {
+  font-weight: 900;
+}
+
+/* Dots Pagination */
+.offers-banner__dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  margin-top: 0.625rem;
+}
+
+.offers-banner__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: none;
+  background: #cbd5e1;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.offers-banner__dot--active {
+  width: 18px;
+  border-radius: 999px;
+  background: var(--color-pos-accent, #2563eb);
+}

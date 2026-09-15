@@ -471,3 +471,54 @@ input[type="date"]::after {
   box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.1), 0 -8px 10px -6px rgba(0, 0, 0, 0.1) !important;
 }
 
+/* ==========================================================================
+   Completely Remove All Horizontal Scrollbars (Horizontal scrolling remains active)
+   ========================================================================== */
+html,
+body,
+.pos-shell,
+.pos-shell__content,
+.sell-dashboard,
+.dashboard-hero,
+.app-header {
+  overflow-x: hidden !important;
+}
+
+*::-webkit-scrollbar {
+  height: 0px !important;
+}
+
+*::-webkit-scrollbar:horizontal {
+  display: none !important;
+  height: 0px !important;
+  background: transparent !important;
+}
+
+*::-webkit-scrollbar-thumb:horizontal,
+*::-webkit-scrollbar-track:horizontal,
+*::-webkit-scrollbar-corner {
+  display: none !important;
+  height: 0px !important;
+  background: transparent !important;
+}
+
+* {
+  -ms-overflow-style: none !important;
+}
+
+.cart-card__table-wrap,
+.kpi-modal__table-wrap,
+.kpi-detail-panel__table-wrap,
+.dashboard-hero__kpi-bar,
+.dashboard-hero__grid,
+.offers-grid,
+.revenue-summary-row,
+.product-catalog-card__list,
+.product-catalog-card__products,
+.app-header__bar,
+.bottom-nav,
+.sell-dashboard {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
