@@ -479,8 +479,7 @@ body,
 .pos-shell,
 .pos-shell__content,
 .sell-dashboard,
-.dashboard-hero,
-.app-header {
+.dashboard-hero {
   overflow-x: hidden !important;
 }
 
