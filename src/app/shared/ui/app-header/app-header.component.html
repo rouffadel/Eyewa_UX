@@ -10,10 +10,12 @@
         {{ userInitials() }}
       </button>
 
-      <div class="app-header__brand">
-        <span class="app-header__brand-name">Eyewa</span>
-        <span class="app-header__brand-erp">ERP</span>
-        <span class="app-header__module">POS</span>
+      <div class="app-header__brand-logo-wrap">
+        <img
+          src="/naimat-al-basar-logo.jpg"
+          alt="Naimat Al-Basar Optical Logo"
+          class="app-header__brand-logo"
+        />
       </div>
     </div>
 
@@ -96,16 +98,18 @@
         + New Customer
       </button>
 
-      <button
-        type="button"
-        class="app-header__icon-btn app-header__icon-btn--dashboard"
-        [class.app-header__icon-btn--active]="sellStore.isDashboardHeroOpen()"
-        title="Toggle POS Dashboard Quick Access"
-        aria-label="Toggle POS Dashboard Quick Access"
-        (click)="sellStore.toggleDashboardHero()"
-      >
-        <span class="app-header__dashboard-icon">📊</span>
-      </button>
+      @if (activeTab() !== 'dashboard') {
+        <button
+          type="button"
+          class="app-header__icon-btn app-header__icon-btn--dashboard"
+          [class.app-header__icon-btn--active]="sellStore.isDashboardHeroOpen()"
+          title="Toggle POS Dashboard Quick Access"
+          aria-label="Toggle POS Dashboard Quick Access"
+          (click)="sellStore.toggleDashboardHero()"
+        >
+          <span class="app-header__dashboard-icon">📊</span>
+        </button>
+      }
 
       @if (sellStore.hasOffersAccess()) {
         <button

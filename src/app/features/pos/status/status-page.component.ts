@@ -2,7 +2,9 @@ import { Component, inject, OnInit, signal, computed, ElementRef, HostListener }
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AppConfigService } from '../../../services/app-config.service';
+import { categorizeOrderStatus, OrderStatusCategory } from '../shared/order-status.utils';
 
 @Component({
   selector: 'app-status-page',
@@ -15,11 +17,14 @@ export class StatusPageComponent implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly appConfig = inject(AppConfigService);
   private readonly elementRef = inject(ElementRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   protected readonly statuses = signal<any[]>([]);
   protected readonly orders = signal<any[]>([]);
   protected readonly selectedOrder = signal<any | null>(null);
   protected readonly selectedStatusId = signal<number | null>(null);
+  protected readonly selectedFilter = signal<OrderStatusCategory>('all');
   
   protected readonly isOpen = signal(false);
 
@@ -54,26 +59,74 @@ export class StatusPageComponent implements OnInit {
 
   searchTerm = signal<string>('');
 
-  // Computed signal to filter orders by Customer No or Invoice No
+  // Counts computed from all raw orders
+  protected readonly totalCount = computed(() => this.orders().length);
+  protected readonly completedCount = computed(() => 
+    this.orders().filter(o => categorizeOrderStatus(o.statusName) === 'completed').length
+  );
+  protected readonly pendingCount = computed(() => 
+    this.orders().filter(o => categorizeOrderStatus(o.statusName) === 'pending').length
+  );
+  protected readonly incompleteCount = computed(() => 
+    this.orders().filter(o => categorizeOrderStatus(o.statusName) === 'incomplete').length
+  );
+
+  // Dynamic page title based on selected filter
+  protected readonly pageTitle = computed(() => {
+    switch (this.selectedFilter()) {
+      case 'completed': return 'Completed Orders';
+      case 'pending': return 'Pending Orders';
+      case 'incomplete': return 'Incomplete Orders';
+      default: return 'All Orders';
+    }
+  });
+
+  // Filter orders by active status filter and search term
   filteredOrders = computed(() => {
+    let list = this.orders();
+    const filter = this.selectedFilter();
+
+    if (filter !== 'all') {
+      list = list.filter(o => categorizeOrderStatus(o.statusName) === filter);
+    }
+
     const search = this.searchTerm().trim().toLowerCase();
-    if (!search) return this.orders();
+    if (!search) return list;
     
-    return this.orders().filter(o => 
+    return list.filter(o => 
       (o.customerNo && o.customerNo.toLowerCase().includes(search)) ||
       (o.invoiceNo && o.invoiceNo.toLowerCase().includes(search)) ||
-      (o.salesId && o.salesId.toString().includes(search))
+      (o.salesId && o.salesId.toString().includes(search)) ||
+      (o.customerName && o.customerName.toLowerCase().includes(search))
     );
   });
 
   ngOnInit() {
+    this.route.queryParams.subscribe(params => {
+      const statusParam = (params['status'] || 'all').toLowerCase() as OrderStatusCategory;
+      if (['completed', 'pending', 'incomplete', 'all'].includes(statusParam)) {
+        this.selectedFilter.set(statusParam);
+      } else {
+        this.selectedFilter.set('all');
+      }
+    });
+
     this.fetchStatuses();
     this.fetchOrders();
   }
 
+  protected setFilter(filter: OrderStatusCategory): void {
+    this.selectedFilter.set(filter);
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { status: filter },
+      queryParamsHandling: 'merge'
+    });
+  }
+
   private getPosApiUrl(): string {
     const settings = this.appConfig.settings as any;
-    return settings?.apiUrl?.replace(/\/$/, '') || 'https://localhost:44314/api';
+    return settings?.apiUrl?.replace(/\/$/, '') || 'https://localhost:7207/api';
   }
 
   private fetchStatuses() {

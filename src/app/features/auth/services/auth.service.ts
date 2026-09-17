@@ -1,4 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AppConfigService } from '../../../services/app-config.service';
 import { ToastService } from '../../../services/toast.service';
@@ -155,9 +156,15 @@ export class AuthService {
 
           return true;
         })
-        .catch(() => {
-          if (this.session()) {
-            this.handleSessionExpired();
+        .catch((err: unknown) => {
+          // Expire session only if server explicitly rejected token with 401 Unauthorized or 403 Forbidden.
+          // Connection errors (status 0) should not cause logouts.
+          if (err instanceof HttpErrorResponse && (err.status === 401 || err.status === 403)) {
+            if (this.session()) {
+              this.handleSessionExpired();
+            }
+          } else {
+            console.warn('Refresh access token skipped/failed due to network or non-auth error:', err);
           }
 
           return false;

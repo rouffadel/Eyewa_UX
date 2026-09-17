@@ -11,6 +11,7 @@ import { PosTabPlaceholderComponent } from './features/pos/pos-tab-placeholder/p
 import { ProfilePageComponent } from './features/pos/profile/profile-page.component';
 import { PosShellComponent } from './features/pos/shell/pos-shell.component';
 import { SellDashboardComponent } from './features/pos/sell/sell-dashboard.component';
+import { SalesmanDashboardComponent } from './features/pos/dashboard/salesman-dashboard.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -22,7 +23,8 @@ export const routes: Routes = [
     component: PosShellComponent,
     canActivate: [authGuard],
     children: [
-      { path: '', redirectTo: 'sell', pathMatch: 'full' },
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'dashboard', component: SalesmanDashboardComponent },
       { path: 'sell', component: SellDashboardComponent },
       {
         path: 'sell/invoice',

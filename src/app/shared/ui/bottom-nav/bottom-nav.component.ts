@@ -24,13 +24,14 @@ export class BottomNavComponent implements OnInit {
   private readonly appConfig = inject(AppConfigService);
 
   protected readonly items = signal<NavItem[]>([
-    { tab: 'sell', label: 'Sell', ariaLabel: 'Sell' },
+    { tab: 'dashboard', label: 'Dashboard', shortLabel: 'Dash', ariaLabel: 'Dashboard' },
     {
       tab: 'prescription',
       label: 'Order',
       shortLabel: 'Order',
       ariaLabel: 'Order',
     },
+    { tab: 'sell', label: 'Sell', ariaLabel: 'Sell' },
     {
       tab: 'reports',
       label: 'Reports',
@@ -62,7 +63,7 @@ export class BottomNavComponent implements OnInit {
     
     // Fetch tenant feature access config
     const settings = this.appConfig.settings;
-    const apiUrl = settings?.apiUrl?.replace(/\/$/, '') || 'https://localhost:44314/api';
+    const apiUrl = settings?.apiUrl?.replace(/\/$/, '') || 'https://localhost:7207/api';
 
     this.http.get<any>(`${apiUrl}/TenantAccess/default`).subscribe({
       next: (config) => {
@@ -80,7 +81,7 @@ export class BottomNavComponent implements OnInit {
   private fetchDeliveriesCount(): void {
     const storeId = '7'; // Fallback store id or take from store logic
     const settings = this.appConfig.settings;
-    const apiUrl = settings?.apiUrl?.replace(/\/$/, '') || 'https://localhost:44314/api';
+    const apiUrl = settings?.apiUrl?.replace(/\/$/, '') || 'https://localhost:7207/api';
 
     this.http.get<{status: string, objresult: any[]}>(`${apiUrl}/sales/GetTodayDeliveries?storeId=${storeId}`)
       .subscribe({

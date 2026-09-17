@@ -39,6 +39,7 @@ export class AppHeaderComponent implements AfterViewInit {
   private readonly searchSubject = new Subject<string>();
   private searchRequestId = 0;
 
+  readonly activeTab = input<string>('dashboard');
   readonly notificationCount = input(0);
 
   readonly notificationsClick = output<void>();

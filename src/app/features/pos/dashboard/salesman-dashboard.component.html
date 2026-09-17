@@ -1,0 +1,246 @@
+<div class="dash-container">
+  <!-- SECTION 1: HEADER / PAGE INTRODUCTION -->
+  <header class="dash-header">
+    <div class="dash-header__greeting">
+      <h1 class="dash-header__title">Good Morning, {{ salesmanName() }} 👋</h1>
+      <p class="dash-header__subtitle">Here's what's happening with your sales today.</p>
+    </div>
+    <div class="dash-header__actions">
+      <div class="dash-header__date-pill">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8" y1="2" x2="8" y2="6"/>
+          <line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+        <span>{{ formattedDate() }}</span>
+      </div>
+      <button type="button" class="btn btn--primary btn--add-order" (click)="navigateToAddOrder()">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        <span>Add Order</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN DASHBOARD CONTENT GRID -->
+  <div class="dash-grid">
+    <!-- SECTION 2: SUMMARY CARDS (2x2 GRID) -->
+    <div class="dash-summary">
+      <!-- 1. Current Order Card / Total Orders -->
+      <div class="summary-card summary-card--blue" (click)="navigateToStatus('all')">
+        <div class="summary-card__icon-box">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
+          </svg>
+        </div>
+        <div class="summary-card__details">
+          <span class="summary-card__label">Total Orders</span>
+          <span class="summary-card__value">{{ summary().totalOrdersCount }}</span>
+        </div>
+        <div class="summary-card__arrow">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- 2. Completed Orders Card -->
+      <div class="summary-card summary-card--green" (click)="navigateToStatus('completed')">
+        <div class="summary-card__icon-box">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
+        <div class="summary-card__details">
+          <span class="summary-card__label">Completed Orders</span>
+          <span class="summary-card__value">{{ summary().completedCount }}</span>
+        </div>
+        <div class="summary-card__arrow">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- 3. Pending Orders Card -->
+      <div class="summary-card summary-card--orange" (click)="navigateToStatus('pending')">
+        <div class="summary-card__icon-box">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div class="summary-card__details">
+          <span class="summary-card__label">Pending Orders</span>
+          <span class="summary-card__value">{{ summary().pendingCount }}</span>
+        </div>
+        <div class="summary-card__arrow">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- 4. Incomplete Orders Card -->
+      <div class="summary-card summary-card--red" (click)="navigateToStatus('incomplete')">
+        <div class="summary-card__icon-box">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div class="summary-card__details">
+          <span class="summary-card__label">Incomplete Orders</span>
+          <span class="summary-card__value">{{ summary().incompleteCount }}</span>
+        </div>
+        <div class="summary-card__arrow">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 3: ORDER STATUS GRAPH -->
+    <div class="dash-chart-card">
+      <div class="dash-chart-card__header">
+        <h2 class="dash-chart-card__title">Order Status</h2>
+        <div class="dash-chart-card__legend">
+          <span class="legend-item"><span class="legend-dot legend-dot--completed"></span> Completed</span>
+          <span class="legend-item"><span class="legend-dot legend-dot--pending"></span> Pending</span>
+          <span class="legend-item"><span class="legend-dot legend-dot--incomplete"></span> Incomplete</span>
+        </div>
+      </div>
+
+      <div class="bar-chart">
+        <div class="bar-chart__y-axis">
+          <span>{{ maxChartValue() }}</span>
+          <span>{{ Math.round(maxChartValue() * 0.66) }}</span>
+          <span>{{ Math.round(maxChartValue() * 0.33) }}</span>
+          <span>0</span>
+        </div>
+        
+        <div class="bar-chart__bars-wrapper">
+          <div class="bar-chart__grid-lines">
+            <div class="grid-line"></div>
+            <div class="grid-line"></div>
+            <div class="grid-line"></div>
+            <div class="grid-line"></div>
+          </div>
+
+          <div class="bar-chart__columns">
+            <!-- Completed Bar -->
+            <div class="chart-column">
+              <div class="chart-column__bar-container">
+                <span class="chart-column__count">{{ summary().completedCount }}</span>
+                <div 
+                  class="chart-column__bar chart-column__bar--completed"
+                  [style.height.%]="(summary().completedCount / maxChartValue()) * 100"
+                ></div>
+              </div>
+              <span class="chart-column__label">Completed</span>
+            </div>
+
+            <!-- Pending Bar -->
+            <div class="chart-column">
+              <div class="chart-column__bar-container">
+                <span class="chart-column__count">{{ summary().pendingCount }}</span>
+                <div 
+                  class="chart-column__bar chart-column__bar--pending"
+                  [style.height.%]="(summary().pendingCount / maxChartValue()) * 100"
+                ></div>
+              </div>
+              <span class="chart-column__label">Pending</span>
+            </div>
+
+            <!-- Incomplete Bar -->
+            <div class="chart-column">
+              <div class="chart-column__bar-container">
+                <span class="chart-column__count">{{ summary().incompleteCount }}</span>
+                <div 
+                  class="chart-column__bar chart-column__bar--incomplete"
+                  [style.height.%]="(summary().incompleteCount / maxChartValue()) * 100"
+                ></div>
+              </div>
+              <span class="chart-column__label">Incomplete</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4: RECENT ORDERS TABLE -->
+  <div class="dash-table-card">
+    <div class="dash-table-card__header">
+      <h2 class="dash-table-card__title">Recent Orders</h2>
+      <button type="button" class="btn btn--link" (click)="navigateToStatus()">View All</button>
+    </div>
+
+    @if (isLoading()) {
+      <div class="dash-table__loading">
+        <div class="dash-spinner"></div>
+        <span>Loading orders...</span>
+      </div>
+    } @else {
+      <div class="dash-table-wrapper">
+        <table class="dash-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Order No.</th>
+              <th>Customer Name</th>
+              <th>Mobile Number</th>
+              <th>Order Type</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Date & Time</th>
+              <th class="text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (order of recentOrders(); track order.id) {
+              <tr>
+                <td>{{ order.id }}</td>
+                <td class="font-bold text-navy">{{ order.orderNo }}</td>
+                <td>{{ order.customerName }}</td>
+                <td class="text-muted">{{ order.mobileNumber }}</td>
+                <td>{{ order.orderType }}</td>
+                <td class="font-bold">₹ {{ order.amount | number:'1.2-2' }}</td>
+                <td>
+                  <span 
+                    class="status-badge"
+                    [class.status-badge--completed]="order.status.toLowerCase().includes('complete') || order.status.toLowerCase().includes('delivered')"
+                    [class.status-badge--pending]="order.status.toLowerCase().includes('pending') || order.status.toLowerCase().includes('open')"
+                    [class.status-badge--incomplete]="order.status.toLowerCase().includes('incomplete') || order.status.toLowerCase().includes('cancel')"
+                  >
+                    {{ order.status }}
+                  </span>
+                </td>
+                <td class="text-muted text-sm">{{ order.dateTime }}</td>
+                <td class="text-right">
+                  <button type="button" class="btn-action-view" (click)="viewOrderDetails(order)">
+                    View
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="9" class="dash-table__empty">No recent orders found.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>

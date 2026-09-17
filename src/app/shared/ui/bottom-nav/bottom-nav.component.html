@@ -13,6 +13,14 @@
           <span class="bottom-nav__badge">{{ item.badge }}</span>
         }
         @switch (item.tab) {
+          @case ('dashboard') {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+            </svg>
+          }
           @case ('sell') {
             <svg viewBox="0 0 24 24">
               <path d="M7 7h14l-1.5 9h-11L7 7Z" />

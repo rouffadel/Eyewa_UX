@@ -1,6 +1,6 @@
 <div class="status-page">
   <div class="status-header">
-    <h1>Order Status</h1>
+    <h1>{{ pageTitle() }}</h1>
     <p>View recent orders and update their status to notify customers.</p>
   </div>
 
@@ -10,7 +10,51 @@
     {{ message()?.text }}
   </div>
 
-  <div class="header-actions" style="margin-bottom: 20px; display: flex; justify-content: flex-end;">
+  <div class="header-actions">
+    <!-- Status Filter Tabs -->
+    <div class="status-filter-tabs">
+      <button 
+        type="button" 
+        class="filter-tab" 
+        [class.filter-tab--active]="selectedFilter() === 'all'"
+        (click)="setFilter('all')"
+      >
+        <span>All Orders</span>
+        <span class="tab-badge tab-badge--all">{{ totalCount() }}</span>
+      </button>
+
+      <button 
+        type="button" 
+        class="filter-tab" 
+        [class.filter-tab--active]="selectedFilter() === 'completed'"
+        (click)="setFilter('completed')"
+      >
+        <span>Completed</span>
+        <span class="tab-badge tab-badge--completed">{{ completedCount() }}</span>
+      </button>
+
+      <button 
+        type="button" 
+        class="filter-tab" 
+        [class.filter-tab--active]="selectedFilter() === 'pending'"
+        (click)="setFilter('pending')"
+      >
+        <span>Pending</span>
+        <span class="tab-badge tab-badge--pending">{{ pendingCount() }}</span>
+      </button>
+
+      <button 
+        type="button" 
+        class="filter-tab" 
+        [class.filter-tab--active]="selectedFilter() === 'incomplete'"
+        (click)="setFilter('incomplete')"
+      >
+        <span>Incomplete</span>
+        <span class="tab-badge tab-badge--incomplete">{{ incompleteCount() }}</span>
+      </button>
+    </div>
+
+    <!-- Search Bar -->
     <div class="search-container">
       <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
