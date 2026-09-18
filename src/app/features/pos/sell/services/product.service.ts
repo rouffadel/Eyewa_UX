@@ -131,18 +131,15 @@ private buildGetAllProductsByStoreIdUrl(storeId: number): string {
     const productId = row.productID ?? row.ProductID;
     const productName = row.productName ?? row.ProductName;
     const productValue = this.parseNumber(row.productValue ?? row.ProductValue);
-    const categoryId = row.categoryID ?? row.CategoryID;
-    const categoryName = (row.categoryName ?? row.CategoryName)?.trim();
-    const brandId = row.brandID ?? row.BrandID;
-    const brandName = row.brandName ?? row.BrandName;
+    const categoryId = row.categoryID ?? row.CategoryID ?? 0;
+    const categoryName = (row.categoryName ?? row.CategoryName)?.trim() || 'General';
+    const brandId = row.brandID ?? row.BrandID ?? 0;
+    const rawBrandName = (row.brandName ?? row.BrandName)?.trim();
+    const brandName = rawBrandName || 'Generic';
     const maxDiscount = this.parseNumber(row.maxDiscount ?? row.MaxDiscount);
     const photoPath = row.photoPath ?? row.PhotoPath;
 
     if (productId == null || !productName?.trim() || productValue == null) {
-      return null;
-    }
-
-    if (categoryId == null || brandId == null || !brandName?.trim()) {
       return null;
     }
 
@@ -152,9 +149,9 @@ private buildGetAllProductsByStoreIdUrl(storeId: number): string {
       productValue,
       maxDiscount: maxDiscount ?? null,
       categoryId,
-      ...(categoryName ? { categoryName } : {}),
+      categoryName,
       brandId,
-      brandName: brandName.trim(),
+      brandName,
       ...(photoPath ? { photoPath } : {}),
     };
   }

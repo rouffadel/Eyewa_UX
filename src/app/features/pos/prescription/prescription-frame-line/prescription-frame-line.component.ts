@@ -230,12 +230,17 @@ export class PrescriptionFrameLineComponent implements OnInit {
       });
       this.salePrice.set(sellingPrice);
     } else {
+      const matchedCategory = this.resolveCategoryById(product.categoryId);
+
       this.group().patchValue({
         productId: product.productId,
         modelNo: product.productName,
         sellingPrice,
         maxDiscount,
         categoryId: product.categoryId,
+        category: matchedCategory?.categoryName ?? this.currentCategoryValue(),
+        brandId: product.brandId,
+        brandName: product.brandName,
       });
     }
 
@@ -552,15 +557,6 @@ export class PrescriptionFrameLineComponent implements OnInit {
     const brandId = this.group().get('brandId')?.value as number | null;
     const storeId = this.storeId();
 
-    if (!categoryId || !brandId) {
-      this.modelSearchRequestId += 1;
-      this.modelSearchOpen.set(true);
-      this.modelSearchLoading.set(false);
-      this.modelResults.set([]);
-      this.modelSearchError.set('Select category and brand before searching models.');
-      return;
-    }
-
     if (!storeId) {
       this.modelSearchRequestId += 1;
       this.modelSearchOpen.set(true);
@@ -576,12 +572,20 @@ export class PrescriptionFrameLineComponent implements OnInit {
     this.modelSearchOpen.set(true);
 
     try {
-      const results = await this.productService.searchProducts({
-        categoryId,
-        brandId,
-        storeId,
-        productName: query,
-      });
+      let results: ProductOption[] = [];
+
+      if (categoryId && brandId) {
+        results = await this.productService.searchProducts({
+          categoryId,
+          brandId,
+          storeId,
+          productName: query,
+        });
+      }
+
+      if (results.length === 0) {
+        results = await this.productService.searchProductsByKey(query, storeId);
+      }
 
       if (requestId !== this.modelSearchRequestId) {
         return;
