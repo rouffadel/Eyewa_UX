@@ -25,13 +25,13 @@ export class BottomNavComponent implements OnInit {
 
   protected readonly items = signal<NavItem[]>([
     { tab: 'dashboard', label: 'Dashboard', shortLabel: 'Dash', ariaLabel: 'Dashboard' },
+    { tab: 'sell', label: 'Sell', ariaLabel: 'Sell' },
     {
       tab: 'prescription',
       label: 'Order',
       shortLabel: 'Order',
       ariaLabel: 'Order',
     },
-    { tab: 'sell', label: 'Sell', ariaLabel: 'Sell' },
     {
       tab: 'reports',
       label: 'Reports',

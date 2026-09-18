@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { BottomNavComponent } from './bottom-nav.component';
 
 describe('BottomNavComponent', () => {
@@ -7,6 +9,7 @@ describe('BottomNavComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [BottomNavComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(BottomNavComponent);
@@ -34,7 +37,7 @@ describe('BottomNavComponent', () => {
     });
 
     const buttons = compiled.querySelectorAll<HTMLButtonElement>('.bottom-nav__item');
-    buttons[1].click();
+    buttons[2].click();
     expect(selectedTab).toBe('prescription');
   });
 });
