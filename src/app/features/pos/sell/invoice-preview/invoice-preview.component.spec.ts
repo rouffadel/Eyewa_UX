@@ -68,10 +68,9 @@ describe('InvoicePreviewComponent', () => {
     expect(compiled.textContent).toContain('INV-001');
     expect(compiled.textContent).toContain('Saud Ahmed');
     expect(compiled.textContent).toContain('SQEYEWEAR');
-    expect(compiled.textContent).toContain('Subtotal');
-    expect(compiled.textContent).toContain('Total');
-    expect(compiled.textContent).toContain('Print');
-    expect(compiled.textContent).toContain('Cancel');
+    expect(compiled.textContent).toContain('Total Amount:');
+    expect(compiled.textContent).toContain('Amount Paid:');
+    expect(compiled.textContent).toContain('Print Receipt');
   });
 
   it('should render invoice QR code when available', () => {
@@ -82,7 +81,7 @@ describe('InvoicePreviewComponent', () => {
     fixture.detectChanges();
 
     const image = fixture.nativeElement.querySelector(
-      '.invoice-preview__qr-image',
+      '.nb-receipt__qr-block img',
     ) as HTMLImageElement | null;
     expect(image).toBeTruthy();
     expect(image?.src).toContain('data:image/png;base64,test-qr');

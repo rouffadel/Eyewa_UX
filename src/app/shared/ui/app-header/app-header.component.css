@@ -256,25 +256,6 @@
   flex-shrink: 0;
 }
 
-.app-header__icon-btn--dashboard {
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: var(--radius-button, 8px);
-  transition: all 0.2s ease;
-}
-
-.app-header__icon-btn--dashboard:hover {
-  background: rgba(255, 255, 255, 0.28);
-}
-
-.app-header__icon-btn--dashboard.app-header__icon-btn--active {
-  background: rgba(45, 212, 191, 0.25);
-  border-color: #2dd4bf;
-}
-
-.app-header__dashboard-icon {
-  font-size: 1.15rem;
-}
 
 .app-header__icon-btn--offers {
   background: rgba(255, 255, 255, 0.15);

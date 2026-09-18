@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AuthService } from '../../../features/auth/services/auth.service';
 import { StoreService } from '../../../features/auth/services/store.service';
 import { CustomerSearchService } from '../../../features/pos/customer/services/customer-search.service';
@@ -29,6 +31,8 @@ describe('AppHeaderComponent', () => {
     await TestBed.configureTestingModule({
       imports: [AppHeaderComponent],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         {
           provide: AuthService,
           useValue: {
@@ -76,11 +80,9 @@ describe('AppHeaderComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('should render tablet ERP header per reference', () => {
+  it('should render header per reference', () => {
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('Eyewa');
-    expect(compiled.textContent).toContain('ERP');
-    expect(compiled.textContent).toContain('POS');
+    expect(compiled.querySelector('.app-header__brand-logo')).toBeTruthy();
     expect(compiled.textContent).toContain('Ameer');
     expect(compiled.textContent).toContain('Main Branch');
     expect(compiled.textContent).toContain('250 PTS');

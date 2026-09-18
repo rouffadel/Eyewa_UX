@@ -46,16 +46,18 @@
   width: 100%;
 }
 
-/* NB Receipt styles (Exact 15cm x 15cm container) */
+/* NB Receipt styles (Exact 15cm x 10cm container) */
 .nb-receipt {
   width: 15cm;
-  height: 15cm;
-  min-height: 15cm;
-  max-height: 15cm;
+  height: 10cm;
+  min-height: 10cm;
+  max-height: 10cm;
   background: #ffffff;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
+  padding: 8px 0;
   box-sizing: border-box;
   color: #000000;
   font-family: 'Outfit', sans-serif;
@@ -64,109 +66,9 @@
   position: relative;
 }
 
-/* 1. Header Banner (Exact 3cm height out of 15cm) */
-.nb-receipt__header {
-  display: flex;
-  height: 3cm;
-  width: 100%;
-  box-sizing: border-box;
-  flex-shrink: 0;
-}
-
-.nb-receipt__header-left {
-  width: 32%;
-  background-color: #cfab3a;
-  color: #ffffff;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding-left: 12px;
-  font-size: 10px;
-  gap: 5px;
-  font-weight: 700;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
-
-.nb-receipt__contact-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.nb-receipt__contact-item .icon {
-  width: 13px;
-  height: 13px;
-  flex-shrink: 0;
-}
-
-.nb-receipt__header-middle {
-  width: 23%;
-  background-color: #1a1a1a;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
-
-.nb-receipt__logo-badge {
-  width: 75px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.nb-receipt__logo-svg {
-  width: 100%;
-  height: 100%;
-}
-
-.nb-receipt__header-right {
-  width: 45%;
-  background-color: #1a1a1a;
-  color: #ffffff;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  text-align: right;
-  padding-right: 12px;
-  font-size: 9.5px;
-  gap: 1.5px;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
-
-.nb-receipt__arabic-title {
-  font-size: 16px;
-  font-weight: 800;
-  color: #ffffff;
-  line-height: 1.1;
-}
-
-.nb-receipt__english-title {
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.4px;
-  color: #cfab3a;
-}
-
-.nb-receipt__vat-no {
-  font-size: 8px;
-  color: #ffffff;
-  font-weight: 700;
-}
-
-.nb-receipt__invoice-type {
-  font-size: 7.5px;
-  color: #cbd5e1;
-  font-weight: 600;
-}
-
-/* 2. Metadata Section */
+/* 1. Metadata Section */
 .nb-receipt__metadata {
-  padding: 6px 12px;
+  padding: 4px 12px 6px;
   border-bottom: 2px solid #000000;
   display: flex;
   flex-direction: column;
@@ -197,9 +99,9 @@
   flex: 1;
 }
 
-/* 3. Products Table */
+/* 2. Products Table */
 .nb-receipt__table-wrap {
-  padding: 4px 12px;
+  padding: 3px 12px;
 }
 
 .nb-receipt__table {
@@ -224,9 +126,9 @@
   print-color-adjust: exact;
 }
 
-/* 4. Prescription Table */
+/* 3. Prescription Table */
 .nb-receipt__prescription-wrap {
-  padding: 0 12px 4px;
+  padding: 3px 12px;
 }
 
 .nb-receipt__prescription-table {
@@ -259,11 +161,11 @@
   print-color-adjust: exact;
 }
 
-/* 5. Footer Details & Totals */
+/* 4. Footer Details & Totals */
 .nb-receipt__footer-row {
   display: flex;
   justify-content: space-between;
-  padding: 0 12px 6px;
+  padding: 3px 12px 4px;
   gap: 12px;
 }
 
@@ -338,63 +240,6 @@
   color: #ef4444;
 }
 
-/* 6. Footer Banner (Exact 2cm height out of 15cm) */
-.nb-receipt__bottom {
-  margin-top: auto;
-  height: 2cm;
-  background-color: #1a1a1a;
-  color: #ffffff;
-  padding: 4px 10px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 2.5px;
-  box-sizing: border-box;
-  flex-shrink: 0;
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
-
-.nb-receipt__notes {
-  border-bottom: 1px solid #cfab3a;
-  padding-bottom: 2.5px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.nb-receipt__notes .arabic {
-  font-size: 9px;
-  font-weight: 800;
-  color: #cfab3a;
-}
-
-.nb-receipt__notes .english {
-  font-size: 7.5px;
-  font-weight: 600;
-  color: #ffffff;
-}
-
-.nb-receipt__address {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 1px;
-}
-
-.nb-receipt__address .arabic {
-  font-size: 8px;
-  font-weight: 700;
-  color: #ffffff;
-}
-
-.nb-receipt__address .english {
-  font-size: 7px;
-  color: #cbd5e1;
-}
-
 /* Actions panel styles */
 .invoice-preview__actions {
   display: flex;
@@ -452,10 +297,10 @@
   margin-top: 1rem;
 }
 
-/* Print CSS - Pixel-Perfect Centered Printing with Equal Margins */
+/* Print CSS - Centered 15cm x 10cm Receipt Printing */
 @media print {
   @page {
-    size: 16cm 16cm;
+    size: 16cm 11cm;
     margin: 0.5cm;
   }
 
@@ -491,19 +336,14 @@
     left: 0.5cm;
     top: 0.5cm;
     width: 15cm !important;
-    height: 15cm !important;
-    min-height: 15cm !important;
-    max-height: 15cm !important;
+    height: 10cm !important;
+    min-height: 10cm !important;
+    max-height: 10cm !important;
     border: none !important;
     box-shadow: none !important;
   }
 
   /* Force background color printing */
-  .nb-receipt__header-left,
-  .nb-receipt__header-middle,
-  .nb-receipt__header-right,
-  .nb-receipt__bottom,
-  .nb-receipt__notes .arabic,
   .nb-receipt__table th,
   .nb-receipt__prescription-table thead th,
   .nb-receipt__prescription-table th.label-cell,

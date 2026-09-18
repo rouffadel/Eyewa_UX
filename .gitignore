@@ -44,3 +44,5 @@ Thumbs.db
 # Capacitor / Xcode local build output
 /ios/DerivedData
 /ios/App/build
+src/config/appsettings.json
+src/config/appsettings.prod.json

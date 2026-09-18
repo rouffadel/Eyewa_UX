@@ -98,18 +98,6 @@
         + New Customer
       </button>
 
-      @if (activeTab() !== 'dashboard') {
-        <button
-          type="button"
-          class="app-header__icon-btn app-header__icon-btn--dashboard"
-          [class.app-header__icon-btn--active]="sellStore.isDashboardHeroOpen()"
-          title="Toggle POS Dashboard Quick Access"
-          aria-label="Toggle POS Dashboard Quick Access"
-          (click)="sellStore.toggleDashboardHero()"
-        >
-          <span class="app-header__dashboard-icon">📊</span>
-        </button>
-      }
 
       @if (sellStore.hasOffersAccess()) {
         <button
