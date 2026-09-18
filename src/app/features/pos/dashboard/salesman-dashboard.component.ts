@@ -116,7 +116,7 @@ export class SalesmanDashboardComponent implements OnInit {
   }
 
   protected navigateToAddOrder(): void {
-    void this.router.navigate(['/home', 'prescription']);
+    void this.router.navigate(['/home', 'sell']);
   }
 
   protected navigateToStatus(statusFilter: OrderStatusCategory = 'all'): void {
