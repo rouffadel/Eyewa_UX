@@ -50,8 +50,29 @@ export class SalesmanDashboardComponent implements OnInit {
     return this.orders().slice(0, 5);
   });
 
-  // Calculate summary metrics dynamically from orders signal
+  // Status summary for last 2 months from API
+  protected readonly statusSummary = signal<{
+    totalInvoices: number;
+    completed: number;
+    pending: number;
+    incomplete: number;
+    completedAmount: number;
+    pendingAmount: number;
+    incompleteAmount: number;
+  } | null>(null);
+
+  // Calculate summary metrics dynamically for cards & charts
   protected readonly summary = computed<DashboardSummary>(() => {
+    const apiSummary = this.statusSummary();
+    if (apiSummary) {
+      return {
+        totalOrdersCount: apiSummary.totalInvoices ?? 0,
+        completedCount: apiSummary.completed ?? 0,
+        pendingCount: apiSummary.pending ?? 0,
+        incompleteCount: apiSummary.incomplete ?? 0
+      };
+    }
+
     const list = this.orders();
     if (!list || list.length === 0) {
       return {
@@ -112,7 +133,30 @@ export class SalesmanDashboardComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.getSalesStatusSummary();
     this.fetchDashboardData();
+  }
+
+  private getSalesStatusSummary(): void {
+    const url = `${this.getPosApiUrl()}/sales/sales-status-summary`;
+    this.http.get<any>(url).subscribe({
+      next: (res) => {
+        if (res) {
+          this.statusSummary.set({
+            totalInvoices: res.totalInvoices ?? res.TotalInvoices ?? 0,
+            completed: res.completed ?? res.Completed ?? 0,
+            pending: res.pending ?? res.Pending ?? 0,
+            incomplete: res.incomplete ?? res.Incomplete ?? 0,
+            completedAmount: res.completedAmount ?? res.CompletedAmount ?? 0,
+            pendingAmount: res.pendingAmount ?? res.PendingAmount ?? 0,
+            incompleteAmount: res.incompleteAmount ?? res.IncompleteAmount ?? 0
+          });
+        }
+      },
+      error: (err) => {
+        console.error('Failed to fetch sales status summary for last 2 months:', err);
+      }
+    });
   }
 
   protected navigateToAddOrder(): void {
@@ -149,7 +193,8 @@ export class SalesmanDashboardComponent implements OnInit {
       this.isLoading.set(true);
     }
 
-    const url = `${this.getPosApiUrl()}/sales/order-status-list`;
+    const todayStr = new Date().toISOString().split('T')[0];
+    const url = `${this.getPosApiUrl()}/sales/order-status-list?take=5&fromDate=${todayStr}&toDate=${todayStr}`;
 
     this.http.get<any>(url).subscribe({
       next: (data) => {
@@ -210,10 +255,11 @@ export class SalesmanDashboardComponent implements OnInit {
           this.orders.set([]);
           this.cacheService.setCachedOrders([]);
         } else {
-          // Unexpected non-array format, fallback safely
+          // Unexpected non-array format, fallback to empty list
           console.warn('POS API returned non-array payload:', data);
           if (!cached) {
-            this.setFallbackData();
+            this.orders.set([]);
+            this.cacheService.setCachedOrders([]);
           }
         }
         this.isLoading.set(false);
@@ -221,70 +267,11 @@ export class SalesmanDashboardComponent implements OnInit {
       error: (err) => {
         console.error('API connection error while fetching live order status list:', err);
         if (!cached) {
-          this.setFallbackData();
+          this.orders.set([]);
+          this.cacheService.setCachedOrders([]);
         }
         this.isLoading.set(false);
       }
     });
-  }
-
-  private setFallbackData(): void {
-    this.orders.set([
-      {
-        id: 1,
-        salesId: 1024,
-        orderNo: '#1024',
-        customerName: 'Sara Khan',
-        mobileNumber: '+91 98765 43210',
-        orderType: 'Sales',
-        amount: 4250.00,
-        status: 'Completed',
-        dateTime: '16 Sep 2025, 10:24 AM'
-      },
-      {
-        id: 2,
-        salesId: 1023,
-        orderNo: '#1023',
-        customerName: 'Ahmed Raza',
-        mobileNumber: '+91 87654 32109',
-        orderType: 'Sales',
-        amount: 2890.00,
-        status: 'Pending',
-        dateTime: '16 Sep 2025, 09:17 AM'
-      },
-      {
-        id: 3,
-        salesId: 1022,
-        orderNo: '#1022',
-        customerName: 'Fatima Ali',
-        mobileNumber: '+91 76543 21098',
-        orderType: 'Sales',
-        amount: 3560.00,
-        status: 'Incomplete',
-        dateTime: '15 Sep 2025, 06:42 PM'
-      },
-      {
-        id: 4,
-        salesId: 1021,
-        orderNo: '#1021',
-        customerName: 'Usman Sheikh',
-        mobileNumber: '+91 65432 10987',
-        orderType: 'Sales',
-        amount: 5120.00,
-        status: 'Completed',
-        dateTime: '15 Sep 2025, 04:20 PM'
-      },
-      {
-        id: 5,
-        salesId: 1020,
-        orderNo: '#1020',
-        customerName: 'Ayesha Begum',
-        mobileNumber: '+91 54321 09876',
-        orderType: 'Sales',
-        amount: 1980.00,
-        status: 'Pending',
-        dateTime: '15 Sep 2025, 01:15 PM'
-      }
-    ]);
   }
 }

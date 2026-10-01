@@ -11,61 +11,57 @@
   </div>
 
   <div class="header-actions">
-    <!-- Status Filter Tabs -->
-    <div class="status-filter-tabs">
-      <button 
-        type="button" 
-        class="filter-tab" 
-        [class.filter-tab--active]="selectedFilter() === 'all'"
-        (click)="setFilter('all')"
-      >
-        <span>All Orders</span>
-        <span class="tab-badge tab-badge--all">{{ totalCount() }}</span>
-      </button>
+    <!-- Date Range & Search Filter Group -->
+    <div class="filter-controls-group">
+      <div class="date-range-picker">
+        <div class="date-field">
+          <label for="fromDate">From Date</label>
+          <input 
+            id="fromDate"
+            type="date" 
+            class="date-input" 
+            [ngModel]="fromDate()" 
+            (ngModelChange)="fromDate.set($event)" 
+          />
+        </div>
 
-      <button 
-        type="button" 
-        class="filter-tab" 
-        [class.filter-tab--active]="selectedFilter() === 'completed'"
-        (click)="setFilter('completed')"
-      >
-        <span>Completed</span>
-        <span class="tab-badge tab-badge--completed">{{ completedCount() }}</span>
-      </button>
+        <div class="date-field">
+          <label for="toDate">To Date</label>
+          <input 
+            id="toDate"
+            type="date" 
+            class="date-input" 
+            [ngModel]="toDate()" 
+            (ngModelChange)="toDate.set($event)" 
+          />
+        </div>
 
-      <button 
-        type="button" 
-        class="filter-tab" 
-        [class.filter-tab--active]="selectedFilter() === 'pending'"
-        (click)="setFilter('pending')"
-      >
-        <span>Pending</span>
-        <span class="tab-badge tab-badge--pending">{{ pendingCount() }}</span>
-      </button>
+        <button type="button" class="btn-filter-action btn-apply" [disabled]="!fromDate() && !toDate()" (click)="applyDateFilter()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+          <span>Search</span>
+        </button>
 
-      <button 
-        type="button" 
-        class="filter-tab" 
-        [class.filter-tab--active]="selectedFilter() === 'incomplete'"
-        (click)="setFilter('incomplete')"
-      >
-        <span>Incomplete</span>
-        <span class="tab-badge tab-badge--incomplete">{{ incompleteCount() }}</span>
-      </button>
-    </div>
+        <button type="button" class="btn-filter-action btn-clear" [disabled]="!fromDate() && !toDate()" (click)="clearFilters()">
+          <span>Clear</span>
+        </button>
+      </div>
 
-    <!-- Search Bar -->
-    <div class="search-container">
-      <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-      </svg>
-      <input 
-        type="text" 
-        class="search-input" 
-        placeholder="Search by Customer, Invoice, ID..." 
-        [ngModel]="searchTerm()" 
-        (ngModelChange)="searchTerm.set($event)"
-      />
+      <!-- Search Bar -->
+      <div class="search-container">
+        <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <input 
+          type="text" 
+          class="search-input" 
+          placeholder="Search by Customer, Invoice, ID..." 
+          [ngModel]="searchTerm()" 
+          (ngModelChange)="onSearchChange($event)"
+          (keyup.enter)="applyDateFilter()"
+        />
+      </div>
     </div>
   </div>
 
@@ -87,10 +83,12 @@
         <tr *ngIf="isLoadingOrders()">
           <td colspan="8" class="col-center" style="padding: 32px; color: #94a3b8;">Loading orders...</td>
         </tr>
-        <tr *ngIf="!isLoadingOrders() && filteredOrders().length === 0">
-          <td colspan="8" class="col-center" style="padding: 32px; color: #94a3b8;">No matching orders found.</td>
+        <tr *ngIf="!isLoadingOrders() && orders().length === 0">
+          <td colspan="8" class="col-center" style="padding: 32px; color: #94a3b8;">
+            {{ (fromDate() || toDate() || searchTerm()) ? 'No orders found for the selected filter.' : 'No orders found.' }}
+          </td>
         </tr>
-        <tr *ngFor="let order of filteredOrders()">
+        <tr *ngFor="let order of orders()">
           <td class="fw-bold">#{{ order.salesId }}</td>
           <td class="fw-bold">{{ order.invoiceNo }}</td>
           <td>

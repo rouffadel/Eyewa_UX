@@ -41,6 +41,7 @@
   height: 34px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   flex-shrink: 0;
+  cursor: pointer;
 }
 
 .app-header__brand-logo {
@@ -377,12 +378,7 @@
   border-radius: var(--radius-button);
   background: transparent;
   color: inherit;
-  cursor: pointer;
   text-align: left;
-}
-
-.app-header__profile:active {
-  background: rgba(255, 255, 255, 0.08);
 }
 
 .app-header__profile-avatar {
@@ -396,6 +392,7 @@
   font-size: 0.875rem;
   font-weight: 600;
   flex-shrink: 0;
+  cursor: pointer;
 }
 
 .app-header__profile-text {
@@ -403,6 +400,23 @@
   flex-direction: column;
   line-height: 1.2;
   min-width: 0;
+  cursor: pointer;
+}
+
+.app-header__profile-store-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: inherit;
+  border-radius: 4px;
+}
+
+.app-header__profile-store-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .app-header__profile-name {

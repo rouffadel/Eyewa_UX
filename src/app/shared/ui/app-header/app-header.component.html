@@ -4,13 +4,13 @@
       <button
         type="button"
         class="app-header__avatar"
-        aria-label="Open profile"
-        (click)="onAvatarClick()"
+        aria-label="Go to Dashboard"
+        (click)="navigateToDashboard()"
       >
         {{ userInitials() }}
       </button>
 
-      <div class="app-header__brand-logo-wrap">
+      <div class="app-header__brand-logo-wrap" (click)="navigateToDashboard()" role="button" tabindex="0">
         <img
           src="/naimat-al-basar-logo.jpg"
           alt="Naimat Al-Basar Optical Logo"
@@ -144,28 +144,42 @@
       </button>
 
       <div class="app-header__profile-menu">
-        <button
-          type="button"
-          class="app-header__profile"
-          aria-label="Select store"
-          aria-haspopup="listbox"
-          [attr.aria-expanded]="storeMenuOpen()"
-          (click)="onProfileMenuToggle()"
-        >
-          <span class="app-header__profile-avatar">{{ userInitials() }}</span>
-          <span class="app-header__profile-text">
+        <div class="app-header__profile">
+          <span
+            class="app-header__profile-avatar"
+            (click)="navigateToDashboard()"
+            role="button"
+            tabindex="0"
+            title="Go to Dashboard"
+          >{{ userInitials() }}</span>
+          <span
+            class="app-header__profile-text"
+            (click)="navigateToDashboard()"
+            role="button"
+            tabindex="0"
+            title="Go to Dashboard"
+          >
             <span class="app-header__profile-name">{{ userName() }}</span>
             <span class="app-header__profile-branch">{{ userBranch() }}</span>
           </span>
-          <svg
-            class="app-header__profile-chevron"
-            [class.app-header__profile-chevron--open]="storeMenuOpen()"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
+          <button
+            type="button"
+            class="app-header__profile-store-btn"
+            aria-label="Select store"
+            aria-haspopup="listbox"
+            [attr.aria-expanded]="storeMenuOpen()"
+            (click)="onProfileMenuToggle()"
           >
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </button>
+            <svg
+              class="app-header__profile-chevron"
+              [class.app-header__profile-chevron--open]="storeMenuOpen()"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+        </div>
 
         @if (storeMenuOpen()) {
           <div class="app-header__store-panel" role="listbox" aria-label="Stores">

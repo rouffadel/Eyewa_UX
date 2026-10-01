@@ -14,6 +14,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { StoreOption } from '../../../features/auth/models/store.models';
@@ -30,6 +31,7 @@ import { SellSessionStore } from '../../../features/pos/sell/services/sell-sessi
   styleUrl: './app-header.component.css',
 })
 export class AppHeaderComponent implements AfterViewInit {
+  private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly authService = inject(AuthService);
@@ -206,6 +208,12 @@ export class AppHeaderComponent implements AfterViewInit {
     this.searchQuery.set('');
     this.closeSearchDropdown();
     this.searchRequestId += 1;
+  }
+
+  protected navigateToDashboard(): void {
+    if (this.activeTab() !== 'dashboard') {
+      void this.router.navigate(['/home', 'dashboard']);
+    }
   }
 
   protected onNotificationsClick(): void {

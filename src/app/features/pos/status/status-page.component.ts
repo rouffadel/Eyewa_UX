@@ -14,6 +14,7 @@ import { categorizeOrderStatus, OrderStatusCategory } from '../shared/order-stat
   styleUrl: './status-page.component.css'
 })
 export class StatusPageComponent implements OnInit {
+  protected readonly Math = Math;
   private readonly http = inject(HttpClient);
   private readonly appConfig = inject(AppConfigService);
   private readonly elementRef = inject(ElementRef);
@@ -57,71 +58,45 @@ export class StatusPageComponent implements OnInit {
   protected readonly isUpdating = signal<boolean>(false);
   protected readonly message = signal<{ text: string, type: 'success' | 'error' } | null>(null);
 
+  // Date range & Filter signals
+  protected readonly fromDate = signal<string>('');
+  protected readonly toDate = signal<string>('');
   searchTerm = signal<string>('');
 
-  // Counts computed from all raw orders
-  protected readonly totalCount = computed(() => this.orders().length);
-  protected readonly completedCount = computed(() => 
-    this.orders().filter(o => categorizeOrderStatus(o.statusName) === 'completed').length
-  );
-  protected readonly pendingCount = computed(() => 
-    this.orders().filter(o => categorizeOrderStatus(o.statusName) === 'pending').length
-  );
-  protected readonly incompleteCount = computed(() => 
-    this.orders().filter(o => categorizeOrderStatus(o.statusName) === 'incomplete').length
-  );
-
-  // Dynamic page title based on selected filter
-  protected readonly pageTitle = computed(() => {
-    switch (this.selectedFilter()) {
-      case 'completed': return 'Completed Orders';
-      case 'pending': return 'Pending Orders';
-      case 'incomplete': return 'Incomplete Orders';
-      default: return 'All Orders';
-    }
-  });
-
-  // Filter orders by active status filter and search term
-  filteredOrders = computed(() => {
-    let list = this.orders();
-    const filter = this.selectedFilter();
-
-    if (filter !== 'all') {
-      list = list.filter(o => categorizeOrderStatus(o.statusName) === filter);
-    }
-
-    const search = this.searchTerm().trim().toLowerCase();
-    if (!search) return list;
-    
-    return list.filter(o => 
-      (o.customerNo && o.customerNo.toLowerCase().includes(search)) ||
-      (o.invoiceNo && o.invoiceNo.toLowerCase().includes(search)) ||
-      (o.salesId && o.salesId.toString().includes(search)) ||
-      (o.customerName && o.customerName.toLowerCase().includes(search))
-    );
-  });
+  // Dynamic page title
+  protected readonly pageTitle = computed(() => 'Order Status');
 
   ngOnInit() {
-    this.route.queryParams.subscribe(params => {
-      const statusParam = (params['status'] || 'all').toLowerCase() as OrderStatusCategory;
-      if (['completed', 'pending', 'incomplete', 'all'].includes(statusParam)) {
-        this.selectedFilter.set(statusParam);
-      } else {
-        this.selectedFilter.set('all');
-      }
-    });
-
     this.fetchStatuses();
     this.fetchOrders();
   }
 
-  protected setFilter(filter: OrderStatusCategory): void {
-    this.selectedFilter.set(filter);
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { status: filter },
-      queryParamsHandling: 'merge'
-    });
+  protected applyDateFilter(): void {
+    this.message.set(null);
+    const from = this.fromDate();
+    const to = this.toDate();
+
+    if (from && to && from > to) {
+      this.message.set({
+        text: 'From date cannot be later than To date.',
+        type: 'error'
+      });
+      return;
+    }
+
+    this.fetchOrders();
+  }
+
+  protected clearFilters(): void {
+    this.fromDate.set('');
+    this.toDate.set('');
+    this.searchTerm.set('');
+    this.message.set(null);
+    this.fetchOrders();
+  }
+
+  protected onSearchChange(term: string): void {
+    this.searchTerm.set(term);
   }
 
   private getPosApiUrl(): string {
@@ -151,11 +126,38 @@ export class StatusPageComponent implements OnInit {
     });
   }
 
-  private fetchOrders() {
+  protected fetchOrders() {
     this.isLoadingOrders.set(true);
-    this.http.get<any[]>(`${this.getPosApiUrl()}/sales/order-status-list`).subscribe({
+
+    const params: string[] = [];
+
+    if (this.fromDate()) {
+      params.push(`fromDate=${encodeURIComponent(this.fromDate())}`);
+    }
+
+    if (this.toDate()) {
+      params.push(`toDate=${encodeURIComponent(this.toDate())}`);
+    }
+
+    const search = this.searchTerm().trim();
+    if (search) {
+      params.push(`search=${encodeURIComponent(search)}`);
+    }
+
+    const queryString = params.length > 0 ? `?${params.join('&')}` : '';
+    const url = `${this.getPosApiUrl()}/sales/order-status-list${queryString}`;
+
+    this.http.get<any>(url).subscribe({
       next: (data) => {
-        this.orders.set(data.map(o => ({
+        const rawList: any[] = Array.isArray(data)
+          ? data
+          : (Array.isArray(data?.items)
+              ? data.items
+              : (Array.isArray(data?.result)
+                  ? data.result
+                  : (Array.isArray(data?.data) ? data.data : [])));
+
+        this.orders.set(rawList.map(o => ({
           salesId: o.SalesId || o.salesId,
           invoiceNo: o.InvoiceNo || o.invoiceNo || (`#${o.SalesId || o.salesId}`),
           customerName: o.CustomerName || o.customerName,
