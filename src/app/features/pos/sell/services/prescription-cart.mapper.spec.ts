@@ -69,4 +69,11 @@ describe('cartItemsFromPrescription', () => {
     expect(items.length).toBe(1);
     expect(items[0].product.category).toBe('frames');
   });
+
+  it('calculates exact line total 249.50 for 300 selling price with 249.50 sale price', () => {
+    const discountPercent = ((300 - 249.50) / 300) * 100;
+    const totals = calculateFrameLineTotals(300, 1, discountPercent);
+    expect(totals.discountAmount).toBe(50.50);
+    expect(totals.totalSellingPrice).toBe(249.50);
+  });
 });

@@ -316,4 +316,18 @@ describe('PaymentService', () => {
       }),
     ).toBe(380);
   });
+
+  it('should apply custom rounding logic to payable amounts (fraction < 0.50 rounds UP to next integer, fraction >= 0.50 preserved)', () => {
+    const totals1 = service.calculateTotals(249.30, DEFAULT_PAYMENT_DRAFT);
+    expect(totals1.payable).toBe(250);
+
+    const totals2 = service.calculateTotals(249.50, DEFAULT_PAYMENT_DRAFT);
+    expect(totals2.payable).toBe(249.50);
+
+    const totals3 = service.calculateTotals(249.15, DEFAULT_PAYMENT_DRAFT);
+    expect(totals3.payable).toBe(250);
+
+    const totals4 = service.calculateTotals(249.75, DEFAULT_PAYMENT_DRAFT);
+    expect(totals4.payable).toBe(249.75);
+  });
 });

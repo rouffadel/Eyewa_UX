@@ -129,8 +129,9 @@ export function calculateFrameLineTotals(
   const qty = Math.max(1, quantity ?? 1);
   const pct = Math.max(0, discountPercent ?? 0);
   const subtotal = price * qty;
-  const discountAmount = subtotal * (pct / 100);
-  const totalSellingPrice = Math.max(0, subtotal - discountAmount);
+  const rawDiscountAmount = subtotal * (pct / 100);
+  const discountAmount = Math.round(rawDiscountAmount * 100) / 100;
+  const totalSellingPrice = Math.round(Math.max(0, subtotal - rawDiscountAmount) * 100) / 100;
 
   return { discountAmount, totalSellingPrice };
 }

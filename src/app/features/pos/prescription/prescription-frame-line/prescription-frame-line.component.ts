@@ -413,9 +413,7 @@ export class PrescriptionFrameLineComponent implements OnInit {
       this.salePrice.set(clampedSale);
     }
 
-    const discountPercent = Number(
-      (((sellingPrice - clampedSale) / sellingPrice) * 100).toFixed(2),
-    );
+    const discountPercent = ((sellingPrice - clampedSale) / sellingPrice) * 100;
 
     this.group().patchValue({ discountPercent });
     this.group().get('discountPercent')?.updateValueAndValidity();

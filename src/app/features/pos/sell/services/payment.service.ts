@@ -51,7 +51,8 @@ export class PaymentService {
       }
     }
     
-    const payable = Math.max(0, afterLoyalty - insuranceAmount);
+    const rawPayable = Math.max(0, afterLoyalty - insuranceAmount);
+    const payable = applyCustomPayableRounding(rawPayable);
 
     return {
       subtotal,
@@ -367,21 +368,28 @@ export function mixedAmountPaid(draft: PaymentDraft): number {
   return Math.max(0, draft.cashAmount) + Math.max(0, draft.cardAmount);
 }
 
+export function applyCustomPayableRounding(amount: number): number {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return 0;
+  }
+  const integerPart = Math.floor(amount);
+  const decimalPart = Math.round((amount - integerPart) * 100) / 100;
+
+  if (decimalPart > 0 && decimalPart < 0.50) {
+    return integerPart + 1;
+  }
+
+  return Math.round(amount * 100) / 100;
+}
+
 export function normalizeBalanceThreshold(balance: number): number {
   if (!Number.isFinite(balance) || balance <= 0) {
     return 0;
   }
-  // If total remaining balance is less than 0.5, it is NOT considered as remaining balance (0)
-  if (balance < 0.5) {
+  if (balance < 0.01) {
     return 0;
   }
-  // If decimal fraction part (balance % 1) is less than 0.5, drop the fraction
-  const integerPart = Math.floor(balance);
-  const decimalPart = balance - integerPart;
-  if (decimalPart < 0.5) {
-    return integerPart;
-  }
-  return Math.round(balance * 100) / 100;
+  return applyCustomPayableRounding(balance);
 }
 
 export function mixedBalanceRemaining(payable: number, draft: PaymentDraft): number {
