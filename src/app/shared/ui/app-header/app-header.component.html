@@ -4,8 +4,9 @@
       <button
         type="button"
         class="app-header__avatar"
-        aria-label="Go to Dashboard"
-        (click)="navigateToDashboard()"
+        aria-label="Logout"
+        title="Logout"
+        (click)="onAvatarClick()"
       >
         {{ userInitials() }}
       </button>

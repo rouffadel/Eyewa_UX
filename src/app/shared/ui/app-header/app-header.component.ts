@@ -222,6 +222,8 @@ export class AppHeaderComponent implements AfterViewInit {
 
   protected onAvatarClick(): void {
     this.profileClick.emit();
+    this.authService.logout();
+    void this.router.navigate(['/login']);
   }
 
   protected onProfileMenuToggle(): void {

@@ -376,7 +376,7 @@ export function applyCustomPayableRounding(amount: number): number {
   const decimalPart = Math.round((amount - integerPart) * 100) / 100;
 
   if (decimalPart > 0 && decimalPart < 0.50) {
-    return integerPart + 1;
+    return integerPart;
   }
 
   return Math.round(amount * 100) / 100;

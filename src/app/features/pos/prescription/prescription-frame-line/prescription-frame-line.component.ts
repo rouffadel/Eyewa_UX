@@ -147,6 +147,13 @@ export class PrescriptionFrameLineComponent implements OnInit {
     this.brandSearchSubject.next(value);
   }
 
+  protected formattedDiscountPercent(): string {
+    const val = this.group().get('discountPercent')?.value;
+    if (val == null || val === '') return '';
+    const num = Number(val);
+    return Number.isFinite(num) ? (Math.round(num * 100) / 100).toFixed(2) : '';
+  }
+
   protected onBrandFocus(): void {
     if (this.brandResults().length > 0 || this.brandSearchError() || this.brandSearchLoading()) {
       this.brandSearchOpen.set(true);

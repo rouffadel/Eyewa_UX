@@ -64,6 +64,7 @@ describe('AppHeaderComponent', () => {
             }).asReadonly(),
             selectedStore: signal(null).asReadonly(),
             selectStore: selectStoreSpy,
+            logout: jasmine.createSpy('logout'),
           },
         },
         { provide: StoreService, useValue: storeService },

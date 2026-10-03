@@ -147,12 +147,8 @@
       </span>
       <input
         class="prescription-field__input"
-        type="number"
-        min="0"
-        [max]="discountInputMax()"
-        step="0.01"
-        inputmode="decimal"
-        formControlName="discountPercent"
+        type="text"
+        [value]="formattedDiscountPercent()"
         readonly
         tabindex="-1"
       />
