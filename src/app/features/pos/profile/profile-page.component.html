@@ -6,18 +6,16 @@
       </svg>
       Back
     </button>
-    <h1 class="profile-page__title">Profile</h1>
+    <h1 class="profile-page__title">Account & Store Info</h1>
   </header>
 
-  <section class="profile-page__profile" aria-label="Staff profile">
-    <div class="profile-page__avatar">{{ userInitials() }}</div>
-    <p class="profile-page__name">{{ displayName() }}</p>
-    <p class="profile-page__branch">{{ branchName() }}</p>
-    @if (loginId() != null) {
-      <p class="profile-page__meta">Login ID: {{ loginId() }} · Role: {{ roleId() }}</p>
-    }
-    <p class="profile-page__loyalty">{{ loyaltyPoints() }} PTS</p>
-  </section>
+  <div class="profile-page__container">
+    <section class="profile-page__card" aria-label="Store and account details">
+      <div class="profile-page__avatar">{{ userInitials() }}</div>
+      <h2 class="profile-page__name">{{ displayName() }}</h2>
+      <p class="profile-page__branch">{{ branchName() }}</p>
 
-  <button type="button" class="profile-page__sign-out" (click)="logout()">Sign out</button>
+      <button type="button" class="profile-page__sign-out" (click)="logout()">Logout</button>
+    </section>
+  </div>
 </div>
