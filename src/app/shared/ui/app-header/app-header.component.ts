@@ -23,6 +23,7 @@ import { StoreService } from '../../../features/auth/services/store.service';
 import { CustomerSearchService } from '../../../features/pos/customer/services/customer-search.service';
 import { Customer } from '../../../features/pos/sell/models/customer.models';
 import { SellSessionStore } from '../../../features/pos/sell/services/sell-session.store';
+import { CompanyBrandingService } from '../../../services/company-branding.service';
 
 @Component({
   selector: 'app-header',
@@ -38,6 +39,7 @@ export class AppHeaderComponent implements AfterViewInit {
   private readonly storeService = inject(StoreService);
   private readonly customerSearchService = inject(CustomerSearchService);
   protected readonly sellStore = inject(SellSessionStore);
+  protected readonly brandingService = inject(CompanyBrandingService);
   private readonly searchSubject = new Subject<string>();
   private searchRequestId = 0;
 

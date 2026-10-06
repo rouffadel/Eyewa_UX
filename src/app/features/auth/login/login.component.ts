@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AppConfigService } from '../../../services/app-config.service';
 import { LoginError } from '../models/login.error';
 import { AuthService } from '../services/auth.service';
+import { CompanyBrandingService } from '../../../services/company-branding.service';
 
 @Component({
   selector: 'app-login',
@@ -16,6 +17,7 @@ export class LoginComponent {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly appConfig = inject(AppConfigService);
+  protected readonly brandingService = inject(CompanyBrandingService);
 
   protected readonly hidePassword = signal(true);
   protected readonly isSubmitting = signal(false);

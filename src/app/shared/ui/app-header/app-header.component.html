@@ -13,8 +13,8 @@
 
       <div class="app-header__brand-logo-wrap" (click)="navigateToDashboard()" role="button" tabindex="0">
         <img
-          src="/naimat-al-basar-logo.jpg"
-          alt="Naimat Al-Basar Optical Logo"
+          [src]="brandingService.companyLogo()"
+          [alt]="brandingService.companyName() + ' Logo'"
           class="app-header__brand-logo"
         />
       </div>

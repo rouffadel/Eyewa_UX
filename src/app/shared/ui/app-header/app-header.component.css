@@ -35,13 +35,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #ffffff;
-  padding: 3px 8px;
+  background: transparent !important;
+  padding: 0 !important;
   border-radius: 6px;
   height: 34px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   flex-shrink: 0;
   cursor: pointer;
+  border: none !important;
+  box-shadow: none !important;
 }
 
 .app-header__brand-logo {
@@ -50,6 +51,7 @@
   width: auto;
   object-fit: contain;
   display: block;
+  mix-blend-mode: multiply;
 }
 
 .app-header__center {
