@@ -1,9 +1,9 @@
 <article class="frame-line" [formGroup]="group()">
   <header class="frame-line__header">
-    <h3 class="frame-line__title">Frame {{ index() + 1 }}</h3>
+    <h3 class="frame-line__title">{{ 'prescription.frame' | translate }} {{ index() + 1 }}</h3>
     @if (activeProductOffer(); as offer) {
       <span class="frame-line__offer-badge" [class.frame-line__offer-badge--get]="isGetProductOfOffer()">
-        {{ offer.offerName }} ({{ isBuyProductOfOffer() ? 'BOGO Buy Item' : 'BOGO Free Item' }})
+        {{ offer.offerName }} ({{ isBuyProductOfOffer() ? ('prescription.bogoBuyItem' | translate) : ('prescription.bogoFreeItem' | translate) }})
       </span>
     }
     @if (canRemove()) {
@@ -22,12 +22,12 @@
     @if (isProductSearchMode()) {
     <!-- Mode B: model first -->
     <div class="prescription-field frame-line__field--wide frame-line__model-wrap">
-      <span class="prescription-field__label">Model No</span>
+      <span class="prescription-field__label">{{ 'prescription.modelNo' | translate }}</span>
       <input
         class="prescription-field__input"
         type="text"
         formControlName="modelNo"
-        placeholder="Search model"
+        [placeholder]="'prescription.searchModel' | translate"
         autocomplete="off"
         aria-autocomplete="list"
         [attr.aria-expanded]="modelSearchOpen()"
@@ -38,7 +38,7 @@
       @if (modelSearchOpen()) {
       <div class="frame-line__model-panel" role="listbox" aria-label="Model search results">
         @if (modelSearchLoading()) {
-        <p class="frame-line__model-status">Searching…</p>
+        <p class="frame-line__model-status">{{ 'prescription.searching' | translate }}</p>
         } @else if (modelSearchError()) {
         <p class="frame-line__model-status frame-line__model-status--error">
           {{ modelSearchError() }}
@@ -73,7 +73,7 @@
     </div>
 
     <label class="prescription-field">
-      <span class="prescription-field__label">Category</span>
+      <span class="prescription-field__label">{{ 'prescription.category' | translate }}</span>
       <select
         class="prescription-field__input prescription-field__select frame-line__locked"
         formControlName="category"
@@ -87,7 +87,7 @@
     </label>
 
     <label class="prescription-field">
-      <span class="prescription-field__label">Brand</span>
+      <span class="prescription-field__label">{{ 'prescription.brand' | translate }}</span>
       <input
         class="prescription-field__input"
         type="text"
@@ -99,7 +99,7 @@
     </label>
 
     <label class="prescription-field">
-      <span class="prescription-field__label">Selling Price</span>
+      <span class="prescription-field__label">{{ 'prescription.sellingPrice' | translate }}</span>
       <input
         class="prescription-field__input"
         type="number"
@@ -113,7 +113,7 @@
     </label>
 
     <label class="prescription-field">
-      <span class="prescription-field__label">Sale Price</span>
+      <span class="prescription-field__label">{{ 'prescription.salePrice' | translate }}</span>
       <input
         class="prescription-field__input"
         type="number"
@@ -127,7 +127,7 @@
     </label>
 
     <label class="prescription-field">
-      <span class="prescription-field__label">Quantity</span>
+      <span class="prescription-field__label">{{ 'prescription.quantity' | translate }}</span>
       <input
         class="prescription-field__input"
         type="number"
@@ -140,7 +140,7 @@
 
     <label class="prescription-field">
       <span class="prescription-field__label">
-        Discount (%)
+        {{ 'prescription.discountPercent' | translate }}
         @if (maxDiscountCap() !== null) {
         <span class="prescription-field__hint">Max {{ maxDiscountCap() }}%</span>
         }
@@ -156,10 +156,10 @@
     } @else {
     <!-- Mode A: guided category → brand → model -->
     <label class="prescription-field frame-line__field--wide">
-      <span class="prescription-field__label">Category</span>
+      <span class="prescription-field__label">{{ 'prescription.category' | translate }}</span>
       <div class="custom-select" [class.custom-select--open]="isCategoryOpen()">
         <button type="button" class="custom-select__trigger" (click)="toggleCategoryDropdown($event)">
-          <span>{{ currentCategoryValue() || 'Select Category' }}</span>
+          <span>{{ currentCategoryValue() || ('prescription.selectCategory' | translate) }}</span>
           <svg class="custom-select__arrow" viewBox="0 0 20 20" fill="none" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m6 8 4 4 4-4" />
           </svg>
@@ -179,12 +179,12 @@
     </label>
 
     <div class="prescription-field frame-line__field--wide frame-line__brand-wrap">
-      <span class="prescription-field__label">Brand</span>
+      <span class="prescription-field__label">{{ 'prescription.brand' | translate }}</span>
       <input
         class="prescription-field__input"
         type="text"
         formControlName="brandName"
-        placeholder="Search brand"
+        [placeholder]="'prescription.searchBrand' | translate"
         autocomplete="off"
         aria-autocomplete="list"
         [attr.aria-expanded]="brandSearchOpen()"
@@ -195,7 +195,7 @@
       @if (brandSearchOpen()) {
       <div class="frame-line__brand-panel" role="listbox" aria-label="Brand search results">
         @if (brandSearchLoading()) {
-        <p class="frame-line__brand-status">Searching…</p>
+        <p class="frame-line__brand-status">{{ 'prescription.searching' | translate }}</p>
         } @else if (brandSearchError()) {
         <p class="frame-line__brand-status frame-line__brand-status--error">
           {{ brandSearchError() }}
@@ -216,12 +216,12 @@
     </div>
 
     <div class="prescription-field frame-line__model-wrap">
-      <span class="prescription-field__label">Model No</span>
+      <span class="prescription-field__label">{{ 'prescription.modelNo' | translate }}</span>
       <input
         class="prescription-field__input"
         type="text"
         formControlName="modelNo"
-        placeholder="Search model"
+        [placeholder]="'prescription.searchModel' | translate"
         autocomplete="off"
         aria-autocomplete="list"
         [attr.aria-expanded]="modelSearchOpen()"
@@ -232,7 +232,7 @@
       @if (modelSearchOpen()) {
       <div class="frame-line__model-panel" role="listbox" aria-label="Model search results">
         @if (modelSearchLoading()) {
-        <p class="frame-line__model-status">Searching…</p>
+        <p class="frame-line__model-status">{{ 'prescription.searching' | translate }}</p>
         } @else if (modelSearchError()) {
         <p class="frame-line__model-status frame-line__model-status--error">
           {{ modelSearchError() }}
@@ -254,7 +254,7 @@
     </div>
 
     <label class="prescription-field">
-      <span class="prescription-field__label">Selling Price</span>
+      <span class="prescription-field__label">{{ 'prescription.sellingPrice' | translate }}</span>
       <input
         class="prescription-field__input"
         type="number"
@@ -266,7 +266,7 @@
     </label>
 
     <label class="prescription-field">
-      <span class="prescription-field__label">Quantity</span>
+      <span class="prescription-field__label">{{ 'prescription.quantity' | translate }}</span>
       <input
         class="prescription-field__input"
         type="number"
@@ -279,7 +279,7 @@
 
     <label class="prescription-field">
       <span class="prescription-field__label">
-        Discount (%)
+        {{ 'prescription.discountPercent' | translate }}
         @if (maxDiscountCap() !== null) {
         <span class="prescription-field__hint">Max {{ maxDiscountCap() }}%</span>
         }
@@ -298,11 +298,11 @@
 
     <div class="frame-line__computed">
       <div class="frame-line__computed-row">
-        <span>Discount</span>
+        <span>{{ 'prescription.discount' | translate }}</span>
         <strong>{{ formatMoney(totalsFor(group()).discountAmount) }}</strong>
       </div>
       <div class="frame-line__computed-row frame-line__computed-row--total">
-        <span>Total Selling Price</span>
+        <span>{{ 'prescription.totalSellingPrice' | translate }}</span>
         <strong>{{ formatMoney(totalsFor(group()).totalSellingPrice) }}</strong>
       </div>
     </div>

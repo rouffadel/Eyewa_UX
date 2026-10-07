@@ -1,6 +1,6 @@
 <section class="pos-card rx-summary">
   <div class="rx-summary__header">
-    <h2>LATEST ORDER</h2>
+    <h2>{{ 'sell.prescriptionTitle' | translate }}</h2>
     <div class="rx-summary__actions-header">
       <button
         type="button"
@@ -70,29 +70,29 @@
           <thead>
             <tr>
               <th></th>
-              <th>R (Right Eye)</th>
-              <th>L (Left Eye)</th>
+              <th>{{ 'sell.rightEye' | translate }}</th>
+              <th>{{ 'sell.leftEye' | translate }}</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <th>SPH</th>
+              <th>{{ 'sell.sph' | translate }}</th>
               <td>{{ rx.od.sph }}</td>
               <td>{{ rx.os.sph }}</td>
             </tr>
             <tr>
-              <th>CYL</th>
+              <th>{{ 'sell.cyl' | translate }}</th>
               <td>{{ rx.od.cyl }}</td>
               <td>{{ rx.os.cyl }}</td>
             </tr>
             <tr>
-              <th>AXIS</th>
+              <th>{{ 'sell.axis' | translate }}</th>
               <td>{{ rx.od.axis }}</td>
               <td>{{ rx.os.axis }}</td>
             </tr>
             @if (rx.od.add || rx.os.add) {
               <tr>
-                <th>ADD</th>
+                <th>{{ 'sell.add' | translate }}</th>
                 <td>{{ rx.od.add ?? '—' }}</td>
                 <td>{{ rx.os.add ?? '—' }}</td>
               </tr>
@@ -100,7 +100,7 @@
           </tbody>
         </table>
 
-        <p class="rx-summary__pd">PD: {{ rx.pd }} · Near PD: {{ rx.nearPd }}</p>
+        <p class="rx-summary__pd">{{ 'sell.pd' | translate }}: {{ rx.pd }} · Near PD: {{ rx.nearPd }}</p>
       </div>
     } @else if (hasCustomer()) {
       <!-- Empty body block -->
@@ -109,7 +109,7 @@
         <svg class="rx-summary__empty-icon animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
         </svg>
-        <p>Select a customer to view order summary</p>
+        <p>{{ 'header.searchPlaceholder' | translate }}</p>
       </div>
     }
   </div>

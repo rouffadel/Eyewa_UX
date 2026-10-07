@@ -1,10 +1,10 @@
 <section class="prescription-grid" [formGroup]="group()">
-  <h3 class="prescription-grid__title">{{ title() }}</h3>
+  <h3 class="prescription-grid__title">{{ title() | translate }}</h3>
 
   <div class="prescription-grid__fields">
     @for (field of fields; track field) {
       <label class="prescription-grid__field">
-        <span class="prescription-grid__label">{{ labelFor(field) }}</span>
+        <span class="prescription-grid__label">{{ ('prescription.' + field) | translate }}</span>
         <div class="custom-select" [class.custom-select--open]="openField() === field">
           <button type="button" class="custom-select__trigger" 
                   [class.custom-select__trigger--invalid]="group().get(field)?.invalid && group().get(field)?.touched"

@@ -29,11 +29,13 @@ import {
   PrescriptionFrameLineTotals,
 } from '../models/prescription.models';
 
+import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+
 export type PrescriptionFramesTemplate = 'guided' | 'productSearch';
 
 @Component({
   selector: 'app-prescription-frame-line',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './prescription-frame-line.component.html',
   styleUrl: './prescription-frame-line.component.css',
 })

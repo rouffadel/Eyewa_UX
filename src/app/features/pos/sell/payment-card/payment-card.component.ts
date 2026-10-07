@@ -9,9 +9,11 @@ import {
   paymentBalanceRemaining,
 } from '../services/payment.service';
 
+import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+
 @Component({
   selector: 'app-payment-card',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './payment-card.component.html',
   styleUrl: './payment-card.component.css',
   host: { class: 'payment-card-host' },

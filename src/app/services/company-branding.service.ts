@@ -24,7 +24,9 @@ export class CompanyBrandingService {
   }
 
   loadBranding(): void {
-    const adminApiUrl = 'https://localhost:44357/api/configurations/company';
+    const settings = this.appConfig.settings;
+    const baseUrl = settings?.apiUrl?.replace(/\/$/, '') || 'https://localhost:44357/api';
+    const adminApiUrl = `${baseUrl}/configurations/company`;
     this.http.get<CompanyConfig>(adminApiUrl).subscribe({
       next: (config) => {
         if (config) {

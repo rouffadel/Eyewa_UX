@@ -18,9 +18,11 @@ import { CustomerService } from './services/customer.service';
 import { CustomerSessionService } from './services/customer-session.service';
 import { SellSessionStore } from '../sell/services/sell-session.store';
 
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+
 @Component({
   selector: 'app-create-customer-form',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './create-customer-form.component.html',
   styleUrl: './create-customer-form.component.css',
 })

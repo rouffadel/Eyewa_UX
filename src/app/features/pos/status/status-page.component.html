@@ -1,7 +1,7 @@
 <div class="status-page">
   <div class="status-header">
-    <h1>{{ pageTitle() }}</h1>
-    <p>View recent orders and update their status to notify customers.</p>
+    <h1>{{ 'status.title' | translate }}</h1>
+    <p>{{ 'status.subtitle' | translate }}</p>
   </div>
 
   <div *ngIf="message()" class="alert" [ngClass]="message()?.type === 'success' ? 'alert-success' : 'alert-error'">
@@ -15,7 +15,7 @@
     <div class="filter-controls-group">
       <div class="date-range-picker">
         <div class="date-field">
-          <label for="fromDate">From Date</label>
+          <label for="fromDate">{{ 'reports.fromDate' | translate }}</label>
           <input 
             id="fromDate"
             type="date" 
@@ -26,7 +26,7 @@
         </div>
 
         <div class="date-field">
-          <label for="toDate">To Date</label>
+          <label for="toDate">{{ 'reports.toDate' | translate }}</label>
           <input 
             id="toDate"
             type="date" 
@@ -40,11 +40,11 @@
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
           </svg>
-          <span>Search</span>
+          <span>{{ 'status.search' | translate }}</span>
         </button>
 
         <button type="button" class="btn-filter-action btn-clear" [disabled]="!fromDate() && !toDate()" (click)="clearFilters()">
-          <span>Clear</span>
+          <span>{{ 'status.clear' | translate }}</span>
         </button>
       </div>
 
@@ -56,7 +56,7 @@
         <input 
           type="text" 
           class="search-input" 
-          placeholder="Search by Customer, Invoice, ID..." 
+          placeholder="{{ 'status.searchOrder' | translate }}" 
           [ngModel]="searchTerm()" 
           (ngModelChange)="onSearchChange($event)"
           (keyup.enter)="applyDateFilter()"
@@ -69,23 +69,23 @@
     <table class="data-table">
       <thead>
         <tr>
-          <th>Sales ID</th>
-          <th>Invoice No</th>
-          <th>Customer</th>
-          <th>Product(s)</th>
-          <th class="col-right">Paid</th>
-          <th class="col-right">Balance</th>
-          <th>Status</th>
-          <th class="col-center">Action</th>
+          <th>{{ 'dashboard.colOrderNo' | translate }}</th>
+          <th>{{ 'status.colInvoiceNo' | translate }}</th>
+          <th>{{ 'dashboard.colCustomerName' | translate }}</th>
+          <th>{{ 'status.colProduct' | translate }}</th>
+          <th class="col-right">{{ 'status.colPaid' | translate }}</th>
+          <th class="col-right">{{ 'status.colBalance' | translate }}</th>
+          <th>{{ 'dashboard.colStatus' | translate }}</th>
+          <th class="col-center">{{ 'dashboard.colAction' | translate }}</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngIf="isLoadingOrders()">
-          <td colspan="8" class="col-center" style="padding: 32px; color: #94a3b8;">Loading orders...</td>
+          <td colspan="8" class="col-center" style="padding: 32px; color: #94a3b8;">Loading...</td>
         </tr>
         <tr *ngIf="!isLoadingOrders() && orders().length === 0">
           <td colspan="8" class="col-center" style="padding: 32px; color: #94a3b8;">
-            {{ (fromDate() || toDate() || searchTerm()) ? 'No orders found for the selected filter.' : 'No orders found.' }}
+            {{ 'dashboard.noRecentOrders' | translate }}
           </td>
         </tr>
         <tr *ngFor="let order of orders()">
@@ -100,7 +100,7 @@
           <td class="col-right text-balance">{{ order.balance | number:'1.2-2' }}</td>
           <td>
             <span class="badge" [ngClass]="order.statusName ? 'badge-active' : ''">
-              {{ order.statusName || 'Pending' }}
+              {{ getStatusDisplayName(order.statusName || 'Pending') }}
             </span>
           </td>
           <td class="col-center">
@@ -118,7 +118,7 @@
 <div *ngIf="selectedOrder()" class="modal-overlay">
   <div class="modal-content">
     <div class="modal-header">
-      <h3>Update Order {{ selectedOrder().invoiceNo }}</h3>
+      <h3>{{ 'status.updateOrder' | translate }} {{ selectedOrder().invoiceNo }}</h3>
       <button (click)="cancelEdit()" class="btn-close">
         <svg style="width: 24px; height: 24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
@@ -127,25 +127,25 @@
     <div class="modal-body">
       <div class="stats-grid">
         <div class="stat-item">
-          <p class="label">Total Amount</p>
+          <p class="label">{{ 'reports.totalAmount' | translate }}</p>
           <p class="value">{{ selectedOrder().grossTotal | number:'1.2-2' }}</p>
         </div>
         <div class="stat-item">
-          <p class="label">Amount Paid</p>
+          <p class="label">{{ 'status.colPaid' | translate }}</p>
           <p class="value text-paid">{{ selectedOrder().paidAmount | number:'1.2-2' }}</p>
         </div>
         <div class="stat-item">
-          <p class="label">Balance</p>
+          <p class="label">{{ 'status.colBalance' | translate }}</p>
           <p class="value text-balance">{{ selectedOrder().balance | number:'1.2-2' }}</p>
         </div>
         <div class="stat-item">
-          <p class="label">Insurance & Discount</p>
+          <p class="label">{{ 'sell.payInsurance' | translate }}</p>
           <p class="value" style="font-size: 14px;">Ins: {{ selectedOrder().insuranceAmount | number:'1.2-2' }} | Disc: {{ selectedOrder().discountAmount | number:'1.2-2' }}</p>
         </div>
       </div>
 
       <div class="form-group">
-        <label>New Status</label>
+        <label>{{ 'dashboard.colStatus' | translate }}</label>
         <div class="custom-select custom-select--up" [class.custom-select--open]="isOpen()">
           <button type="button" class="custom-select__trigger" (click)="toggleDropdown($event)">
             <span>{{ currentStatusName() }}</span>
@@ -158,13 +158,13 @@
               <button type="button" class="custom-select__option" 
                       [class.custom-select__option--selected]="selectedStatusId() === null"
                       (click)="selectStatus(null)">
-                -- Select a Status --
+                {{ 'status.selectStatus' | translate }}
               </button>
               <button type="button" *ngFor="let status of statuses()"
                       class="custom-select__option" 
                       [class.custom-select__option--selected]="selectedStatusId() === status.id"
                       (click)="selectStatus(status.id)">
-                {{ status.statusName }}
+                {{ getStatusDisplayName(status.statusName) }}
               </button>
             </div>
           }
@@ -174,11 +174,11 @@
 
     <div class="modal-footer">
       <button (click)="cancelEdit()" class="btn btn-secondary">
-        Cancel
+        {{ 'customer.cancel' | translate }}
       </button>
       <button (click)="updateStatus()" [disabled]="isUpdating() || !selectedStatusId()" class="btn btn-primary">
         <svg *ngIf="isUpdating()" class="spin-icon" fill="none" viewBox="0 0 24 24" style="width: 16px; height: 16px;"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-        {{ isUpdating() ? 'Updating...' : 'Update Status & Notify' }}
+        {{ isUpdating() ? '...' : ('status.updateBtn' | translate) }}
       </button>
     </div>
   </div>

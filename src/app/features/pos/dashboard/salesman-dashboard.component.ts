@@ -7,6 +7,7 @@ import { AppConfigService } from '../../../services/app-config.service';
 
 import { DashboardCacheService } from './services/dashboard-cache.service';
 import { categorizeOrderStatus, OrderStatusCategory } from '../shared/order-status.utils';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 
 export interface RecentOrder {
   id: number;
@@ -30,7 +31,7 @@ export interface DashboardSummary {
 @Component({
   selector: 'app-salesman-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   templateUrl: './salesman-dashboard.component.html',
   styleUrl: './salesman-dashboard.component.css'
 })

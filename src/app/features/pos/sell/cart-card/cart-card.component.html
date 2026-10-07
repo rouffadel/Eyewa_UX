@@ -1,9 +1,8 @@
 <section class="pos-card cart-card" [class.cart-card--locked]="locked()">
   <div class="cart-card__header">
-    <h2>CART ({{ itemCount() }} Items)</h2>
-    <!-- <button type="button" class="cart-card__clear" [disabled]="locked()" (click)="clearCart.emit()">Clear Cart</button> -->
+    <h2>{{ 'sell.cartTitle' | translate }} ({{ itemCount() }})</h2>
 
-    <button type="button" class="cart-card__clear" [disabled]="locked()" (click)="clearCart.emit()" title="Clear Cart">
+    <button type="button" class="cart-card__clear" [disabled]="locked()" (click)="clearCart.emit()" title="{{ 'sell.clearCart' | translate }}">
       <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
         <path
           d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v8h-2V9zm4 0h2v8h-2V9zM7 9h2v8H7V9zm1 12h8a2 2 0 0 0 2-2V7H6v12a2 2 0 0 0 2 2z"
@@ -25,7 +24,7 @@
     <svg class="cart-card__empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
       <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
     </svg>
-    <p>Cart is empty</p>
+    <p>{{ 'sell.cartTitle' | translate }}</p>
   </div>
   } @else {
   <div class="cart-card__table-wrap">
@@ -34,9 +33,9 @@
         <tr>
           <th>Item</th>
           <th>Qty</th>
-          <th>Price</th>
+          <th>{{ 'dashboard.colAmount' | translate }}</th>
           <th>Discount</th>
-          <th>Total</th>
+          <th>{{ 'reports.totalAmount' | translate }}</th>
           <th></th>
         </tr>
       </thead>

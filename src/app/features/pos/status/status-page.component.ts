@@ -5,11 +5,13 @@ import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AppConfigService } from '../../../services/app-config.service';
 import { categorizeOrderStatus, OrderStatusCategory } from '../shared/order-status.utils';
+import { TranslationService } from '../../../services/translation.service';
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 
 @Component({
   selector: 'app-status-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, TranslatePipe],
   templateUrl: './status-page.component.html',
   styleUrl: './status-page.component.css'
 })
@@ -20,6 +22,7 @@ export class StatusPageComponent implements OnInit {
   private readonly elementRef = inject(ElementRef);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly translationService = inject(TranslationService);
 
   protected readonly statuses = signal<any[]>([]);
   protected readonly orders = signal<any[]>([]);
@@ -41,9 +44,22 @@ export class StatusPageComponent implements OnInit {
 
   protected currentStatusName(): string {
     const id = this.selectedStatusId();
-    if (id == null) return '-- Select a Status --';
+    if (id == null) return this.translationService.translate('status.selectStatus');
     const statusObj = this.statuses().find((s) => s.id === id);
-    return statusObj ? statusObj.statusName : '-- Select a Status --';
+    return statusObj ? this.getStatusDisplayName(statusObj.statusName) : this.translationService.translate('status.selectStatus');
+  }
+
+  protected getStatusDisplayName(name: string): string {
+    if (!name) return '';
+    const lower = name.toLowerCase().trim().replace(/\s+/g, '');
+    if (lower === 'created') return this.translationService.translate('status.created');
+    if (lower === 'inprogress') return this.translationService.translate('status.inProgress');
+    if (lower === 'ready') return this.translationService.translate('status.ready');
+    if (lower === 'delivered') return this.translationService.translate('status.delivered');
+    if (lower === 'completed') return this.translationService.translate('status.completed');
+    if (lower === 'pending') return this.translationService.translate('status.pending');
+    if (lower === 'incomplete') return this.translationService.translate('status.incomplete');
+    return name;
   }
 
   @HostListener('document:click', ['$event'])

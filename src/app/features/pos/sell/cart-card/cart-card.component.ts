@@ -2,8 +2,11 @@ import { Component, input, output, inject, signal, effect } from '@angular/core'
 import { CartLineItem, lineTotal } from '../models/cart.models';
 import { formatMoney } from '../services/payment.service';
 import { SellSessionStore } from '../services/sell-session.store';
+import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+
 @Component({
   selector: 'app-cart-card',
+  imports: [TranslatePipe],
   templateUrl: './cart-card.component.html',
   styleUrl: './cart-card.component.css',
   host: { class: 'cart-card-host' },

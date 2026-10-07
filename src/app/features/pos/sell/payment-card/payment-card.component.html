@@ -1,11 +1,11 @@
 <section class="pos-card payment-card">
-  <h2 class="payment-card__title">PAYMENT</h2>
+  <h2 class="payment-card__title">{{ 'nav.sell' | translate }}</h2>
 
   <div class="payment-card__body">
     <div class="payment-card__scroll">
     <dl class="payment-card__rows">
       <div class="payment-card__row">
-        <dt>Subtotal</dt>
+        <dt>{{ 'sell.subtotal' | translate }}</dt>
         <dd>{{ formatMoney(totals().subtotal) }}</dd>
       </div>
       <div class="payment-card__row payment-card__row--input">
@@ -62,13 +62,13 @@
         </div>
       }
       <div class="payment-card__row payment-card__row--strong">
-        <dt>Total</dt>
+        <dt>{{ 'reports.totalAmount' | translate }}</dt>
         <dd>{{ formatMoney(totals().total) }}</dd>
       </div>
       @if (totals().insuranceAmount > 0) {
         <div class="payment-card__row payment-card__row--insurance">
           <dt>
-            Insurance
+            {{ 'sell.payInsurance' | translate }}
             @if (insuranceCompanyName()) {
               <span class="payment-card__insurance-name">({{ insuranceCompanyName() }})</span>
             }
@@ -87,7 +87,7 @@
         @if (hasSalesInsurance() && hasInsuranceAccess()) {
           <div class="payment-card__loyalty-row payment-card__insurance-row" style="margin-bottom: 0.5rem;">
             <label class="payment-card__loyalty-toggle" [class.payment-card__loyalty-toggle--disabled]="isInsuranceLocked()">
-              <span class="payment-card__loyalty-text">Apply Insurance</span>
+              <span class="payment-card__loyalty-text">{{ 'sell.payInsurance' | translate }}</span>
               <input
                 type="checkbox"
                 [ngModel]="draft().applyInsurance"
@@ -102,7 +102,7 @@
         @if (hasRedmeePointsAccess()) {
         <div class="payment-card__loyalty-row">
           <label class="payment-card__loyalty-toggle">
-            <span class="payment-card__loyalty-text">Redeem Loyalty Points</span>
+            <span class="payment-card__loyalty-text">{{ 'header.loyalty' | translate }}</span>
             <input
               type="checkbox"
               [ngModel]="draft().redeemLoyalty"
@@ -128,7 +128,7 @@
 
       <div class="payment-card__payable">
         <span class="payment-card__payable-label">
-          {{ orderFullyPaid() ? 'Paid Amount' : 'Payable Amount' }}
+          {{ 'sell.totalPayable' | translate }}
         </span>
         <span class="payment-card__payable-value">
           {{ formatMoney(orderFullyPaid() ? amountAlreadyPaid() : totals().payable) }} SAR
@@ -160,7 +160,7 @@
 
         @if (draft().method !== 'mixed') {
           <label class="payment-card__method-field payment-card__partial-field">
-            <span class="payment-card__method-label">Payment Amount</span>
+            <span class="payment-card__method-label">{{ 'dashboard.colAmount' | translate }}</span>
             <input
               class="payment-card__method-input"
               type="number"
@@ -176,7 +176,7 @@
 
           <div class="payment-card__mixed-summary">
             <div class="payment-card__method-row">
-              <span class="payment-card__method-label">Total Paid</span>
+              <span class="payment-card__method-label">{{ 'reports.totalAmount' | translate }}</span>
               <span class="payment-card__method-value">{{ formatMoney(paidAmount()) }} SAR</span>
             </div>
             <div class="payment-card__method-row">
@@ -190,7 +190,7 @@
 
         <div class="payment-card__delivery-date-row">
           <label class="payment-card__method-field">
-            <span class="payment-card__method-label">Delivery Date (Optional)</span>
+            <span class="payment-card__method-label">Delivery Date</span>
             <input
               class="payment-card__method-input"
               type="date"
@@ -218,18 +218,21 @@
                 <rect x="2" y="6" width="20" height="12" rx="2" />
                 <circle cx="12" cy="12" r="3" />
               </svg>
+              {{ 'sell.payCash' | translate }}
             }
             @case ('card') {
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <rect x="2" y="5" width="20" height="14" rx="2" />
                 <path d="M2 10h20" />
               </svg>
+              {{ 'sell.payCard' | translate }}
             }
             @case ('mixed') {
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M8 6h12v12H8z" />
                 <path d="M4 10h4v8H4z" />
               </svg>
+              {{ 'sell.paySplit' | translate }}
             }
             @default {
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -237,9 +240,9 @@
                 <circle cx="12" cy="12" r="1.5" />
                 <circle cx="19" cy="12" r="1.5" />
               </svg>
+              {{ method.label }}
             }
           }
-          {{ method.label }}
         </button>
       }
     </div>
@@ -248,29 +251,23 @@
       @case ('cash') {
         <div class="payment-card__method-panel">
           <div class="payment-card__method-row">
-            <span class="payment-card__method-label">Cash</span>
+            <span class="payment-card__method-label">{{ 'sell.payCash' | translate }}</span>
             <span class="payment-card__method-value">{{ formatMoney(amountDue()) }} SAR</span>
           </div>
-          <p class="payment-card__method-hint">
-            {{ showSettlementSummary() ? 'Pay remaining balance by cash' : 'Full payment by cash' }}
-          </p>
         </div>
       }
       @case ('card') {
         <div class="payment-card__method-panel">
           <div class="payment-card__method-row">
-            <span class="payment-card__method-label">Card</span>
+            <span class="payment-card__method-label">{{ 'sell.payCard' | translate }}</span>
             <span class="payment-card__method-value">{{ formatMoney(amountDue()) }} SAR</span>
           </div>
-          <p class="payment-card__method-hint">
-            {{ showSettlementSummary() ? 'Pay remaining balance by card' : 'Full payment by card' }}
-          </p>
         </div>
       }
       @case ('mixed') {
         <div class="payment-card__method-panel payment-card__method-panel--mixed">
           <label class="payment-card__method-field">
-            <span class="payment-card__method-label">Cash</span>
+            <span class="payment-card__method-label">{{ 'sell.payCash' | translate }}</span>
             <input
               class="payment-card__method-input"
               type="number"
@@ -283,7 +280,7 @@
             />
           </label>
           <label class="payment-card__method-field">
-            <span class="payment-card__method-label">Card</span>
+            <span class="payment-card__method-label">{{ 'sell.payCard' | translate }}</span>
             <input
               class="payment-card__method-input"
               type="number"
@@ -310,11 +307,6 @@
               </span>
             </div>
           </div>
-          @if (!mixedIsBalanced()) {
-            <p class="payment-card__method-hint payment-card__method-hint--error">
-              Cash and card must total {{ formatMoney(amountDue()) }} SAR before paying.
-            </p>
-          }
         </div>
       }
       @case ('more') {
@@ -348,7 +340,7 @@
             [disabled]="!canPrintReceipt()"
             (click)="printReceipt.emit()"
           >
-            PRINT RECEIPT
+            {{ 'reports.print' | translate }}
           </button>
         } @else {
           <button
@@ -357,7 +349,7 @@
             [disabled]="!canPay() || isPaying()"
             (click)="pay.emit()"
           >
-            {{ isPaying() ? 'PROCESSING...' : 'PAY' }}
+            {{ isPaying() ? '...' : ('sell.completeSale' | translate) }}
           </button>
         }
       </div>

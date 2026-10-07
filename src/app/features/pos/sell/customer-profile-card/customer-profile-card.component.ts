@@ -1,8 +1,10 @@
 import { Component, input, output } from '@angular/core';
 import { Customer } from '../models/customer.models';
+import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 
 @Component({
   selector: 'app-customer-profile-card',
+  imports: [TranslatePipe],
   templateUrl: './customer-profile-card.component.html',
   styleUrl: './customer-profile-card.component.css',
   host: { class: 'customer-profile-card-host' },

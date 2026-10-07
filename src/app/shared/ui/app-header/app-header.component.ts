@@ -24,10 +24,12 @@ import { CustomerSearchService } from '../../../features/pos/customer/services/c
 import { Customer } from '../../../features/pos/sell/models/customer.models';
 import { SellSessionStore } from '../../../features/pos/sell/services/sell-session.store';
 import { CompanyBrandingService } from '../../../services/company-branding.service';
+import { TranslationService } from '../../../services/translation.service';
+import { TranslatePipe } from '../../pipes/translate.pipe';
 
 @Component({
   selector: 'app-header',
-  imports: [FormsModule],
+  imports: [FormsModule, TranslatePipe],
   templateUrl: './app-header.component.html',
   styleUrl: './app-header.component.css',
 })
@@ -40,6 +42,7 @@ export class AppHeaderComponent implements AfterViewInit {
   private readonly customerSearchService = inject(CustomerSearchService);
   protected readonly sellStore = inject(SellSessionStore);
   protected readonly brandingService = inject(CompanyBrandingService);
+  protected readonly translationService = inject(TranslationService);
   private readonly searchSubject = new Subject<string>();
   private searchRequestId = 0;
 
@@ -58,6 +61,8 @@ export class AppHeaderComponent implements AfterViewInit {
   protected readonly searchLoading = signal(false);
   protected readonly searchError = signal<string | null>(null);
   protected readonly storeMenuOpen = signal(false);
+  protected readonly languageMenuOpen = signal(false);
+  protected readonly currentLanguage = computed(() => this.translationService.currentLang());
   protected readonly stores = signal<StoreOption[]>([]);
   protected readonly storesLoading = signal(false);
   protected readonly storesError = signal<string | null>(null);
@@ -220,6 +225,18 @@ export class AppHeaderComponent implements AfterViewInit {
 
   protected onNotificationsClick(): void {
     this.notificationsClick.emit();
+  }
+
+  protected onLanguageMenuToggle(): void {
+    this.languageMenuOpen.update((open) => !open);
+    if (this.languageMenuOpen()) {
+      this.storeMenuOpen.set(false);
+    }
+  }
+
+  protected selectLanguage(lang: 'en' | 'ar'): void {
+    this.translationService.setLanguage(lang);
+    this.languageMenuOpen.set(false);
   }
 
   protected onAvatarClick(): void {

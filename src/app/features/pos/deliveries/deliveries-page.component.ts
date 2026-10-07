@@ -18,10 +18,12 @@ interface DeliveryRecord {
   InsuranceAmount?: number;
 }
 
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+
 @Component({
   selector: 'app-deliveries-page',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, TranslatePipe],
   templateUrl: './deliveries-page.component.html',
   styleUrl: './deliveries-page.component.css'
 })

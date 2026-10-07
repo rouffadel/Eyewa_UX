@@ -1,9 +1,9 @@
 <section class="prescription-page">
   <form class="prescription-card" [formGroup]="form" (ngSubmit)="onSave()" novalidate>
     <header class="prescription-card__header">
-      <h1 class="prescription-card__title">ORDER</h1>
+      <h1 class="prescription-card__title">{{ 'prescription.title' | translate }}</h1>
       <button type="button" class="prescription-card__new-link" (click)="onNewPrescription()">
-        + New Order
+        {{ 'prescription.newOrder' | translate }}
       </button>
     </header>
 
@@ -18,7 +18,7 @@
       }
     } @else {
       <p class="prescription-message prescription-message--info" role="status">
-        Select a customer from the header before saving this order.
+        {{ 'prescription.selectCustomerWarning' | translate }}
       </p>
     }
 
@@ -36,9 +36,9 @@
           aria-controls="prescription-frames-panel"
           (click)="toggleFramesExpanded()"
         >
-          <span class="prescription-accordion__title">FRAMES</span>
+          <span class="prescription-accordion__title">{{ 'prescription.frames' | translate }}</span>
           <span class="prescription-accordion__summary">
-            {{ frameLines.length }} {{ frameLines.length === 1 ? 'item' : 'items' }}
+            {{ frameLines.length }} {{ frameLines.length === 1 ? ('prescription.item' | translate) : ('prescription.items' | translate) }}
           </span>
           <svg
             class="prescription-accordion__chevron"
@@ -49,7 +49,7 @@
           </svg>
         </button>
         <button type="button" class="prescription-section__add" (click)="addFrameLine()">
-          + Add Frame
+          {{ 'prescription.addFrame' | translate }}
         </button>
       </div>
 
@@ -87,9 +87,9 @@
           aria-controls="prescription-lenses-panel"
           (click)="toggleLensesExpanded()"
         >
-          <span class="prescription-accordion__title">LENSES</span>
+          <span class="prescription-accordion__title">{{ 'prescription.lenses' | translate }}</span>
           <span class="prescription-accordion__summary">
-            {{ lensLines.length }} {{ lensLines.length === 1 ? 'line' : 'lines' }}
+            {{ lensLines.length }} {{ lensLines.length === 1 ? ('prescription.line' | translate) : ('prescription.lines' | translate) }}
           </span>
           <svg
             class="prescription-accordion__chevron"
@@ -115,17 +115,17 @@
 
           <div class="prescription-section__footer">
             <button type="button" class="prescription-section__add" (click)="addLensLine()">
-              + Add Lens Line
+              {{ 'prescription.addLensLine' | translate }}
             </button>
             <p class="prescription-section__total">
-              Lens Total: <strong>{{ formatMoney(lensesSectionTotal()) }}</strong>
+              {{ 'prescription.lensTotal' | translate }}: <strong>{{ formatMoney(lensesSectionTotal()) }}</strong>
             </p>
           </div>
         </div>
       }
     </section>
 
-    <h2 class="prescription-section__title prescription-section__title--rx">EYE ORDER</h2>
+    <h2 class="prescription-section__title prescription-section__title--rx">{{ 'prescription.title' | translate }}</h2>
 
     @if (successMessage()) {
       <p class="prescription-message prescription-message--success" role="status">
@@ -150,18 +150,18 @@
         <app-prescription-grid
           [group]="rightEyeGroup"
           [dropdowns]="eyeDropdowns()"
-          title="R (Right Eye)"
+          title="prescription.rightEye"
         />
         <app-prescription-grid
           [group]="leftEyeGroup"
           [dropdowns]="eyeDropdowns()"
-          title="L (Left Eye)"
+          title="prescription.leftEye"
         />
       </div>
 
       <div class="prescription-card__shared">
         <label class="prescription-field">
-          <span class="prescription-field__label">PD</span>
+          <span class="prescription-field__label">{{ 'prescription.pd' | translate }}</span>
           <input
             class="prescription-field__input"
             [class.prescription-field__input--invalid]="
@@ -175,7 +175,7 @@
         </label>
 
         <label class="prescription-field">
-          <span class="prescription-field__label">Near PD</span>
+          <span class="prescription-field__label">{{ 'prescription.nearPd' | translate }}</span>
           <input
             class="prescription-field__input"
             [class.prescription-field__input--invalid]="
@@ -189,7 +189,7 @@
         </label>
 
         <label class="prescription-field">
-          <span class="prescription-field__label">VD</span>
+          <span class="prescription-field__label">{{ 'prescription.vd' | translate }}</span>
           <input
             class="prescription-field__input"
             [class.prescription-field__input--invalid]="
@@ -206,11 +206,11 @@
     </div>
 
     <label class="prescription-field">
-      <span class="prescription-field__label">Notes</span>
+      <span class="prescription-field__label">{{ 'prescription.notes' | translate }}</span>
       <input
         class="prescription-field__input"
         type="text"
-        placeholder="Optional"
+        placeholder="{{ 'prescription.optional' | translate }}"
         formControlName="notes"
       />
     </label>
@@ -221,7 +221,7 @@
         class="prescription-actions__save"
         [disabled]="isSaving()"
       >
-        {{ isSaving() ? 'Saving…' : 'Save Order' }}
+        {{ isSaving() ? '...' : ('prescription.saveOrder' | translate) }}
       </button>
 
       <div class="prescription-actions__secondary">
@@ -231,11 +231,11 @@
             <path d="M6 8h12a2 2 0 0 1 2 2v5H4v-5a2 2 0 0 1 2-2Z" />
             <path d="M7 15h10v5H7z" />
           </svg>
-          Print
+          {{ 'prescription.print' | translate }}
         </button>
 
         <button type="button" class="prescription-actions__btn" (click)="onCancel()">
-          Cancel
+          {{ 'prescription.cancel' | translate }}
         </button>
       </div>
     </footer>

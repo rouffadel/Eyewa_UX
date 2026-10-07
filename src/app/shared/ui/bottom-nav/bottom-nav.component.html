@@ -63,12 +63,7 @@
         }
       </span>
       <span class="bottom-nav__indicator" aria-hidden="true"></span>
-      <span class="bottom-nav__label bottom-nav__label--full">{{ item.label }}</span>
-      @if (item.shortLabel) {
-        <span class="bottom-nav__label bottom-nav__label--short" aria-hidden="true">{{
-          item.shortLabel
-        }}</span>
-      }
+      <span class="bottom-nav__label">{{ item.i18nKey | translate }}</span>
     </button>
   }
 </nav>

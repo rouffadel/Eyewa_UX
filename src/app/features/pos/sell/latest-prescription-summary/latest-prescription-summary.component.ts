@@ -1,8 +1,10 @@
 import { Component, input, output } from '@angular/core';
 import { PrescriptionSummary } from '../models/customer.models';
+import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
 
 @Component({
   selector: 'app-latest-prescription-summary',
+  imports: [TranslatePipe],
   templateUrl: './latest-prescription-summary.component.html',
   styleUrl: './latest-prescription-summary.component.css',
   host: { class: 'latest-prescription-summary-host' },

@@ -1,7 +1,7 @@
 <section class="reports-page pos-scroll-page">
   <header class="reports-page__header">
-    <h1 class="reports-page__title">REPORTS</h1>
-    <p class="reports-page__subtitle">Payments, register actions, and sales reports</p>
+    <h1 class="reports-page__title">{{ 'reports.title' | translate }}</h1>
+    <p class="reports-page__subtitle">{{ 'reports.subtitle' | translate }}</p>
   </header>
 
   @if (store.statusMessage()) {
@@ -20,37 +20,19 @@
     </div>
   }
 
-<!--
-  <div class="reports-page__actions">
-    @for (action of actions; track action.key) {
-      <button
-        type="button"
-        class="reports-page__btn"
-        [class.reports-page__btn--primary]="action.primary"
-        [disabled]="isActionDisabled(action)"
-        (click)="onAction(action)"
-      >
-        {{ actionLabel(action) }}
-      </button>
-    }
-  </div>
-
-  <p class="reports-page__shortcut">F9 Pay &amp; Print</p>
--->
-
   <div class="reports-grid-section">
     <div class="reports-filter-row">
       <span style="margin-right: auto; font-weight: 500; color: #475569;">
-        Showing data for today ({{ fromDate() }})
+        ({{ fromDate() }})
       </span>
       <button type="button" class="reports-btn-search" (click)="loadFramesSalesReport()" [disabled]="isLoading()">
         <svg viewBox="0 0 24 24" aria-hidden="true" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;">
           <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
         </svg>
-        {{ isLoading() ? 'Loading...' : 'Refresh' }}
+        {{ isLoading() ? '...' : ('reports.refresh' | translate) }}
       </button>
       <button type="button" class="reports-btn-export" (click)="exportToPdf()" [disabled]="isLoading() || reportData().length === 0">
-        Export PDF
+        {{ 'reports.exportPdf' | translate }}
       </button>
     </div>
 
@@ -63,15 +45,15 @@
     @if (extraData()) {
       <div class="reports-summary-inline" style="display: flex; gap: 24px; margin-bottom: 12px; align-items: center; justify-content: flex-end; padding: 0 4px;">
         <div style="display: flex; align-items: baseline; gap: 8px;">
-          <span style="color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase;">Total Cash:</span>
+          <span style="color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase;">{{ 'reports.totalCash' | translate }}:</span>
           <span style="font-size: 15px; font-weight: 700; color: #059669;">{{ extraData().TotalCash | number:'1.2-2' }}</span>
         </div>
         <div style="display: flex; align-items: baseline; gap: 8px;">
-          <span style="color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase;">Total Card:</span>
+          <span style="color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase;">{{ 'reports.totalCard' | translate }}:</span>
           <span style="font-size: 15px; font-weight: 700; color: #2563eb;">{{ extraData().TotalCard | number:'1.2-2' }}</span>
         </div>
         <div style="display: flex; align-items: baseline; gap: 8px;">
-          <span style="color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase;">Total Payment:</span>
+          <span style="color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase;">{{ 'reports.totalAmount' | translate }}:</span>
           <span style="font-size: 15px; font-weight: 800; color: #0f172a;">{{ extraData().TotalAmount | number:'1.2-2' }}</span>
         </div>
       </div>
@@ -81,24 +63,24 @@
       <table class="reports-table">
         <thead>
           <tr>
-            <th>Sale ID</th>
-            <th>Store</th>
-            <th>Customer Name</th>
-            <th>Customer No</th>
-            <th>Invoice Payment ID</th>
-            <th>Date</th>
-            <th>Amount</th>
-            <th>Mode</th>
-            <th>Insurance</th>
-            <th>Net Total</th>
-            <th>Balance</th>
-            <th>Products</th>
+            <th>{{ 'dashboard.colOrderNo' | translate }}</th>
+            <th>{{ 'header.selectStore' | translate }}</th>
+            <th>{{ 'dashboard.colCustomerName' | translate }}</th>
+            <th>{{ 'dashboard.colMobile' | translate }}</th>
+            <th>{{ 'reports.invoiceId' | translate }}</th>
+            <th>{{ 'deliveries.date' | translate }}</th>
+            <th>{{ 'dashboard.colAmount' | translate }}</th>
+            <th>{{ 'dashboard.colOrderType' | translate }}</th>
+            <th>{{ 'sell.payInsurance' | translate }}</th>
+            <th>{{ 'reports.netTotal' | translate }}</th>
+            <th>{{ 'reports.balance' | translate }}</th>
+            <th>{{ 'reports.products' | translate }}</th>
           </tr>
         </thead>
         <tbody>
           @if (reportData().length === 0 && !isLoading()) {
             <tr>
-              <td colspan="12" class="reports-table-empty">No results found.</td>
+              <td colspan="12" class="reports-table-empty">{{ 'dashboard.noRecentOrders' | translate }}</td>
             </tr>
           }
           @for (row of reportData(); track row.SaleID) {
@@ -118,19 +100,6 @@
             </tr>
           }
         </tbody>
-        <!-- @if (extraData()) {
-          <tfoot>
-            <tr>
-              <th colspan="6" style="text-align: right; padding-right: 1rem;">Totals:</th>
-              <th>{{ extraData().TotalAmount | number:'1.2-2' }}</th>
-              <th></th>
-              <th>{{ extraData().TotalInsurance | number:'1.2-2' }}</th>
-              <th>{{ extraData().TotalNetTotal | number:'1.2-2' }}</th>
-              <th>{{ extraData().TotalBalance | number:'1.2-2' }}</th>
-              <th></th>
-            </tr>
-          </tfoot>
-        } -->
       </table>
     </div>
   </div>

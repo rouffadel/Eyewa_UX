@@ -15,9 +15,11 @@ interface ReportAction {
   primary?: boolean;
 }
 
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+
 @Component({
   selector: 'app-reports-page',
-  imports: [DatePipe, DecimalPipe],
+  imports: [DatePipe, DecimalPipe, TranslatePipe],
   templateUrl: './reports-page.component.html',
   styleUrl: './reports-page.component.css',
 })

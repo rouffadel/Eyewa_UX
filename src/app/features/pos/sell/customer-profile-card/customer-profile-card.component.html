@@ -41,12 +41,12 @@
       @if (showLoyaltySection) {
         <div class="customer-card__loyalty">
           <div>
-            <span class="customer-card__loyalty-label">Loyalty Balance</span>
-            <span class="customer-card__loyalty-value">{{ c.loyaltyPoints }} PTS</span>
+            <span class="customer-card__loyalty-label">{{ 'header.loyalty' | translate }}</span>
+            <span class="customer-card__loyalty-value">{{ c.loyaltyPoints }} {{ 'header.points' | translate }}</span>
           </div>
           @if (hasRedmeePointsAccess()) {
             <button type="button" class="customer-card__redeem" (click)="redeemPoints.emit()">
-              Redeem Points
+              Redeem
             </button>
           }
         </div>
@@ -65,8 +65,8 @@
     </div>
   } @else {
     <div class="customer-card__empty">
-      <p>Search or select a customer</p>
-      <span>Use the header search to find a customer by mobile number.</span>
+      <p>{{ 'customer.title' | translate }}</p>
+      <span>{{ 'header.searchPlaceholder' | translate }}</span>
     </div>
   }
 </section>

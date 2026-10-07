@@ -35,14 +35,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: transparent !important;
-  padding: 0 !important;
-  border-radius: 6px;
+  background: #ffffff !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
   height: 34px;
   flex-shrink: 0;
   cursor: pointer;
-  border: none !important;
-  box-shadow: none !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .app-header__brand-logo {
@@ -51,7 +50,6 @@
   width: auto;
   object-fit: contain;
   display: block;
-  mix-blend-mode: multiply;
 }
 
 .app-header__center {
@@ -570,4 +568,106 @@
     padding-inline: 0.75rem;
     font-size: 0.8125rem;
   }
+}
+
+.app-header__settings-menu {
+  position: relative;
+}
+
+.app-header__icon-btn--settings {
+  color: #ffffff;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: var(--radius-button, 8px);
+}
+
+.app-header__icon-btn--settings:hover,
+.app-header__icon-btn--settings.app-header__icon-btn--active {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.app-header__translate-icon {
+  width: 28px !important;
+  height: 28px !important;
+  fill: none !important;
+  stroke: none !important;
+  stroke-width: 0 !important;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
+  transition: transform 0.2s ease;
+}
+
+.app-header__icon-btn--settings:hover .app-header__translate-icon {
+  transform: scale(1.08);
+}
+
+.app-header__language-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 2000;
+  min-width: 220px;
+  padding: 0.5rem;
+  border-radius: var(--radius-button, 10px);
+  background: #ffffff !important;
+  color: var(--color-text-heading, #0f172a) !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.2), 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+.app-header__language-title {
+  margin: 0.25rem 0.5rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.app-header__language-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.app-header__language-option {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  min-height: 40px;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #1e293b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.app-header__language-option:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.app-header__language-option--selected {
+  background: rgba(37, 99, 235, 0.08);
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.app-header__lang-flag {
+  font-size: 1.125rem;
+  line-height: 1;
+}
+
+.app-header__lang-name {
+  flex: 1;
+}
+
+.app-header__lang-check {
+  font-weight: 700;
+  color: #2563eb;
+  font-size: 0.875rem;
 }

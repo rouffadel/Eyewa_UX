@@ -7,9 +7,11 @@ import {
 } from '../../../features/pos/prescription/models/prescription-dropdown.models';
 import { EYE_FIELD_LABELS, EyeFieldKey } from '../../../features/pos/prescription/models/prescription.models';
 
+import { TranslatePipe } from '../../pipes/translate.pipe';
+
 @Component({
   selector: 'app-prescription-grid',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './prescription-grid.component.html',
   styleUrl: './prescription-grid.component.css',
 })

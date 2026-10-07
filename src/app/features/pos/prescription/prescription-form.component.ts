@@ -44,6 +44,8 @@ import {
 import { PrescriptionDropdownService } from './services/prescription-dropdown.service';
 import { formatPrescriptionSavedAt } from '../sell/services/prescription-summary.mapper';
 
+import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+
 @Component({
   selector: 'app-prescription-form',
   imports: [
@@ -51,6 +53,7 @@ import { formatPrescriptionSavedAt } from '../sell/services/prescription-summary
     PrescriptionGridComponent,
     PrescriptionFrameLineComponent,
     PrescriptionLensLineComponent,
+    TranslatePipe,
   ],
   templateUrl: './prescription-form.component.html',
   styleUrl: './prescription-form.component.css',

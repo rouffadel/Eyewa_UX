@@ -6,9 +6,11 @@ import {
   LENS_CATEGORY_OPTIONS,
 } from '../models/prescription.models';
 
+import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+
 @Component({
   selector: 'app-prescription-lens-line',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslatePipe],
   templateUrl: './prescription-lens-line.component.html',
   styleUrl: './prescription-lens-line.component.css',
 })

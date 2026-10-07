@@ -1,17 +1,7 @@
 <header class="app-header">
   <div class="app-header__bar">
     <div class="app-header__brand-group">
-      <button
-        type="button"
-        class="app-header__avatar"
-        aria-label="Account & Store Info"
-        title="Account & Store Info"
-        (click)="onAvatarClick()"
-      >
-        {{ userInitials() }}
-      </button>
-
-      <div class="app-header__brand-logo-wrap" (click)="navigateToDashboard()" role="button" tabindex="0">
+      <div class="app-header__brand-logo-wrap" (click)="navigateToDashboard()" role="button" tabindex="0" title="Go to Dashboard">
         <img
           [src]="brandingService.companyLogo()"
           [alt]="brandingService.companyName() + ' Logo'"
@@ -30,7 +20,7 @@
           <input
             type="search"
             class="app-header__search-input"
-            placeholder="Search customer by mobile number"
+            [placeholder]="'header.searchPlaceholder' | translate"
             [ngModel]="searchQuery()"
             (ngModelChange)="onSearchInput($event)"
             (focus)="onSearchFocus()"
@@ -96,7 +86,7 @@
         class="app-header__new-customer"
         (click)="onNewCustomer()"
       >
-        + New Customer
+        {{ 'header.newCustomer' | translate }}
       </button>
 
 
@@ -123,42 +113,86 @@
 
     <div class="app-header__right">
       <div class="app-header__loyalty" aria-label="Loyalty points">
-        <span class="app-header__loyalty-label">Loyalty</span>
-        <span class="app-header__loyalty-points">{{ loyaltyPoints() }} PTS</span>
+        <span class="app-header__loyalty-label">{{ 'header.loyalty' | translate }}</span>
+        <span class="app-header__loyalty-points">{{ loyaltyPoints() }} {{ 'header.points' | translate }}</span>
       </div>
 
-      <button
-        type="button"
-        class="app-header__icon-btn app-header__icon-btn--bell"
-        aria-label="Notifications"
-        (click)="onNotificationsClick()"
-      >
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M12 3a5 5 0 0 1 5 5v2.5c0 .6.2 1.2.6 1.7l.9 1.1a1 1 0 0 1-.8 1.7H6.3a1 1 0 0 1-.8-1.7l.9-1.1c.4-.5.6-1.1.6-1.7V8a5 5 0 0 1 5-5Z"
-          />
-          <path d="M10 19a2 2 0 0 0 4 0" />
-        </svg>
-        @if (notificationCount() > 0) {
-          <span class="app-header__badge-count">{{ notificationCount() }}</span>
+      <div class="app-header__settings-menu">
+        <button
+          type="button"
+          class="app-header__icon-btn app-header__icon-btn--settings"
+          [class.app-header__icon-btn--active]="languageMenuOpen()"
+          aria-label="Select Language"
+          title="Select Language / اختر اللغة"
+          [attr.aria-expanded]="languageMenuOpen()"
+          (click)="onLanguageMenuToggle()"
+        >
+          <svg class="app-header__translate-icon" viewBox="0 0 32 32" aria-hidden="true">
+            <defs>
+              <filter id="translateIconShadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="1.5" stdDeviation="1.2" flood-color="#000000" flood-opacity="0.3"/>
+              </filter>
+            </defs>
+            <!-- Blue Back Card (English 'A') -->
+            <rect x="2" y="3" width="19" height="20" rx="4" fill="#2563eb" />
+            <text x="11.5" y="13.5" font-size="13" font-weight="800" fill="#ffffff" text-anchor="middle" dominant-baseline="central" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">A</text>
+
+            <!-- White Front Card (Arabic 'ع') -->
+            <rect x="11" y="9" width="19" height="20" rx="4" fill="#ffffff" stroke="#cbd5e1" stroke-width="1" filter="url(#translateIconShadow)" />
+            <text x="20.5" y="19" font-size="14" font-weight="800" fill="#0f172a" text-anchor="middle" dominant-baseline="central" font-family="'Segoe UI', Tahoma, Geneva, Verdana, sans-serif">ع</text>
+          </svg>
+        </button>
+
+        @if (languageMenuOpen()) {
+          <div class="app-header__language-panel" role="listbox" aria-label="Select Language">
+            <p class="app-header__language-title">Select Language / اختر اللغة</p>
+            <ul class="app-header__language-list">
+              <li>
+                <button
+                  type="button"
+                  class="app-header__language-option"
+                  [class.app-header__language-option--selected]="currentLanguage() === 'en'"
+                  (click)="selectLanguage('en')"
+                >
+                  <span class="app-header__lang-name">English (EN)</span>
+                  @if (currentLanguage() === 'en') {
+                    <span class="app-header__lang-check">✓</span>
+                  }
+                </button>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  class="app-header__language-option"
+                  [class.app-header__language-option--selected]="currentLanguage() === 'ar'"
+                  (click)="selectLanguage('ar')"
+                >
+                  <span class="app-header__lang-name">العربية (AR)</span>
+                  @if (currentLanguage() === 'ar') {
+                    <span class="app-header__lang-check">✓</span>
+                  }
+                </button>
+              </li>
+            </ul>
+          </div>
         }
-      </button>
+      </div>
 
       <div class="app-header__profile-menu">
         <div class="app-header__profile">
           <span
             class="app-header__profile-avatar"
-            (click)="navigateToDashboard()"
+            (click)="onAvatarClick()"
             role="button"
             tabindex="0"
-            title="Go to Dashboard"
+            title="Account & Store Info"
           >{{ userInitials() }}</span>
           <span
             class="app-header__profile-text"
-            (click)="navigateToDashboard()"
+            (click)="onAvatarClick()"
             role="button"
             tabindex="0"
-            title="Go to Dashboard"
+            title="Account & Store Info"
           >
             <span class="app-header__profile-name">{{ userName() }}</span>
             <span class="app-header__profile-branch">{{ userBranch() }}</span>

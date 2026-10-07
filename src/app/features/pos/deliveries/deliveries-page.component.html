@@ -1,26 +1,26 @@
 <div class="deliveries-page">
   <header class="deliveries-header">
-    <h1 class="deliveries-title">Today's Deliveries</h1>
+    <h1 class="deliveries-title">{{ 'deliveries.title' | translate }}</h1>
   </header>
 
   @if (isLoading()) {
-    <div class="deliveries-loading">Loading deliveries...</div>
+    <div class="deliveries-loading">{{ 'deliveries.loading' | translate }}</div>
   } @else if (error()) {
     <div class="deliveries-error">{{ error() }}</div>
   } @else if (deliveries().length === 0) {
-    <div class="deliveries-empty">No deliveries scheduled for today.</div>
+    <div class="deliveries-empty">{{ 'deliveries.noDeliveries' | translate }}</div>
   } @else {
     <div class="deliveries-table-container">
       <table class="deliveries-table">
         <thead>
           <tr>
-            <th>Customer Name</th>
-            <th>Mobile Number</th>
-            <th>Gross Total</th>
-            <th>Paid Amount</th>
-            <th>Insurance Amount</th>
-            <th>Balance</th>
-            <th>Action</th>
+            <th>{{ 'dashboard.colCustomerName' | translate }}</th>
+            <th>{{ 'dashboard.colMobile' | translate }}</th>
+            <th>{{ 'dashboard.colAmount' | translate }}</th>
+            <th>{{ 'deliveries.paidAmount' | translate }}</th>
+            <th>{{ 'sell.payInsurance' | translate }}</th>
+            <th>{{ 'deliveries.balance' | translate }}</th>
+            <th>{{ 'dashboard.colAction' | translate }}</th>
           </tr>
         </thead>
         <tbody>
@@ -39,10 +39,10 @@
                     (click)="onOpen(delivery)"
                     aria-label="Open delivery"
                   >
-                    Open
+                    {{ 'deliveries.open' | translate }}
                   </button>
                 } @else {
-                  <span class="deliveries-btn-closed">Closed</span>
+                  <span class="deliveries-btn-closed">{{ 'deliveries.closed' | translate }}</span>
                 }
               </td>
             </tr>

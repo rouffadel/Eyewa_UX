@@ -4,9 +4,9 @@
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M15 6l-6 6 6 6" />
       </svg>
-      Back
+      {{ 'customer.cancel' | translate }}
     </button>
-    <h1 class="create-customer-page__title">Create Customer</h1>
+    <h1 class="create-customer-page__title">{{ 'customer.title' | translate }}</h1>
   </header>
 
   <form class="create-customer-card" [formGroup]="form" (ngSubmit)="onSave()">
@@ -24,7 +24,7 @@
 
     <div class="create-customer-field-group">
       <label class="create-customer-field">
-        <span class="create-customer-field__label">Customer Name</span>
+        <span class="create-customer-field__label">{{ 'customer.firstName' | translate }}</span>
         <input
           class="create-customer-field__input"
           [class.create-customer-field__input--invalid]="!!nameErrorMessage()"
@@ -43,7 +43,7 @@
 
     <div class="create-customer-field-group">
       <label class="create-customer-field">
-        <span class="create-customer-field__label">Mobile No</span>
+        <span class="create-customer-field__label">{{ 'customer.mobileNumber' | translate }}</span>
         <input
           class="create-customer-field__input"
           [class.create-customer-field__input--invalid]="!!mobileErrorMessage()"
@@ -73,14 +73,14 @@
         [disabled]="isSaving()"
         (click)="onCancel()"
       >
-        Cancel
+        {{ 'customer.cancel' | translate }}
       </button>
       <button
         type="submit"
         class="create-customer-actions__save"
         [disabled]="form.invalid || isSaving()"
       >
-        {{ isSaving() ? 'Saving…' : 'Save' }}
+        {{ isSaving() ? '...' : ('customer.saveCustomer' | translate) }}
       </button>
     </footer>
   </form>
