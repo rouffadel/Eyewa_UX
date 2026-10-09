@@ -521,3 +521,79 @@ body,
   -ms-overflow-style: none !important;
 }
 
+/* ==========================================================================
+   Custom 15cm x 15cm Pre-Printed Letterhead Print Optimization
+   Top 3.2cm: Clears pre-printed logo header
+   Bottom 2.2cm: Clears pre-printed return policy footer
+   Middle 9.6cm: Fits all invoice tables cleanly on 1 single sheet
+   ========================================================================== */
+@media print {
+  /* Hide all topbars, headers, bottom nav, sidebars, buttons, and status messages */
+  .app-header,
+  .bottom-nav,
+  .side-menu,
+  .invoice-preview__header,
+  .invoice-preview__actions,
+  .invoice-preview__status,
+  .invoice-preview__back,
+  header,
+  nav,
+  footer,
+  button {
+    display: none !important;
+  }
+
+  /* Reset page layout container background and padding */
+  html, body, .pos-shell, .pos-shell__content, .invoice-preview-page {
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 15cm !important;
+    height: 15cm !important;
+    overflow: hidden !important;
+  }
+
+  /* Hide everything inside invoice-preview-page except invoice-preview-container */
+  .invoice-preview-page > *:not(.invoice-preview-container) {
+    display: none !important;
+  }
+
+  .invoice-preview-container,
+  .nb-receipt {
+    width: 14cm !important;
+    max-width: 14cm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .nb-receipt__table th,
+  .nb-receipt__table td,
+  .nb-receipt__prescription-table th,
+  .nb-receipt__prescription-table td,
+  .nb-receipt__totals-table th,
+  .nb-receipt__totals-table td {
+    padding: 3px 6px !important;
+    font-size: 10px !important;
+  }
+
+  .nb-receipt__qr-block img {
+    max-width: 60px !important;
+    max-height: 60px !important;
+  }
+
+  /* Page margin setup for physical 15cm x 15cm letterhead alignment */
+  @page {
+    size: 15cm 15cm;
+    margin: 3.2cm 0.5cm 2.2cm 0.5cm;
+  }
+}
+
+
+
