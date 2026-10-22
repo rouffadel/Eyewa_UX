@@ -7,6 +7,8 @@ import { AppConfigService } from '../../../services/app-config.service';
 import { categorizeOrderStatus, OrderStatusCategory } from '../shared/order-status.utils';
 import { TranslationService } from '../../../services/translation.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+import { SellSessionStore } from '../sell/services/sell-session.store';
+import { Customer } from '../sell/models/customer.models';
 
 @Component({
   selector: 'app-status-page',
@@ -23,7 +25,9 @@ export class StatusPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly translationService = inject(TranslationService);
+  private readonly sellStore = inject(SellSessionStore);
 
+  protected readonly isNavigatingInvoice = signal<number | null>(null);
   protected readonly statuses = signal<any[]>([]);
   protected readonly orders = signal<any[]>([]);
   protected readonly selectedOrder = signal<any | null>(null);
@@ -207,6 +211,33 @@ export class StatusPageComponent implements OnInit {
     this.selectedOrder.set(null);
     this.selectedStatusId.set(null);
     this.message.set(null);
+  }
+
+  protected async viewOrderInvoice(order: any): Promise<void> {
+    if (this.isNavigatingInvoice() !== null) return;
+    this.isNavigatingInvoice.set(order.salesId);
+
+    try {
+      const customer: Customer = {
+        id: order.customerNo || String(order.salesId),
+        displayName: order.customerName || 'Walk-in Customer',
+        initials: (order.customerName || 'W').substring(0, 2).toUpperCase(),
+        phoneMasked: order.customerNo || '',
+        phone: order.customerNo || '',
+        loyaltyPoints: 0,
+        lastVisit: 'Recent',
+        invoiceNo: order.invoiceNo,
+        salesId: order.salesId,
+      };
+
+      await this.sellStore.prepareOrderInvoice(customer, order);
+      void this.router.navigate(['/home/sell/invoice']);
+    } catch (err) {
+      console.error('Failed to load invoice for order', err);
+      this.message.set({ text: 'Unable to open invoice preview. Please try again.', type: 'error' });
+    } finally {
+      this.isNavigatingInvoice.set(null);
+    }
   }
 
   protected updateStatus() {

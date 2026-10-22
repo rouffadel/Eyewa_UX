@@ -23,7 +23,7 @@
     <!-- SECTION 2: SUMMARY CARDS (2x2 GRID) -->
     <div class="dash-summary">
       <!-- 1. Current Order Card / Total Orders -->
-      <div class="summary-card summary-card--blue" (click)="navigateToStatus('all')">
+      <div class="summary-card summary-card--blue" (click)="navigateToReports('all')">
         <div class="summary-card__icon-box">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -45,7 +45,7 @@
       </div>
 
       <!-- 2. Completed Orders Card -->
-      <div class="summary-card summary-card--green" (click)="navigateToStatus('completed')">
+      <div class="summary-card summary-card--green" (click)="navigateToReports('completed')">
         <div class="summary-card__icon-box">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
@@ -64,7 +64,7 @@
       </div>
 
       <!-- 3. Pending Orders Card -->
-      <div class="summary-card summary-card--orange" (click)="navigateToStatus('pending')">
+      <div class="summary-card summary-card--orange" (click)="navigateToReports('pending')">
         <div class="summary-card__icon-box">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"/>
@@ -83,7 +83,7 @@
       </div>
 
       <!-- 4. Incomplete Orders Card -->
-      <div class="summary-card summary-card--red" (click)="navigateToStatus('incomplete')">
+      <div class="summary-card summary-card--red" (click)="navigateToReports('incomplete')">
         <div class="summary-card__icon-box">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>

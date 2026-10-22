@@ -83,7 +83,65 @@ describe('buildSaveSalesDetailsPayload', () => {
       CustomerName: 'Mobark',
       CustomerNo: '0546388847',
       SalesManId: 0,
+      RedeemedLoyaltyPoints: 0,
     });
+  });
+
+  it('should send 0 PaidAmount and full Balance on a zero-payment credit sale', () => {
+    const payload = buildSaveSalesDetailsPayload({
+      customer: {
+        id: '116062',
+        displayName: 'Mobark',
+        initials: 'M',
+        phoneMasked: '0546388847',
+        phone: '0546388847',
+        loyaltyPoints: 0,
+        lastVisit: '14-07-2026',
+        salesId: 116062,
+      },
+      record: {
+        id: 'rx-1',
+        customerId: '116062',
+        salesId: 116062,
+        orderLensEnabled: false,
+        frames: [
+          {
+            category: 'Frames - P',
+            categoryId: 6,
+            brandId: 8,
+            brandName: 'Bono',
+            productId: 12,
+            modelNo: 'BNS1078',
+            sellingPrice: 480,
+            quantity: 1,
+            maxDiscount: 75,
+            discountPercent: 0,
+          },
+        ],
+        lenses: [],
+        rightEye: { sph: null, cyl: null, axis: null, add: null },
+        leftEye: { sph: null, cyl: null, axis: null, add: null },
+        pd: 62,
+        nearPd: 60,
+        vd: null,
+        notes: '',
+        createdAt: '2026-07-07T00:00:00.000Z',
+        updatedAt: '2026-07-07T00:00:00.000Z',
+      },
+      storeId: '2',
+      loginId: 0,
+      salesManId: 0,
+      payable: 480,
+      draft: {
+        ...DEFAULT_PAYMENT_DRAFT,
+        partialAmount: 0,
+      },
+    });
+
+    expect(payload.PaidAmount).toBe(0);
+    expect(payload.AdvancePaidAmount).toBe(0);
+    expect(payload.Balance).toBe('480.00');
+    expect(payload.NetTotal).toBe('480.00');
   });
 
   it('should settle an existing partial order with full cumulative paid amount', () => {
@@ -152,8 +210,8 @@ describe('buildSaveSalesDetailsPayload', () => {
       orderPayment,
     });
 
-    expect(payload.PaidAmount).toBe(864);
-    expect(payload.AdvancePaidAmount).toBe(864);
+    expect(payload.PaidAmount).toBe(364);
+    expect(payload.AdvancePaidAmount).toBe(364);
     expect(payload.Balance).toBe('0.00');
     expect(payload.SalesGrids[0].SalesDetailId).toBe(107390);
   });
@@ -281,9 +339,79 @@ describe('buildSaveSalesDetailsPayload', () => {
       orderPayment,
     });
 
-    expect(payload.PaidAmount).toBe(480);
-    expect(payload.AdvancePaidAmount).toBe(480);
+    expect(payload.PaidAmount).toBe(280);
+    expect(payload.AdvancePaidAmount).toBe(280);
     expect(payload.Balance).toBe('0.00');
+    expect(payload.NetTotal).toBe('480.00');
+  });
+
+  it('should send zero PaidAmount and AdvancePaidAmount when no additional payment is made on existing order', () => {
+    const orderPayment: SalesDetailsPaymentSummary = {
+      grossTotal: 480,
+      discount: 0,
+      netTotal: 480,
+      balance: 280,
+      totalTax: 0,
+      paidAmount: 200,
+      insuranceAmount: 0,
+    };
+
+    const payload = buildSaveSalesDetailsPayload({
+      customer: {
+        id: '114126',
+        displayName: 'Zero Pay Cust',
+        initials: 'ZP',
+        phoneMasked: '8886453629',
+        phone: '8886453629',
+        loyaltyPoints: 0,
+        lastVisit: '14-07-2026',
+        salesId: 114126,
+      },
+      record: {
+        id: 'rx-2',
+        customerId: '114126',
+        salesId: 114126,
+        orderLensEnabled: false,
+        frames: [
+          {
+            category: 'Frames - S',
+            categoryId: 6,
+            brandId: 8,
+            productId: 10,
+            sellingPrice: 480,
+            quantity: 1,
+            discountPercent: 0,
+            discountAmount: 0,
+            salesDetailsId: 107391,
+          },
+        ],
+        rightEye: { sph: null, cyl: null, axis: null, add: null },
+        leftEye: { sph: null, cyl: null, axis: null, add: null },
+        pd: null,
+        nearPd: null,
+        vd: null,
+        notes: '',
+        createdAt: '2026-07-14T00:00:00.000Z',
+        updatedAt: '2026-07-14T00:00:00.000Z',
+      },
+      storeId: '1',
+      loginId: 1,
+      salesManId: 1,
+      payable: 280,
+      draft: {
+        ...DEFAULT_PAYMENT_DRAFT,
+        settleRemainingBalance: false,
+        method: 'cash',
+        partialAmount: 0,
+        cashAmount: 0,
+        cardAmount: 0,
+      },
+      orderPayment,
+    });
+
+    expect(payload.PaidAmount).toBe(0);
+    expect(payload.AdvancePaidAmount).toBe(0);
+    expect(payload.Balance).toBe('280.00');
     expect(payload.NetTotal).toBe('480.00');
   });
 

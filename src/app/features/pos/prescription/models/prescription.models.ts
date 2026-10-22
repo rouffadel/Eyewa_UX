@@ -21,6 +21,7 @@ export interface PrescriptionFrameLine {
   quantity: number;
   maxDiscount: number | null;
   discountPercent: number | null;
+  discountAmount?: number | null;
   /** Existing sales line id from GetSalesDetailsGrid table1 (SalesDetailsID). */
   salesDetailsId?: number | null;
 }
@@ -124,14 +125,29 @@ export function calculateFrameLineTotals(
   sellingPrice: number | null,
   quantity: number | null | undefined,
   discountPercent: number | null,
+  discountAmountOverride?: number | null,
 ): PrescriptionFrameLineTotals {
   const price = sellingPrice ?? 0;
   const qty = Math.max(1, quantity ?? 1);
-  const pct = Math.max(0, discountPercent ?? 0);
   const subtotal = price * qty;
-  const rawDiscountAmount = subtotal * (pct / 100);
+
+  if (discountAmountOverride != null && discountAmountOverride >= 0) {
+    const discountAmount = Math.min(subtotal, Math.round(discountAmountOverride * 100) / 100);
+    const totalSellingPrice = Math.round(Math.max(0, subtotal - discountAmount) * 100) / 100;
+    return { discountAmount, totalSellingPrice };
+  }
+
+  const pct = Math.max(0, discountPercent ?? 0);
+  let rawDiscountAmount = subtotal * (pct / 100);
+
+  // Compensate for 2-decimal percentage rounding (e.g. 32.43% on 370 gives 119.991 instead of 120.00)
+  const roundedHalf = Math.round(rawDiscountAmount * 2) / 2;
+  if (Math.abs(rawDiscountAmount - roundedHalf) < 0.02) {
+    rawDiscountAmount = roundedHalf;
+  }
+
   const discountAmount = Math.round(rawDiscountAmount * 100) / 100;
-  const totalSellingPrice = Math.round(Math.max(0, subtotal - rawDiscountAmount) * 100) / 100;
+  const totalSellingPrice = Math.round(Math.max(0, subtotal - discountAmount) * 100) / 100;
 
   return { discountAmount, totalSellingPrice };
 }

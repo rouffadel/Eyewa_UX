@@ -14,11 +14,12 @@ import { AppHeaderComponent } from '../../../shared/ui/app-header/app-header.com
 import { BottomNavComponent } from '../../../shared/ui/bottom-nav/bottom-nav.component';
 import { Customer } from '../sell/models/customer.models';
 import { SellSessionStore } from '../sell/services/sell-session.store';
+import { CustomerOrderHistoryModalComponent } from '../customer/customer-order-history-modal/customer-order-history-modal.component';
 
 @Component({
   selector: 'app-pos-shell',
   standalone: true,
-  imports: [AppHeaderComponent, BottomNavComponent, RouterOutlet],
+  imports: [AppHeaderComponent, BottomNavComponent, RouterOutlet, CustomerOrderHistoryModalComponent],
   template: `
     <div class="pos-shell">
       @if (isPageLoading()) {
@@ -55,6 +56,16 @@ import { SellSessionStore } from '../sell/services/sell-session.store';
       @if (!hideShellChrome()) {
         <app-bottom-nav [activeTab]="activeTab()" (tabChange)="onTabChange($event)" />
       }
+
+      @if (selectedCustomerForHistory()) {
+        <app-customer-order-history-modal
+          [customer]="selectedCustomerForHistory()!"
+          (close)="onCloseCustomerHistory()"
+          (startSale)="onStartSaleFromHistory($event)"
+          (viewInvoice)="onViewInvoiceFromHistory($event)"
+          (editOrder)="onEditOrderFromHistory($event)"
+        />
+      }
     </div>
   `,
   styleUrl: './pos-shell.component.css',
@@ -66,6 +77,7 @@ export class PosShellComponent {
   protected readonly activeTab = signal<PosTab>('dashboard');
   protected readonly hideShellChrome = signal(false);
   protected readonly isPageLoading = signal<boolean>(false);
+  protected readonly selectedCustomerForHistory = signal<Customer | null>(null);
 
   constructor() {
     this.syncFromUrl(this.router.url);
@@ -99,12 +111,48 @@ export class PosShellComponent {
   }
 
   protected onCustomerSelected(customer: Customer): void {
+    this.selectedCustomerForHistory.set(customer);
+  }
+
+  protected onCloseCustomerHistory(): void {
+    this.selectedCustomerForHistory.set(null);
+  }
+
+  protected onStartSaleFromHistory(customer: Customer): void {
+    this.selectedCustomerForHistory.set(null);
     this.sellStore.selectCustomer(customer);
     this.sellStore.clearStatusMessages();
 
     if (this.activeTab() !== 'sell') {
       void this.router.navigate(['/home', 'sell']);
     }
+  }
+
+  protected onEditOrderFromHistory(event: { customer: Customer; order: any }): void {
+    this.selectedCustomerForHistory.set(null);
+    this.sellStore.selectCustomer(null);
+    const customerWithOrder: Customer = {
+      ...event.customer,
+      salesId: event.order.salesId,
+      invoiceNo: event.order.invoiceNo,
+    };
+    this.sellStore.selectCustomer(customerWithOrder);
+    this.sellStore.clearStatusMessages();
+    void this.router.navigate(['/home', 'sell']);
+  }
+
+  protected async onViewInvoiceFromHistory(event: { customer: Customer; order: any }): Promise<void> {
+    this.selectedCustomerForHistory.set(null);
+    this.sellStore.selectCustomer(null);
+    const customerWithOrder: Customer = {
+      ...event.customer,
+      salesId: event.order.salesId,
+      invoiceNo: event.order.invoiceNo,
+    };
+    await this.sellStore.prepareOrderInvoice(customerWithOrder, event.order);
+    void this.router.navigate(['/home', 'sell', 'invoice'], {
+      queryParams: { salesId: event.order.salesId },
+    });
   }
 
   protected onNewCustomer(): void {

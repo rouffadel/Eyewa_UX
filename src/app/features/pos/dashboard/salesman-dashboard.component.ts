@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, effect, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -8,6 +8,8 @@ import { AppConfigService } from '../../../services/app-config.service';
 import { DashboardCacheService } from './services/dashboard-cache.service';
 import { categorizeOrderStatus, OrderStatusCategory } from '../shared/order-status.utils';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+import { SellSessionStore } from '../sell/services/sell-session.store';
+import { Customer } from '../sell/models/customer.models';
 
 export interface RecentOrder {
   id: number;
@@ -42,6 +44,7 @@ export class SalesmanDashboardComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly appConfig = inject(AppConfigService);
   private readonly cacheService = inject(DashboardCacheService);
+  private readonly sellStore = inject(SellSessionStore);
 
   protected readonly isLoading = signal<boolean>(true);
   protected readonly orders = signal<RecentOrder[]>([]);
@@ -133,13 +136,33 @@ export class SalesmanDashboardComponent implements OnInit {
     });
   });
 
-  ngOnInit(): void {
-    this.getSalesStatusSummary();
-    this.fetchDashboardData();
+  constructor() {
+    effect(() => {
+      const selected = this.authService.selectedStore();
+      const user = this.authService.user();
+      const storeId = selected?.storeId ?? user?.storeId ?? 1;
+
+      untracked(() => {
+        this.getSalesStatusSummary(storeId);
+        this.fetchDashboardData(storeId);
+      });
+    });
   }
 
-  private getSalesStatusSummary(): void {
-    const url = `${this.getPosApiUrl()}/sales/sales-status-summary`;
+  ngOnInit(): void {
+    // Initial fetch handled reactively by constructor effect
+  }
+
+  private getSelectedStoreId(): number {
+    return this.authService.selectedStore()?.storeId ?? this.authService.user()?.storeId ?? 1;
+  }
+
+  private getSalesStatusSummary(storeId?: number): void {
+    const targetStoreId = storeId ?? this.getSelectedStoreId();
+    let url = `${this.getPosApiUrl()}/sales/sales-status-summary`;
+    if (targetStoreId && targetStoreId > 0) {
+      url += `?storeId=${targetStoreId}`;
+    }
     this.http.get<any>(url).subscribe({
       next: (res) => {
         if (res) {
@@ -155,7 +178,7 @@ export class SalesmanDashboardComponent implements OnInit {
         }
       },
       error: (err) => {
-        console.error('Failed to fetch sales status summary for last 2 months:', err);
+        console.error('Failed to fetch sales status summary:', err);
       }
     });
   }
@@ -170,8 +193,36 @@ export class SalesmanDashboardComponent implements OnInit {
     });
   }
 
-  protected viewOrderDetails(order: RecentOrder): void {
+  protected navigateToReports(statusFilter: OrderStatusCategory = 'all'): void {
+    const todayStr = new Date().toISOString().split('T')[0];
+    void this.router.navigate(['/home', 'reports'], {
+      queryParams: {
+        status: statusFilter,
+        fromDate: todayStr,
+        toDate: todayStr
+      }
+    });
+  }
+
+  protected async viewOrderDetails(order: RecentOrder): Promise<void> {
     if (order.salesId) {
+      try {
+        const customer: Customer = {
+          id: order.mobileNumber && order.mobileNumber !== '-' ? order.mobileNumber : String(order.salesId),
+          displayName: order.customerName || 'Walk-in Customer',
+          initials: (order.customerName || 'W').substring(0, 2).toUpperCase(),
+          phoneMasked: order.mobileNumber && order.mobileNumber !== '-' ? order.mobileNumber : '',
+          phone: order.mobileNumber && order.mobileNumber !== '-' ? order.mobileNumber : '',
+          loyaltyPoints: 0,
+          lastVisit: 'Recent',
+          invoiceNo: order.orderNo,
+          salesId: order.salesId,
+        };
+        await this.sellStore.prepareOrderInvoice(customer, order);
+      } catch (err) {
+        console.error('Failed to prepare invoice for recent order:', err);
+      }
+
       void this.router.navigate(['/home', 'sell', 'invoice'], {
         queryParams: { salesId: order.salesId }
       });
@@ -185,8 +236,9 @@ export class SalesmanDashboardComponent implements OnInit {
     return settings?.apiUrl?.replace(/\/$/, '') || 'https://localhost:7207/api';
   }
 
-  private fetchDashboardData(): void {
-    const cached = this.cacheService.getCachedOrders();
+  private fetchDashboardData(storeId?: number): void {
+    const targetStoreId = storeId ?? this.getSelectedStoreId();
+    const cached = this.cacheService.getCachedOrders(targetStoreId);
     if (cached && cached.length > 0) {
       this.orders.set(cached);
       this.isLoading.set(false);
@@ -195,7 +247,10 @@ export class SalesmanDashboardComponent implements OnInit {
     }
 
     const todayStr = new Date().toISOString().split('T')[0];
-    const url = `${this.getPosApiUrl()}/sales/order-status-list?take=5&fromDate=${todayStr}&toDate=${todayStr}`;
+    let url = `${this.getPosApiUrl()}/sales/order-status-list?take=5&fromDate=${todayStr}&toDate=${todayStr}`;
+    if (targetStoreId && targetStoreId > 0) {
+      url += `&storeId=${targetStoreId}`;
+    }
 
     this.http.get<any>(url).subscribe({
       next: (data) => {
@@ -250,17 +305,17 @@ export class SalesmanDashboardComponent implements OnInit {
           });
 
           this.orders.set(mapped);
-          this.cacheService.setCachedOrders(mapped);
+          this.cacheService.setCachedOrders(mapped, targetStoreId);
         } else if (Array.isArray(data) || data?.status === '200' || data?.Status === '200') {
           // Valid API response with 0 live orders
           this.orders.set([]);
-          this.cacheService.setCachedOrders([]);
+          this.cacheService.setCachedOrders([], targetStoreId);
         } else {
           // Unexpected non-array format, fallback to empty list
           console.warn('POS API returned non-array payload:', data);
           if (!cached) {
             this.orders.set([]);
-            this.cacheService.setCachedOrders([]);
+            this.cacheService.setCachedOrders([], targetStoreId);
           }
         }
         this.isLoading.set(false);
@@ -269,7 +324,7 @@ export class SalesmanDashboardComponent implements OnInit {
         console.error('API connection error while fetching live order status list:', err);
         if (!cached) {
           this.orders.set([]);
-          this.cacheService.setCachedOrders([]);
+          this.cacheService.setCachedOrders([], targetStoreId);
         }
         this.isLoading.set(false);
       }

@@ -64,6 +64,7 @@ export function buildInvoiceFromExistingOrder(
   return {
     ...base,
     ...paidFields,
+    salesId: input.customer.salesId ?? base.salesId,
     invoiceNo: input.customer.invoiceNo?.trim() || base.invoiceNo,
     invoiceDate: input.invoiceDate?.trim() || base.invoiceDate,
     qrcodeImg: input.qrcodeImg ?? null,
@@ -87,6 +88,7 @@ export function buildInvoiceViewModel(input: BuildInvoiceInput): InvoiceViewMode
   );
 
   return {
+    salesId: input.customer.salesId,
     invoiceNo: resolveInvoiceNo(input.customer),
     invoiceDate: formatInvoiceDateTime(),
     customerName: input.customer.displayName,
@@ -205,6 +207,8 @@ function buildProductLines(
       modelNo,
       sellingPrice: formatMoney(item.unitPrice),
       quantity: String(item.qty),
+      vat: '0',
+      discount: item.discount > 0 ? formatMoney(item.discount) : '0',
       total: formatMoney(lineTotal(item)),
     };
   });
@@ -224,6 +228,7 @@ function buildProductLinesFromPrescription(
         line.sellingPrice,
         line.quantity,
         line.discountPercent,
+        line.discountAmount,
       );
 
       return {
@@ -232,6 +237,8 @@ function buildProductLinesFromPrescription(
         modelNo: line.modelNo.trim() || '—',
         sellingPrice: formatMoney(line.sellingPrice ?? 0),
         quantity: String(line.quantity),
+        vat: '0',
+        discount: totals.discountAmount > 0 ? formatMoney(totals.discountAmount) : '0',
         total: formatMoney(totals.totalSellingPrice),
       };
     });
@@ -245,6 +252,8 @@ function buildProductLinesFromPrescription(
           modelNo: '—',
           sellingPrice: formatMoney(line.price ?? 0),
           quantity: String(line.quantity),
+          vat: '0',
+          discount: '0',
           total: formatMoney(calculateLensLineTotal(line.price, line.quantity)),
         }))
     : [];

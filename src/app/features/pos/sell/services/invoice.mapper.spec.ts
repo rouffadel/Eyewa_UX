@@ -268,4 +268,123 @@ describe('buildInvoiceFromExistingOrder', () => {
     expect(invoice.balance).toBe('180.00');
     expect(invoice.paidThisTime).toBeUndefined();
   });
+
+  it('should correctly calculate Sale 116539 with 80 SAR frame discount and zero paid as 270 total and 270 balance', () => {
+    const rxRecord: any = {
+      id: 'rx-api-116539',
+      customerId: '116539',
+      salesId: 116539,
+      orderLensEnabled: true,
+      frames: [
+        {
+          category: 'Frames - U',
+          brandId: 100,
+          brandName: 'Lucas',
+          productId: 10216,
+          modelNo: 'New0102',
+          sellingPrice: 250,
+          quantity: 1,
+          maxDiscount: 0,
+          discountPercent: 32,
+          discountAmount: 80,
+          salesDetailsId: 109375,
+        },
+      ],
+      lenses: [
+        {
+          orderLenseId: 67333,
+          category: 'CR39',
+          orderLens: 'cmx',
+          price: 50,
+          quantity: 2,
+        },
+      ],
+      rightEye: { sph: null, cyl: null, axis: null, add: null },
+      leftEye: { sph: null, cyl: null, axis: null, add: null },
+      pd: null,
+      nearPd: null,
+      vd: null,
+      notes: '',
+    };
+
+    const invoice = buildInvoiceFromExistingOrder({
+      customer: { ...TEST_CUSTOMER, salesId: 116539, invoiceNo: '2020-16102026-36204' },
+      cartItems: [
+        {
+          lineId: 'sales-109375',
+          product: {
+            sku: 'sales-product-10216',
+            name: 'Lucas New0102',
+            price: 250,
+            category: 'frames',
+          },
+          qty: 1,
+          unitPrice: 250,
+          discount: 80,
+          variantLabel: 'Frames - U',
+        },
+        {
+          lineId: 'lens-67333',
+          product: {
+            sku: 'order-lense-67333',
+            name: 'cmx',
+            price: 50,
+            category: 'lenses',
+          },
+          qty: 2,
+          unitPrice: 50,
+          discount: 0,
+          variantLabel: 'CR39',
+        },
+      ],
+      orderPayment: {
+        grossTotal: 270,
+        discount: 0,
+        netTotal: 270,
+        balance: 270,
+        totalTax: 0,
+        paidAmount: 0,
+        insuranceAmount: 0,
+      },
+      paymentTotals: {
+        subtotal: 350,
+        discount: 80,
+        vat: 0,
+        vatRate: 0.15,
+        total: 270,
+        loyaltyDeduction: 0,
+        insuranceAmount: 0,
+        insuranceCompensation: 0,
+        insuranceCompensationType: null,
+        payable: 270,
+      },
+      paymentDraft: {
+        ...DEFAULT_PAYMENT_DRAFT,
+        method: 'cash',
+        cashAmount: 0,
+        partialAmount: 0,
+      },
+      prescriptionRecord: rxRecord,
+      latestPrescription: null,
+      staffName: 'Faizan',
+    });
+
+    expect(invoice.salesId).toBe(116539);
+    expect(invoice.subtotal).toBe('350.00');
+    expect(invoice.discount).toBe('80.00');
+    expect(invoice.total).toBe('270.00');
+    expect(invoice.amountPaid).toBe('0.00');
+    expect(invoice.balance).toBe('270.00');
+
+    // Frame line in product lines
+    expect(invoice.productLines.length).toBe(2);
+    expect(invoice.productLines[0].sellingPrice).toBe('250.00');
+    expect(invoice.productLines[0].discount).toBe('80.00');
+    expect(invoice.productLines[0].total).toBe('170.00');
+
+    // Lens line in product lines
+    expect(invoice.productLines[1].sellingPrice).toBe('50.00');
+    expect(invoice.productLines[1].quantity).toBe('2');
+    expect(invoice.productLines[1].total).toBe('100.00');
+  });
 });

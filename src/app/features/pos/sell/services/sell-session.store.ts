@@ -40,7 +40,7 @@ import {
 } from './api-sale-prescription.mapper';
 import { buildSaveSalesDetailsPayload, hasPrescriptionFramesForSales } from './save-sales.mapper';
 import { buildInvoiceFromSaveSalesResponse } from './save-sales-response.mapper';
-import { buildInvoiceFromExistingOrder, BuildInvoiceInput } from './invoice.mapper';
+import { buildInvoiceFromExistingOrder, buildInvoiceViewModel, BuildInvoiceInput } from './invoice.mapper';
 import { SaveSalesService } from './save-sales.service';
 import {
   createEmptyEyePrescription,
@@ -516,7 +516,9 @@ export class SellSessionStore {
     options: { freshSale?: boolean } = {},
   ): void {
     void this.loadActiveOffers();
-    const previousId = this.selectedCustomer()?.id;
+    const previousCustomer = this.selectedCustomer();
+    const previousId = previousCustomer?.id;
+    const previousSalesId = previousCustomer?.salesId;
     this.selectedCustomer.set(customer);
     this.resetLoyaltyRedemption();
 
@@ -529,7 +531,7 @@ export class SellSessionStore {
       });
     }
 
-    if (customer?.id !== previousId) {
+    if (customer?.id !== previousId || customer?.salesId !== previousSalesId) {
       this.cartItems.set([]);
       this.paymentDraft.set(this.createInitialPaymentDraft());
       this.orderPaymentSummary.set(null);
@@ -537,6 +539,7 @@ export class SellSessionStore {
       this.loadedSalesQrcodeImg.set(null);
       this.salesInsurance.set(null);
       this.selectedCoupon.set(null);
+      this.lastInvoice.set(null);
     }
 
     if (!customer?.id) {
@@ -1112,6 +1115,17 @@ export class SellSessionStore {
       ...draft,
       method,
       ...amounts,
+      ...(method !== 'mixed' ? { cashAmount: 0, cardAmount: 0 } : {}),
+    }));
+  }
+
+  clearPaymentDraftInputs(): void {
+    this.paymentDraft.update((draft) => ({
+      ...draft,
+      cashAmount: 0,
+      cardAmount: 0,
+      partialAmount: 0,
+      settleRemainingBalance: false,
     }));
   }
 
@@ -1213,6 +1227,45 @@ export class SellSessionStore {
       this.syncReceiptInvoice(staffName);
     }
     return true;
+  }
+
+  async prepareOrderInvoice(customer: Customer, orderFallback?: any): Promise<boolean> {
+    this.selectCustomer(customer);
+    await this.loadSalesDetails(customer, { forceApplyFromApi: true, persistToLocalStorage: true });
+
+    let orderPayment = this.orderPaymentSummary();
+    if (!orderPayment && orderFallback) {
+      orderPayment = {
+        grossTotal: Number(orderFallback.grossTotal) || 0,
+        discount: Number(orderFallback.discountAmount) || 0,
+        netTotal: Number(orderFallback.grossTotal) || 0,
+        balance: Number(orderFallback.balance) || 0,
+        totalTax: 0,
+        paidAmount: Number(orderFallback.paidAmount) || 0,
+        insuranceAmount: Number(orderFallback.insuranceAmount) || 0,
+      };
+      this.orderPaymentSummary.set(orderPayment);
+    }
+
+    const staffName = this.resolveStaffName();
+    if (orderPayment) {
+      this.syncReceiptInvoice(staffName);
+    } else {
+      const invoice = buildInvoiceViewModel({
+        customer,
+        cartItems: this.cartItems(),
+        paymentTotals: this.paymentTotals(),
+        paymentDraft: this.paymentDraft(),
+        prescriptionRecord: this.prescriptionRecordByCustomer()[customer.id] ?? null,
+        latestPrescription: this.latestPrescription(),
+        staffName,
+        storeName: this.auth.selectedStore()?.storeName,
+        storeAddress: 'Al Ahsa, 829200\n+517272723638, NB.OPTICAL@HOTMAIL.COM',
+      });
+      this.lastInvoice.set(invoice);
+    }
+
+    return this.lastInvoice() !== null;
   }
 
   redeemPointsStub(): void {
@@ -1386,6 +1439,7 @@ export class SellSessionStore {
     }
 
     this.resetLoyaltyRedemption();
+    this.clearPaymentDraftInputs();
     this.syncPaymentAmountsToPayable();
     return true;
   }
@@ -1429,8 +1483,14 @@ export class SellSessionStore {
       return;
     }
 
+    const currentSalesId = customer.salesId;
+    const cachedRecord = this.prescriptionRecordByCustomer()[customer.id];
     const prescriptionRecord =
-      this.prescriptionRecordByCustomer()[customer.id] ??
+      (cachedRecord && (!currentSalesId || cachedRecord.salesId === currentSalesId)
+        ? cachedRecord
+        : null) ??
+      (currentSalesId ? this.prescriptionStorage.getBySalesId(customer.id, currentSalesId) : null) ??
+      cachedRecord ??
       this.prescriptionStorage.getLatest(customer.id);
 
     this.lastInvoice.set(
@@ -1522,7 +1582,7 @@ export class SellSessionStore {
       }
     }
 
-    let record = this.findStoredPrescriptionRecord(customerId);
+    let record = this.findStoredPrescriptionRecord(customerId, customer?.salesId);
 
     if (!record) {
       const lastSaved = this.prescriptionStorage.getLastSaved();
@@ -1581,7 +1641,14 @@ export class SellSessionStore {
     };
   }
 
-  private findStoredPrescriptionRecord(customerId: string): PrescriptionRecord | null {
+  private findStoredPrescriptionRecord(customerId: string, salesId?: number | null): PrescriptionRecord | null {
+    if (salesId != null) {
+      const bySales = this.prescriptionStorage.getBySalesId(customerId, salesId);
+      if (bySales) {
+        return bySales;
+      }
+    }
+
     const selectedId = this.selectedPrescriptionIdByCustomer()[customerId];
     if (selectedId) {
       const selected = this.resolvePrescriptionRecord(customerId, selectedId);
@@ -1591,7 +1658,7 @@ export class SellSessionStore {
     }
 
     const cached = this.prescriptionRecordByCustomer()[customerId];
-    if (cached) {
+    if (cached && (salesId == null || cached.salesId === salesId)) {
       return cached;
     }
 
@@ -1600,12 +1667,15 @@ export class SellSessionStore {
       return null;
     }
 
-    this.prescriptionRecordByCustomer.update((current) => ({
-      ...current,
-      [customerId]: fromStorage,
-    }));
+    if (salesId == null || fromStorage.salesId === salesId) {
+      this.prescriptionRecordByCustomer.update((current) => ({
+        ...current,
+        [customerId]: fromStorage,
+      }));
+      return fromStorage;
+    }
 
-    return fromStorage;
+    return null;
   }
 
   private cartHasPrescriptionLines(): boolean {

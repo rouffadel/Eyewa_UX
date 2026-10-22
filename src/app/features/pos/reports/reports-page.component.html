@@ -2,6 +2,10 @@
   <header class="reports-page__header">
     <h1 class="reports-page__title">{{ 'reports.title' | translate }}</h1>
     <p class="reports-page__subtitle">{{ 'reports.subtitle' | translate }}</p>
+    <div class="reports-print-meta">
+      <span>{{ 'header.selectStore' | translate }}: <strong>{{ auth.selectedStore()?.storeName || 'Naimat Al Basar' }}</strong></span>
+      <span>{{ 'deliveries.date' | translate }}: <strong>{{ fromDate() }}</strong></span>
+    </div>
   </header>
 
   @if (store.statusMessage()) {
@@ -21,20 +25,92 @@
   }
 
   <div class="reports-grid-section">
-    <div class="reports-filter-row">
-      <span style="margin-right: auto; font-weight: 500; color: #475569;">
-        ({{ fromDate() }})
-      </span>
-      <button type="button" class="reports-btn-search" (click)="loadFramesSalesReport()" [disabled]="isLoading()">
-        <svg viewBox="0 0 24 24" aria-hidden="true" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2;">
-          <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-        </svg>
-        {{ isLoading() ? '...' : ('reports.refresh' | translate) }}
-      </button>
-      <button type="button" class="reports-btn-export" (click)="exportToPdf()" [disabled]="isLoading() || reportData().length === 0">
-        {{ 'reports.exportPdf' | translate }}
-      </button>
+    <!-- Status Filter Pills & Top Bar -->
+    <div class="reports-filter-bar">
+      <div class="reports-status-filters">
+        <button
+          type="button"
+          class="reports-status-pill reports-status-pill--all"
+          [class.active]="selectedStatusFilter() === 'all'"
+          (click)="setStatusFilter('all')"
+        >
+          All
+          <span class="reports-pill-count">{{ reportData().length }}</span>
+        </button>
+
+        <button
+          type="button"
+          class="reports-status-pill reports-status-pill--completed"
+          [class.active]="selectedStatusFilter() === 'completed'"
+          (click)="setStatusFilter('completed')"
+        >
+          <span class="status-dot status-dot--completed"></span>
+          Completed
+          <span class="reports-pill-count">{{ getCount('completed') }}</span>
+        </button>
+
+        <button
+          type="button"
+          class="reports-status-pill reports-status-pill--pending"
+          [class.active]="selectedStatusFilter() === 'pending'"
+          (click)="setStatusFilter('pending')"
+        >
+          <span class="status-dot status-dot--pending"></span>
+          Pending
+          <span class="reports-pill-count">{{ getCount('pending') }}</span>
+        </button>
+
+        <button
+          type="button"
+          class="reports-status-pill reports-status-pill--incomplete"
+          [class.active]="selectedStatusFilter() === 'incomplete'"
+          (click)="setStatusFilter('incomplete')"
+        >
+          <span class="status-dot status-dot--incomplete"></span>
+          Incomplete
+          <span class="reports-pill-count">{{ getCount('incomplete') }}</span>
+        </button>
+      </div>
+
+      <div class="reports-actions-group">
+        <div class="reports-date-badge" title="Select date">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <span class="reports-date-text">{{ fromDate() }}</span>
+          <input
+            type="date"
+            class="reports-date-invisible-input"
+            [value]="fromDate()"
+            (change)="onDateChange($event)"
+            aria-label="Select date"
+          />
+        </div>
+
+        <button type="button" class="reports-btn-export" (click)="printReport()" [disabled]="isLoading() || filteredReportData().length === 0" title="Print Report">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 6 2 18 2 18 9"/>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+            <rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          {{ 'reports.print' | translate }}
+        </button>
+      </div>
     </div>
+
+    @if (selectedStatusFilter() !== 'all') {
+      <div class="reports-active-filter-banner">
+        <span class="reports-filter-indicator">
+          Filter active: <strong>{{ getFilterLabel() }}</strong> ({{ filteredReportData().length }} orders)
+        </span>
+        <button type="button" class="reports-clear-filter-btn" (click)="clearStatusFilter()">
+          ✕ Clear Filter
+        </button>
+      </div>
+    }
 
     @if (errorMessage()) {
       <div class="reports-error-message">
@@ -42,19 +118,19 @@
       </div>
     }
 
-    @if (extraData()) {
-      <div class="reports-summary-inline" style="display: flex; gap: 24px; margin-bottom: 12px; align-items: center; justify-content: flex-end; padding: 0 4px;">
-        <div style="display: flex; align-items: baseline; gap: 8px;">
-          <span style="color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase;">{{ 'reports.totalCash' | translate }}:</span>
-          <span style="font-size: 15px; font-weight: 700; color: #059669;">{{ extraData().TotalCash | number:'1.2-2' }}</span>
+    @if (filteredExtraData()) {
+      <div class="reports-summary-inline">
+        <div class="reports-summary-item">
+          <span class="reports-summary-label">{{ 'reports.totalCash' | translate }}:</span>
+          <span class="reports-summary-val text-green">{{ filteredExtraData().TotalCash | number:'1.2-2' }}</span>
         </div>
-        <div style="display: flex; align-items: baseline; gap: 8px;">
-          <span style="color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase;">{{ 'reports.totalCard' | translate }}:</span>
-          <span style="font-size: 15px; font-weight: 700; color: #2563eb;">{{ extraData().TotalCard | number:'1.2-2' }}</span>
+        <div class="reports-summary-item">
+          <span class="reports-summary-label">{{ 'reports.totalCard' | translate }}:</span>
+          <span class="reports-summary-val text-blue">{{ filteredExtraData().TotalCard | number:'1.2-2' }}</span>
         </div>
-        <div style="display: flex; align-items: baseline; gap: 8px;">
-          <span style="color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase;">{{ 'reports.totalAmount' | translate }}:</span>
-          <span style="font-size: 15px; font-weight: 800; color: #0f172a;">{{ extraData().TotalAmount | number:'1.2-2' }}</span>
+        <div class="reports-summary-item">
+          <span class="reports-summary-label">{{ 'reports.totalAmount' | translate }}:</span>
+          <span class="reports-summary-val text-dark">{{ filteredExtraData().TotalAmount | number:'1.2-2' }}</span>
         </div>
       </div>
     }
@@ -78,24 +154,24 @@
           </tr>
         </thead>
         <tbody>
-          @if (reportData().length === 0 && !isLoading()) {
+          @if (filteredReportData().length === 0 && !isLoading()) {
             <tr>
               <td colspan="12" class="reports-table-empty">{{ 'dashboard.noRecentOrders' | translate }}</td>
             </tr>
           }
-          @for (row of reportData(); track row.SaleID) {
+          @for (row of filteredReportData(); track row.SaleID) {
             <tr>
-              <td>{{ row.SaleID }}</td>
+              <td>#{{ row.SaleID }}</td>
               <td>{{ row.StoreName }}</td>
               <td>{{ row.CustomerName }}</td>
               <td>{{ row.CustomerNo }}</td>
               <td>{{ row.InvoicePaymentID }}</td>
               <td>{{ row.PaymentDate | date:'short' }}</td>
-              <td>{{ row.PaymentAmount }}</td>
+              <td>{{ row.PaymentAmount | number:'1.2-2' }}</td>
               <td>{{ row.PaymentMode }}</td>
-              <td>{{ row.InsuranceAmount }}</td>
-              <td>{{ row.NetTotal }}</td>
-              <td>{{ row.Balance }}</td>
+              <td>{{ row.InsuranceAmount | number:'1.2-2' }}</td>
+              <td>{{ row.NetTotal | number:'1.2-2' }}</td>
+              <td>{{ row.Balance | number:'1.2-2' }}</td>
               <td>{{ row.Products }}</td>
             </tr>
           }

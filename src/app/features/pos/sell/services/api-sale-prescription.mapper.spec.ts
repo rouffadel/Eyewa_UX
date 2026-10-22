@@ -92,4 +92,52 @@ describe('prescriptionRecordFromApiSale', () => {
     expect(record.leftEye.sph).toBe(1);
     expect(record.salesId).toBe(114122);
   });
+
+  it('should map discounted frame with 250 value and 170 selling price to exact 80 discountAmount and 32% discountPercent', () => {
+    const salesResult: SalesDetailsResult = {
+      salesId: 116539,
+      row: null,
+      prescription: null,
+      lineItems: [
+        {
+          salesDetailsId: 109375,
+          categoryName: 'Frames - U',
+          categoryId: 1,
+          brandId: 100,
+          productId: 10216,
+          brandName: 'Lucas',
+          productName: 'New0102',
+          sellingPrice: 170,
+          productValue: 250,
+          quantity: 1,
+          maxDiscount: 0,
+          discountPercent: 80,
+          tax: 0,
+          taxPercent: 0,
+        },
+      ],
+      payment: null,
+      qrcodeImg: null,
+    };
+
+    const orderResult: OrderLenseOrder = {
+      salesId: 116539,
+      lenses: [],
+      od: null,
+      os: null,
+      additional: null,
+    };
+
+    const record = prescriptionRecordFromApiSale({
+      customerId: '116539',
+      salesId: 116539,
+      salesResult,
+      orderResult,
+    });
+
+    expect(record.frames.length).toBe(1);
+    expect(record.frames[0].sellingPrice).toBe(250);
+    expect(record.frames[0].discountAmount).toBe(80);
+    expect(record.frames[0].discountPercent).toBe(32);
+  });
 });

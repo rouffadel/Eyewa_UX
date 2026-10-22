@@ -528,23 +528,18 @@ body,
    Middle 9.6cm: Fits all invoice tables cleanly on 1 single sheet
    ========================================================================== */
 @media print {
-  /* Hide all topbars, headers, bottom nav, sidebars, buttons, and status messages */
+  /* Hide standard navigation bars and buttons during print */
   .app-header,
   .bottom-nav,
   .side-menu,
-  .invoice-preview__header,
-  .invoice-preview__actions,
-  .invoice-preview__status,
-  .invoice-preview__back,
-  header,
   nav,
   footer,
   button {
     display: none !important;
   }
 
-  /* Reset page layout container background and padding */
-  html, body, .pos-shell, .pos-shell__content, .invoice-preview-page {
+  /* Scoped 15cm x 15cm letterhead rules specifically for invoice preview */
+  body:has(.invoice-preview-page) {
     background: #ffffff !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -553,7 +548,6 @@ body,
     overflow: hidden !important;
   }
 
-  /* Hide everything inside invoice-preview-page except invoice-preview-container */
   .invoice-preview-page > *:not(.invoice-preview-container) {
     display: none !important;
   }
@@ -586,12 +580,6 @@ body,
   .nb-receipt__qr-block img {
     max-width: 60px !important;
     max-height: 60px !important;
-  }
-
-  /* Page margin setup for physical 15cm x 15cm letterhead alignment */
-  @page {
-    size: 15cm 15cm;
-    margin: 3.2cm 0.5cm 2.2cm 0.5cm;
   }
 }
 

@@ -102,7 +102,7 @@ function cartItemToLensLine(
 }
 
 function toFrameCartItem(line: PrescriptionFrameLine, index: number): CartLineItem {
-  const totals = calculateFrameLineTotals(line.sellingPrice, line.quantity, line.discountPercent);
+  const totals = calculateFrameLineTotals(line.sellingPrice, line.quantity, line.discountPercent, line.discountAmount);
   const product: Product = {
     sku: `rx-frame-${index}`,
     name: formatFrameName(line),

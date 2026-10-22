@@ -76,4 +76,10 @@ describe('cartItemsFromPrescription', () => {
     expect(totals.discountAmount).toBe(50.50);
     expect(totals.totalSellingPrice).toBe(249.50);
   });
+
+  it('calculates exact 120.00 discount and 250.00 total for 370 selling price with 32.43% discount', () => {
+    const totals = calculateFrameLineTotals(370, 1, 32.43);
+    expect(totals.discountAmount).toBe(120.00);
+    expect(totals.totalSellingPrice).toBe(250.00);
+  });
 });

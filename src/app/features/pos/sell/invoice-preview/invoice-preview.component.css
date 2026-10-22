@@ -297,16 +297,20 @@
   margin-top: 1rem;
 }
 
-/* Print CSS - Centered 15cm x 10cm Receipt Printing */
+/* Print CSS - Exact 15cm x 15cm Single Sheet for Pre-Printed Stationery */
 @media print {
   @page {
-    size: 16cm 11cm;
-    margin: 0.5cm;
+    size: 150mm 150mm; /* Exact 15cm x 15cm square paper size */
+    margin: 0;         /* Removes default browser margins and headers/footers */
   }
 
-  body {
+  html, body {
+    width: 150mm !important;
+    height: 150mm !important;
+    max-height: 150mm !important;
     margin: 0 !important;
     padding: 0 !important;
+    overflow: hidden !important;
     background: #ffffff !important;
   }
 
@@ -318,32 +322,50 @@
     visibility: visible;
   }
 
+  /* Hide app navigation, buttons, and shell during print */
   .invoice-preview__header,
   .invoice-preview__actions,
   .invoice-preview__status,
-  .invoice-preview__back {
+  .invoice-preview__back,
+  app-header,
+  header {
     display: none !important;
     visibility: hidden !important;
   }
 
   .invoice-preview-page {
+    display: block !important;
     padding: 0 !important;
+    margin: 0 !important;
+    width: 150mm !important;
+    height: 150mm !important;
+    overflow: hidden !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
     background: transparent !important;
   }
 
+  /* Exactly position within the 10cm printable area */
   .nb-receipt {
-    position: absolute;
-    left: 0.5cm;
-    top: 0.5cm;
-    width: 15cm !important;
-    height: 10cm !important;
-    min-height: 10cm !important;
-    max-height: 10cm !important;
+    position: absolute !important;
+    top: 30mm !important;     /* 3cm top offset: clears pre-printed header */
+    left: 4mm !important;     /* 4mm safe margin from paper edge */
+    width: 142mm !important;  /* 150mm minus 8mm side margins */
+    height: 100mm !important; /* Exact 10cm printable height */
+    min-height: 100mm !important;
+    max-height: 100mm !important;
+    box-sizing: border-box !important;
     border: none !important;
     box-shadow: none !important;
+    padding: 2mm 0 !important;
+    overflow: hidden !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 
-  /* Force background color printing */
+  /* Force table background colors and borders to print sharply */
   .nb-receipt__table th,
   .nb-receipt__prescription-table thead th,
   .nb-receipt__prescription-table th.label-cell,

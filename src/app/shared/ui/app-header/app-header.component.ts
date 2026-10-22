@@ -248,7 +248,7 @@ export class AppHeaderComponent implements AfterViewInit {
     this.storeMenuOpen.set(willOpen);
 
     if (willOpen) {
-      void this.loadStores();
+      void this.loadStores(true);
     }
   }
 
@@ -320,8 +320,8 @@ export class AppHeaderComponent implements AfterViewInit {
     }
   }
 
-  private async loadStores(): Promise<void> {
-    if (this.stores().length > 0 || this.storesLoading()) {
+  private async loadStores(forceRefresh: boolean = false): Promise<void> {
+    if ((!forceRefresh && this.stores().length > 0) || this.storesLoading()) {
       return;
     }
 

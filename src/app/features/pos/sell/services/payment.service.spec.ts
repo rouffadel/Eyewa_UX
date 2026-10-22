@@ -176,6 +176,15 @@ describe('PaymentService', () => {
     expect(service.paymentValidationMessage(1000, draft)).toBeNull();
   });
 
+  it('should allow zero payment (unpaid / credit sales) when amount is 0', () => {
+    const draft = {
+      ...DEFAULT_PAYMENT_DRAFT,
+      partialAmount: 0,
+    };
+
+    expect(service.paymentValidationMessage(550, draft)).toBeNull();
+  });
+
   it('should validate settling the remaining balance on an existing order', () => {
     const orderPayment = {
       grossTotal: 480,

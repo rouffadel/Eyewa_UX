@@ -122,9 +122,7 @@ export class PaymentService {
       return false;
     }
 
-    const amount = draft.method === 'mixed' 
-      ? mixedAmountPaid(draft)
-      : Math.max(0, draft.partialAmount);
+    const amount = effectivePaymentAmount(draft);
 
     if (draft.settleRemainingBalance) {
       const due = settlementAmountDue(payable, draft, orderPayment);
@@ -145,9 +143,7 @@ export class PaymentService {
       return false;
     }
 
-    const amount = draft.method === 'mixed' 
-      ? mixedAmountPaid(draft)
-      : Math.max(0, draft.partialAmount);
+    const amount = effectivePaymentAmount(draft);
 
     if (draft.settleRemainingBalance) {
       const due = settlementAmountDue(payable, draft, orderPayment);
@@ -170,12 +166,10 @@ export class PaymentService {
       return 'Select Cash, Card, or Mixed to continue.';
     }
 
-    const amount = draft.method === 'mixed' 
-      ? mixedAmountPaid(draft)
-      : Math.max(0, draft.partialAmount);
+    const amount = effectivePaymentAmount(draft);
 
-    if (amount <= 0) {
-      return draft.method === 'mixed' ? 'Enter cash and card amounts.' : 'Enter the payment amount.';
+    if (amount < 0 || (draft.method === 'mixed' && (draft.cashAmount < 0 || draft.cardAmount < 0))) {
+      return 'Payment amount cannot be negative.';
     }
 
     if (draft.settleRemainingBalance) {
@@ -243,6 +237,22 @@ export function formatMoney(value: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+}
+
+export function effectivePaymentAmount(draft: PaymentDraft): number {
+  if (draft.method === 'mixed') {
+    return mixedAmountPaid(draft);
+  }
+  if (draft.partialAmount > 0) {
+    return draft.partialAmount;
+  }
+  if (draft.method === 'cash') {
+    return Math.max(0, draft.cashAmount);
+  }
+  if (draft.method === 'card') {
+    return Math.max(0, draft.cardAmount);
+  }
+  return 0;
 }
 
 export function settlementAmountDue(
@@ -356,11 +366,13 @@ export function resolveInvoicePaymentBreakdown(
     previouslyPaid = orderAmountAlreadyPaid(orderForPreviouslyPaid);
   }
 
+  const remainingBalance = normalizeBalanceThreshold(Math.max(0, normalizedNetTotal - totalPaid));
+
   return {
     previouslyPaid,
     paidThisTime: Math.max(0, totalPaid - previouslyPaid),
     totalPaid,
-    balance: normalizedBalance,
+    balance: remainingBalance,
   };
 }
 
@@ -402,9 +414,7 @@ export function paymentAmountPaid(
   draft: PaymentDraft,
   orderPayment?: SalesDetailsPaymentSummary | null,
 ): number {
-  const amount = draft.method === 'mixed'
-    ? mixedAmountPaid(draft)
-    : Math.max(0, draft.partialAmount);
+  const amount = effectivePaymentAmount(draft);
 
   if (draft.settleRemainingBalance && orderPayment) {
     const previouslyPaid = orderAmountAlreadyPaid(orderPayment);

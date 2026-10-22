@@ -1,20 +1,48 @@
-import { Component, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { SellSessionStore } from '../services/sell-session.store';
+import { Customer } from '../models/customer.models';
 
 @Component({
   selector: 'app-invoice-preview',
   templateUrl: './invoice-preview.component.html',
   styleUrl: './invoice-preview.component.css',
 })
-export class InvoicePreviewComponent {
+export class InvoicePreviewComponent implements OnInit {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly store = inject(SellSessionStore);
 
   protected readonly invoice = computed(() => this.store.lastInvoice());
   protected readonly statusMessage = signal('');
 
+  ngOnInit(): void {
+    const rawSalesId = this.route.snapshot.queryParams['salesId'];
+    const salesId = rawSalesId ? Number(rawSalesId) : null;
+    const currentInvoice = this.invoice();
+
+    if (salesId && (!currentInvoice || currentInvoice.salesId !== salesId)) {
+      const selected = this.store.selectedCustomer();
+      if (selected && selected.salesId === salesId) {
+        void this.store.prepareOrderInvoice(selected);
+      } else {
+        const fallbackCustomer: Customer = {
+          id: selected?.id ?? String(salesId),
+          displayName: selected?.displayName ?? 'Customer',
+          initials: selected?.initials ?? 'C',
+          phoneMasked: selected?.phoneMasked ?? '',
+          phone: selected?.phone ?? '',
+          loyaltyPoints: selected?.loyaltyPoints ?? 0,
+          lastVisit: 'Recent',
+          salesId: salesId,
+        };
+        void this.store.prepareOrderInvoice(fallbackCustomer);
+      }
+    }
+  }
+
   protected onCancel(): void {
+    this.store.clearPaymentDraftInputs();
     void this.router.navigate(['/home/sell']);
   }
 

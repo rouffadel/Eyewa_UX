@@ -403,9 +403,15 @@ export class PrescriptionFrameLineComponent implements OnInit {
       sellingPrice: number | null;
       quantity: number;
       discountPercent: number | null;
+      discountAmount?: number | null;
     };
 
-    return calculateFrameLineTotals(value.sellingPrice, value.quantity, value.discountPercent);
+    return calculateFrameLineTotals(
+      value.sellingPrice,
+      value.quantity,
+      value.discountPercent,
+      value.discountAmount,
+    );
   }
 
   private applySalePriceDiscount(sale: number | null): void {

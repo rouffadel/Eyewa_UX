@@ -98,7 +98,11 @@ export const EN_DICTIONARY: Record<string, any> = {
     "products": "Products",
     "totalCash": "Total Cash",
     "totalCard": "Total Card",
-    "totalAmount": "Total Amount"
+    "totalAmount": "Total Amount",
+    "filterAll": "All Orders",
+    "filterCompleted": "Completed",
+    "filterPending": "Pending",
+    "filterIncomplete": "Incomplete"
   },
   "status": {
     "title": "Order Tracking & Status",
@@ -120,7 +124,24 @@ export const EN_DICTIONARY: Record<string, any> = {
     "created": "Created",
     "inProgress": "In Progress",
     "ready": "Ready",
-    "delivered": "Delivered"
+    "delivered": "Delivered",
+    "editStatus": "Edit Order Status",
+    "viewInvoice": "View & Print Invoice"
+  },
+  "customerHistory": {
+    "title": "Customer Details & Order History",
+    "startSale": "New Sale",
+    "lastVisit": "Last Visit",
+    "loyaltyPoints": "Loyalty Points",
+    "orderHistory": "Order History",
+    "noOrders": "No order history found for this customer.",
+    "loadingOrders": "Loading customer order history...",
+    "editOrder": "Edit Order",
+    "editStatus": "Edit Order Status",
+    "viewInvoice": "View & Print Invoice",
+    "updateStatus": "Update Status",
+    "selectStatus": "Select Status",
+    "statusUpdated": "Order status updated successfully!"
   },
   "prescription": {
     "title": "EYE ORDER",
@@ -278,7 +299,11 @@ export const AR_DICTIONARY: Record<string, any> = {
     "products": "المنتجات",
     "totalCash": "إجمالي النقدي",
     "totalCard": "إجمالي الشبكة",
-    "totalAmount": "إجمالي المبلغ"
+    "totalAmount": "إجمالي المبلغ",
+    "filterAll": "جميع الطلبات",
+    "filterCompleted": "مكتمل",
+    "filterPending": "معلق",
+    "filterIncomplete": "غير مكتمل"
   },
   "status": {
     "title": "تتبع حالة الطلبات",
@@ -300,7 +325,24 @@ export const AR_DICTIONARY: Record<string, any> = {
     "created": "تم الإنشاء",
     "inProgress": "قيد التنفيذ",
     "ready": "جاهز",
-    "delivered": "تم التسليم"
+    "delivered": "تم التسليم",
+    "editStatus": "تعديل حالة الطلب",
+    "viewInvoice": "عرض وطباعة الفاتورة"
+  },
+  "customerHistory": {
+    "title": "بيانات العميل وسجل الطلبات",
+    "startSale": "بيع جديد",
+    "lastVisit": "آخر زيارة",
+    "loyaltyPoints": "نقاط الولاء",
+    "orderHistory": "سجل الطلبات",
+    "noOrders": "لا يوجد سجل طلبات لهذا العميل.",
+    "loadingOrders": "جاري تحميل سجل طلبات العميل...",
+    "editOrder": "تعديل الطلب",
+    "editStatus": "تعديل حالة الطلب",
+    "viewInvoice": "عرض وطباعة الفاتورة",
+    "updateStatus": "تحديث الحالة",
+    "selectStatus": "اختر الحالة",
+    "statusUpdated": "تم تحديث حالة الطلب بنجاح!"
   },
   "prescription": {
     "title": "طلب النظارة / العين",

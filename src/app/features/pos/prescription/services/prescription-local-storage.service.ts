@@ -47,6 +47,11 @@ export class PrescriptionLocalStorageService {
     return null;
   }
 
+  getBySalesId(customerId: string, salesId: number): PrescriptionRecord | null {
+    const records = this.getHistory(customerId);
+    return records.find((entry) => entry.salesId === salesId) ?? null;
+  }
+
   getHistory(customerId: string): PrescriptionRecord[] {
     return this.readStore()[customerId] ?? [];
   }

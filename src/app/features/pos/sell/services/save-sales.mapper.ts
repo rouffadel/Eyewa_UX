@@ -10,7 +10,7 @@ import {
   SaveSalesGridPayload,
 } from '../models/save-sales.models';
 import { SalesDetailsPaymentSummary } from '../models/sales-details-grid.models';
-import { paymentAmountPaid, orderAmountAlreadyPaid } from './payment.service';
+import { paymentAmountPaid, orderAmountAlreadyPaid, mixedAmountPaid } from './payment.service';
 
 interface BuildSaveSalesPayloadOptions {
   customer: Customer;
@@ -99,7 +99,14 @@ export function buildSaveSalesDetailsPayload({
       });
     }
 
-    return { ...basePayload, payments };
+    return {
+      ...basePayload,
+      PaidAmount: paymentAmounts.paidAmount,
+      AdvancePaidAmount: paymentAmounts.advancePaidAmount,
+      PaymentMode: 'Mixed',
+      InsuranceAmount: resolvedInsuranceAmount,
+      payments,
+    };
   }
 
   return {
@@ -118,33 +125,50 @@ function resolveSaveSalesPaymentAmounts(
   payable: number,
 ): { paidAmount: number; advancePaidAmount: number; balance: number } {
   const roundedNetTotal = roundMoney(netTotal);
+  const alreadyPaid = orderPayment ? orderAmountAlreadyPaid(orderPayment) : 0;
+  const remainingBalance = roundMoney(Math.max(0, payable - alreadyPaid));
 
-  if (draft.settleRemainingBalance && orderPayment) {
-    const alreadyPaid = orderAmountAlreadyPaid(orderPayment);
-    const remainingBalance = roundMoney(Math.max(0, payable - alreadyPaid));
+  if (orderPayment) {
+    let payNow: number;
+    if (
+      draft.settleRemainingBalance &&
+      draft.partialAmount === 0 &&
+      draft.cashAmount === 0 &&
+      draft.cardAmount === 0
+    ) {
+      // User explicitly triggered full balance settlement
+      payNow = remainingBalance;
+    } else {
+      const amountToPay =
+        draft.method === 'mixed'
+          ? mixedAmountPaid(draft)
+          : Math.max(0, draft.partialAmount || draft.cashAmount || draft.cardAmount);
+      payNow = Math.min(amountToPay, remainingBalance);
+    }
+
+    const newBalance = roundMoney(Math.max(0, remainingBalance - payNow));
     return {
-      paidAmount: remainingBalance,
-      advancePaidAmount: remainingBalance,
-      balance: 0,
+      paidAmount: roundMoney(payNow),
+      advancePaidAmount: roundMoney(payNow),
+      balance: newBalance,
     };
   }
 
-  const alreadyPaid = orderPayment ? orderAmountAlreadyPaid(orderPayment) : 0;
   const paidAmount = roundMoney(
-    paymentAmountPaid(payable, draft, orderPayment),
+    paymentAmountPaid(payable, draft, null),
   );
 
   return {
     paidAmount,
     advancePaidAmount: paidAmount,
-    balance: roundMoney(Math.max(0, payable - alreadyPaid - paidAmount)),
+    balance: roundMoney(Math.max(0, payable - paidAmount)),
   };
 }
 
 function toSalesGrid(line: PrescriptionFrameLine, salesId: number): SaveSalesGridPayload {
   const quantity = Math.max(1, line.quantity ?? 1);
   const productValue = roundMoney(line.sellingPrice ?? 0);
-  const totals = calculateFrameLineTotals(productValue, quantity, line.discountPercent);
+  const totals = calculateFrameLineTotals(productValue, quantity, line.discountPercent, line.discountAmount);
 
   return {
     SalesDetailId: line.salesDetailsId ?? salesId,
@@ -182,6 +206,7 @@ export function computePrescriptionFrameNetTotal(record: PrescriptionRecord): nu
           line.sellingPrice,
           line.quantity,
           line.discountPercent,
+          line.discountAmount,
         );
         return sum + totals.totalSellingPrice;
       }, 0),

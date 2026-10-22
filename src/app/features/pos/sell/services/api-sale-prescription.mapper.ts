@@ -64,19 +64,44 @@ export function framesFromSalesLineItems(
 }
 
 function mapFrames(lines: SalesDetailsGridLineItem[]): PrescriptionFrameLine[] {
-  return lines.map((line) => ({
-    category: line.categoryName,
-    categoryId: line.categoryId,
-    brandId: line.brandId,
-    brandName: line.brandName,
-    productId: line.productId,
-    modelNo: line.productName,
-    sellingPrice: line.productValue,
-    quantity: line.quantity,
-    maxDiscount: line.maxDiscount,
-    discountPercent: line.discountPercent,
-    salesDetailsId: line.salesDetailsId,
-  }));
+  return lines.map((line) => {
+    const subtotal = line.productValue * line.quantity;
+    let discountAmount: number | null = null;
+    let discountPercent = line.discountPercent;
+
+    if (line.sellingPrice > 0 && line.sellingPrice < subtotal) {
+      const candidateLineDiscount = subtotal - line.sellingPrice;
+      const candidateUnitDiscount = subtotal - line.sellingPrice * line.quantity;
+
+      if (Math.abs(line.discountPercent - candidateUnitDiscount) <= 0.05) {
+        discountAmount = Math.round(candidateUnitDiscount * 100) / 100;
+      } else {
+        discountAmount = Math.round(candidateLineDiscount * 100) / 100;
+      }
+
+      discountPercent = subtotal > 0 ? Math.round((discountAmount / subtotal) * 10000) / 100 : 0;
+    } else if (line.discountPercent > 0) {
+      if (line.discountPercent >= subtotal || line.discountPercent > 100) {
+        discountAmount = Math.min(subtotal, line.discountPercent);
+        discountPercent = subtotal > 0 ? Math.round((discountAmount / subtotal) * 10000) / 100 : 0;
+      }
+    }
+
+    return {
+      category: line.categoryName,
+      categoryId: line.categoryId,
+      brandId: line.brandId,
+      brandName: line.brandName,
+      productId: line.productId,
+      modelNo: line.productName,
+      sellingPrice: line.productValue,
+      quantity: line.quantity,
+      maxDiscount: line.maxDiscount,
+      discountPercent,
+      discountAmount: discountAmount !== null ? discountAmount : undefined,
+      salesDetailsId: line.salesDetailsId,
+    };
+  });
 }
 
 function mapLenses(lines: OrderLenseLine[]): PrescriptionLensLine[] {

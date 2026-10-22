@@ -15,8 +15,10 @@ export function paymentDraftFromSalesDetails(
 ): Partial<PaymentDraft> {
   const draft: Partial<PaymentDraft> = {
     discountAmount: Math.max(0, payment.discount),
-    settleRemainingBalance: true,
+    settleRemainingBalance: false,
     partialAmount: 0,
+    cashAmount: 0,
+    cardAmount: 0,
   };
 
   if (payment.insuranceAmount > 0) {
@@ -64,12 +66,44 @@ function calculateLineDiscount(line: SalesDetailsGridLineItem): number {
 
   if (disc <= 0) return 0;
 
+  // If the API returned sellingPrice and it is less than subtotal, sellingPrice is authoritative
+  if (line.sellingPrice > 0 && line.sellingPrice < subtotal) {
+    const candidateLineDiscount = subtotal - line.sellingPrice;
+    const candidateUnitDiscount = subtotal - line.sellingPrice * line.quantity;
+
+    // 1. Direct match when disc represents the absolute SAR discount amount from DB
+    if (Math.abs(disc - candidateLineDiscount) <= 0.05) {
+      return Math.round(candidateLineDiscount * 100) / 100;
+    }
+    if (Math.abs(disc - candidateUnitDiscount) <= 0.05) {
+      return Math.round(candidateUnitDiscount * 100) / 100;
+    }
+
+    // 2. Match when disc represents a percentage discount
+    const pctDiscount = subtotal * (disc / 100);
+    if (Math.abs(pctDiscount - candidateLineDiscount) <= 0.05) {
+      return Math.round(candidateLineDiscount * 100) / 100;
+    }
+    if (Math.abs(pctDiscount - candidateUnitDiscount) <= 0.05) {
+      return Math.round(candidateUnitDiscount * 100) / 100;
+    }
+
+    // 3. Fallback to candidateLineDiscount since sellingPrice was explicitly recorded
+    return Math.round(candidateLineDiscount * 100) / 100;
+  }
+
   // If disc >= subtotal or disc > 100, the API value is an absolute discount amount in SAR (e.g. 420 SAR for a free item)
   if (disc >= subtotal || disc > 100) {
     return Math.min(subtotal, disc);
   }
 
-  return Math.min(subtotal, subtotal * (disc / 100));
+  let rawDiscountAmount = subtotal * (disc / 100);
+  const roundedHalf = Math.round(rawDiscountAmount * 2) / 2;
+  if (Math.abs(rawDiscountAmount - roundedHalf) < 0.02) {
+    rawDiscountAmount = roundedHalf;
+  }
+
+  return Math.min(subtotal, Math.round(rawDiscountAmount * 100) / 100);
 }
 
 export function isSalesCartLine(lineId: string): boolean {

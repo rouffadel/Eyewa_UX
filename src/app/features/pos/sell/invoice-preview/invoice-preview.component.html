@@ -61,8 +61,8 @@
               <td>{{ line.modelNo }}</td>
               <td>{{ line.sellingPrice }}</td>
               <td>{{ line.quantity }}</td>
-              <td>0</td>
-              <td>0</td>
+              <td>{{ line.vat || '0' }}</td>
+              <td>{{ line.discount || '0' }}</td>
               <td>{{ line.total }}</td>
             </tr>
             } @empty {

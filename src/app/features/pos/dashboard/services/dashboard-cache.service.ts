@@ -3,17 +3,23 @@ import { RecentOrder } from '../salesman-dashboard.component';
 
 @Injectable({ providedIn: 'root' })
 export class DashboardCacheService {
+  private cachedStoreId: number | null = null;
   private readonly cachedOrders = signal<RecentOrder[] | null>(null);
 
-  getCachedOrders(): RecentOrder[] | null {
+  getCachedOrders(storeId?: number): RecentOrder[] | null {
+    if (storeId != null && this.cachedStoreId !== storeId) {
+      return null;
+    }
     return this.cachedOrders();
   }
 
-  setCachedOrders(orders: RecentOrder[]): void {
+  setCachedOrders(orders: RecentOrder[], storeId?: number): void {
+    this.cachedStoreId = storeId ?? null;
     this.cachedOrders.set(orders);
   }
 
   clear(): void {
+    this.cachedStoreId = null;
     this.cachedOrders.set(null);
   }
 }

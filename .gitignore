@@ -46,3 +46,7 @@ Thumbs.db
 /ios/App/build
 src/config/appsettings.json
 src/config/appsettings.prod.json
+
+# Documentation (local only, do not push to server)
+docs/
+documentation/

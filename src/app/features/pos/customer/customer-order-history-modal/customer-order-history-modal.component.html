@@ -1,0 +1,166 @@
+<div class="modal-overlay" (click)="onBackdropClick($event)">
+  <div class="modal-card" (click)="$event.stopPropagation()">
+    <!-- 1. Header: Customer Profile & Quick Actions -->
+    <div class="modal-header">
+      <div class="customer-info-wrap">
+        <div class="customer-avatar">
+          {{ customerInitials() }}
+        </div>
+        <div class="customer-meta">
+          <div class="customer-name-row">
+            <h2 class="customer-name">{{ customer().displayName || 'Customer' }}</h2>
+            <span class="customer-loyalty-badge" *ngIf="loyaltyPoints() !== null">
+              <svg class="loyalty-icon" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+              </svg>
+              <span>{{ loyaltyPoints() | number }} PTS</span>
+            </span>
+          </div>
+          <div class="customer-sub-meta">
+            <span class="customer-phone" *ngIf="customer().phone || customer().phoneMasked">
+              <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+              </svg>
+              {{ customer().phone || customer().phoneMasked }}
+            </span>
+            <span class="meta-separator" *ngIf="(customer().phone || customer().phoneMasked) && customer().lastVisit && customer().lastVisit !== '—'">•</span>
+            <span class="customer-visit" *ngIf="customer().lastVisit && customer().lastVisit !== '—'">
+              {{ 'customerHistory.lastVisit' | translate }}: {{ customer().lastVisit }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button type="button" class="btn-start-sale" (click)="onStartSale()">
+          <svg class="sale-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          <span>{{ 'customerHistory.startSale' | translate }}</span>
+        </button>
+        <button type="button" class="btn-close" (click)="onClose()" title="Close">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Alert / notification inside modal -->
+    <div *ngIf="feedbackMessage()" class="modal-alert" [ngClass]="feedbackMessage()?.type === 'success' ? 'modal-alert--success' : 'modal-alert--error'">
+      {{ feedbackMessage()?.text }}
+    </div>
+
+    <!-- 2. Body: Order History Table -->
+    <div class="modal-body">
+      <div class="body-header">
+        <h3 class="section-title">{{ 'customerHistory.orderHistory' | translate }}</h3>
+        <span class="orders-count-badge" *ngIf="!isLoadingOrders()">
+          {{ orders().length }} {{ orders().length === 1 ? 'Order' : 'Orders' }}
+        </span>
+      </div>
+
+      <div class="table-container">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>{{ 'dashboard.colOrderNo' | translate }}</th>
+              <th>{{ 'status.colInvoiceNo' | translate }}</th>
+              <th>{{ 'status.colProduct' | translate }}</th>
+              <th class="col-right">{{ 'status.colPaid' | translate }}</th>
+              <th class="col-right">{{ 'status.colBalance' | translate }}</th>
+              <th class="col-center">{{ 'dashboard.colAction' | translate }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Loading State -->
+            <tr *ngIf="isLoadingOrders()">
+              <td colspan="6" class="state-cell">
+                <div class="loading-state">
+                  <div class="spinner"></div>
+                  <span>{{ 'customerHistory.loadingOrders' | translate }}</span>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Empty State -->
+            <tr *ngIf="!isLoadingOrders() && orders().length === 0">
+              <td colspan="6" class="state-cell">
+                <div class="empty-state">
+                  <svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                  <p>{{ 'customerHistory.noOrders' | translate }}</p>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Order Rows -->
+            <tr *ngFor="let order of orders()" class="order-row">
+              <td class="col-order-no">#{{ order.salesId }}</td>
+              <td class="col-invoice-no">{{ order.invoiceNo }}</td>
+              <td class="col-product" [title]="order.productName">{{ order.productName }}</td>
+              <td class="col-right text-paid">{{ order.paidAmount | number:'1.2-2' }}</td>
+              <td class="col-right text-balance" [class.is-zero]="order.balance === 0">{{ order.balance | number:'1.2-2' }}</td>
+              <td class="col-center">
+                <div class="action-btn-group">
+                  <!-- Edit Order Button (Redirects to Sell page) -->
+                  <button type="button" 
+                          (click)="onEditOrder(order)" 
+                          class="btn-icon btn-icon--edit" 
+                          [title]="'customerHistory.editOrder' | translate">
+                    <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                    </svg>
+                  </button>
+
+                  <!-- View & Print Invoice Button -->
+                  <button type="button" 
+                          (click)="onViewInvoice(order)" 
+                          [disabled]="isNavigatingInvoice() === order.salesId" 
+                          class="btn-icon btn-icon--invoice" 
+                          [title]="'status.viewInvoice' | translate">
+                    <svg *ngIf="isNavigatingInvoice() === order.salesId" class="spin-icon icon-sm" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <svg *ngIf="isNavigatingInvoice() !== order.salesId" class="icon-sm" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                      <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                      <rect x="6" y="14" width="12" height="8"></rect>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Inline Quick Status Edit Sub-Modal -->
+<div *ngIf="editingOrder()" class="sub-modal-overlay" (click)="onCloseStatusEdit()">
+  <div class="sub-modal-content" (click)="$event.stopPropagation()">
+    <div class="sub-modal-header">
+      <h4>{{ 'status.updateOrder' | translate }} {{ editingOrder().invoiceNo }}</h4>
+      <button type="button" class="btn-sub-close" (click)="onCloseStatusEdit()">✕</button>
+    </div>
+    <div class="sub-modal-body">
+      <label class="sub-modal-label">{{ 'dashboard.colStatus' | translate }}</label>
+      <select class="sub-modal-select" [ngModel]="selectedStatusId()" (ngModelChange)="selectedStatusId.set($event)">
+        <option [ngValue]="null">{{ 'status.selectStatus' | translate }}</option>
+        <option *ngFor="let s of statuses()" [ngValue]="s.id">
+          {{ getStatusDisplayName(s.statusName) }}
+        </option>
+      </select>
+    </div>
+    <div class="sub-modal-footer">
+      <button type="button" class="btn-sub-cancel" (click)="onCloseStatusEdit()">{{ 'customer.cancel' | translate }}</button>
+      <button type="button" class="btn-sub-save" [disabled]="isUpdatingStatus() || !selectedStatusId()" (click)="onSaveStatus()">
+        {{ isUpdatingStatus() ? '...' : ('status.updateBtn' | translate) }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -45,6 +45,7 @@ export function cartItemsFromPrescription(record: PrescriptionRecord): CartLineI
       line.sellingPrice,
       line.quantity,
       line.discountPercent,
+      line.discountAmount,
     );
     const product: Product = {
       sku: `rx-frame-${record.id}-${index}`,

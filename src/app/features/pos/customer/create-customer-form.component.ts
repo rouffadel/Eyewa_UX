@@ -168,9 +168,7 @@ export class CreateCustomerFormComponent implements OnInit, AfterViewInit {
         );
         this.form.markAsPristine();
 
-        const returnTo = this.route.snapshot.queryParamMap.get('returnTo') ?? undefined;
-        const tab = posTabFromUrlSegment(returnTo) ?? 'sell';
-        void this.router.navigate(['/home', tab]);
+        void this.router.navigate(['/home', 'sell']);
       })
       .catch((error: unknown) => {
         const message = error instanceof Error ? error.message : 'Unable to save customer.';

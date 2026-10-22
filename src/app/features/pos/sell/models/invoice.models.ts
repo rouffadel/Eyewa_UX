@@ -4,6 +4,8 @@ export interface InvoiceProductLine {
   modelNo: string;
   sellingPrice: string;
   quantity: string;
+  vat?: string;
+  discount?: string;
   total: string;
 }
 
@@ -16,6 +18,7 @@ export interface InvoiceRxRow {
 }
 
 export interface InvoiceViewModel {
+  salesId?: number;
   invoiceNo: string;
   invoiceDate: string;
   customerName: string;
