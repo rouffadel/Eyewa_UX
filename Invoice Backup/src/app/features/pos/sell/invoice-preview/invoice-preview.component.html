@@ -1,0 +1,190 @@
+<section class="invoice-preview-page">
+  @if (invoice(); as data) {
+  <header class="invoice-preview__header">
+    <button type="button" class="invoice-preview__back" (click)="onCancel()">
+      ← Back to Sell
+    </button>
+    <h1 class="invoice-preview__title">INVOICE PREVIEW</h1>
+  </header>
+
+  <article class="invoice-preview-container">
+    <div class="nb-receipt">
+
+      <!-- 1. Metadata Section -->
+      <div class="nb-receipt__metadata">
+        <div class="nb-receipt__meta-row">
+          <div class="nb-receipt__meta-col">
+            <span class="label">Inv No</span>
+            <span class="separator">:</span>
+            <span class="value">{{ data.invoiceNo }}</span>
+          </div>
+          <div class="nb-receipt__meta-col">
+            <span class="label">Name</span>
+            <span class="separator">:</span>
+            <span class="value">{{ data.customerName }}</span>
+          </div>
+        </div>
+        <div class="nb-receipt__meta-row">
+          <div class="nb-receipt__meta-col">
+            <span class="label">Date</span>
+            <span class="separator">:</span>
+            <span class="value">{{ data.invoiceDate }}</span>
+          </div>
+          <div class="nb-receipt__meta-col">
+            <span class="label">Number</span>
+            <span class="separator">:</span>
+            <span class="value">{{ data.contactNo }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Products Table -->
+      <div class="nb-receipt__table-wrap">
+        <table class="nb-receipt__table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Brand</th>
+              <th>Model</th>
+              <th>Price</th>
+              <th>Qty</th>
+              <th>VAT</th>
+              <th>Discount</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (line of data.productLines; track $index) {
+            <tr>
+              <td>{{ line.category }}</td>
+              <td>{{ line.brand }}</td>
+              <td>{{ line.modelNo }}</td>
+              <td>{{ line.sellingPrice }}</td>
+              <td>{{ line.quantity }}</td>
+              <td>{{ line.vat || '0' }}</td>
+              <td>{{ line.discount || '0' }}</td>
+              <td>{{ line.total }}</td>
+            </tr>
+            } @empty {
+            <tr>
+              <td colspan="8" class="empty">No line items</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 3. Prescription Table -->
+      <div class="nb-receipt__prescription-wrap">
+        <table class="nb-receipt__prescription-table">
+          <thead>
+            <tr>
+              <th style="width: 40%">Prescription Details</th>
+              <th>SPH</th>
+              <th>CYL</th>
+              <th>AXIS</th>
+              <th>ADD</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of data.rxRows; track row.label) {
+              @if (row.label !== 'IPD') {
+                <tr>
+                  <th class="label-cell">{{ row.label }}</th>
+                  <td>{{ row.sph }}</td>
+                  <td>{{ row.cyl }}</td>
+                  <td>{{ row.axis }}</td>
+                  <td>{{ row.add }}</td>
+                </tr>
+              } @else {
+                <tr>
+                  <th class="label-cell">IPD</th>
+                  <td>{{ row.sph }}</td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 4. Footer Details & Totals -->
+      <div class="nb-receipt__footer-row">
+        <div class="nb-receipt__qr-block">
+          @if (data.qrcodeImg) {
+            <img [src]="data.qrcodeImg" alt="Invoice QR code" />
+          }
+        </div>
+        
+        <div class="nb-receipt__totals-block">
+          <table class="nb-receipt__totals-table">
+            <tbody>
+              <tr>
+                <th class="label-cell">Details:</th>
+                <td class="middle-cell"></td>
+                <th class="title-cell">Total Amount:</th>
+                <td class="value-cell font-bold">{{ data.total }}</td>
+              </tr>
+              <tr>
+                <th class="label-cell">Payment Mode</th>
+                <td class="middle-cell value-cell">{{ data.paymentMethod || 'Cash' }}</td>
+                <th class="title-cell">Amount Paid:</th>
+                <td class="value-cell font-bold">{{ data.amountPaid }}</td>
+              </tr>
+              <tr>
+                <th class="label-cell"></th>
+                <td class="middle-cell"></td>
+                <th class="title-cell">Total VAT:</th>
+                <td class="value-cell font-bold">{{ data.vat }}</td>
+              </tr>
+              <tr>
+                <th class="label-cell"></th>
+                <td class="middle-cell"></td>
+                <th class="title-cell">Balance:</th>
+                <td class="value-cell font-bold text-red">{{ data.balance }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Actions Panel -->
+    <footer class="invoice-preview__actions">
+      <button type="button" class="invoice-preview__btn invoice-preview__btn--secondary" (click)="onCancel()">
+        ← Back to Sell
+      </button>
+      <button type="button" class="invoice-preview__btn invoice-preview__btn--secondary" (click)="onDownload()">
+        <svg xmlns="http://www.w3.org/2000/svg" class="invoice-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Download Invoice
+      </button>
+      <button type="button" class="invoice-preview__btn invoice-preview__btn--primary" (click)="onPrint()">
+        <svg xmlns="http://www.w3.org/2000/svg" class="invoice-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 6 2 18 2 18 9"/>
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+          <rect x="6" y="14" width="12" height="8"/>
+        </svg>
+        Print Receipt
+      </button>
+    </footer>
+  </article>
+
+  @if (statusMessage()) {
+  <p class="invoice-preview__status" role="status">{{ statusMessage() }}</p>
+  }
+  } @else {
+  <div class="invoice-preview__fallback">
+    <p>No invoice available. Complete payment from the Sell dashboard first.</p>
+    <button type="button" class="invoice-preview__btn invoice-preview__btn--primary" (click)="onCancel()">
+      Back to Sell
+    </button>
+  </div>
+  }
+</section>

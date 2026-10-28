@@ -1,0 +1,495 @@
+.invoice-preview-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 1.5rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+  background: #f1f5f9;
+}
+
+.invoice-preview__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  max-width: 15cm;
+  margin-inline: auto;
+  width: 100%;
+}
+
+.invoice-preview__back {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-pos-accent, #0284c7);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.invoice-preview__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #0f172a;
+}
+
+.invoice-preview-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+/* NB Receipt styles (Screen Preview Mode) */
+.nb-receipt {
+  width: 15cm;
+  min-height: 10cm;
+  background: #ffffff;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 8px 6px;
+  box-sizing: border-box;
+  color: #000000;
+  font-family: 'Outfit', sans-serif;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  position: relative;
+}
+
+/* 1. Metadata Section */
+.nb-receipt__metadata {
+  padding: 3px 8px 4px;
+  border-bottom: 2px solid #000000;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nb-receipt__meta-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.nb-receipt__meta-col {
+  display: flex;
+  width: 48%;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.nb-receipt__meta-col .label {
+  width: 55px;
+}
+
+.nb-receipt__meta-col .separator {
+  margin-right: 6px;
+}
+
+.nb-receipt__meta-col .value {
+  flex: 1;
+}
+
+/* 2. Products Table */
+.nb-receipt__table-wrap {
+  padding: 2px 6px;
+}
+
+.nb-receipt__table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 2px solid #000000;
+  font-size: 10px;
+}
+
+.nb-receipt__table th,
+.nb-receipt__table td {
+  border: 1px solid #000000;
+  padding: 2px 3px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.nb-receipt__table th {
+  background-color: #f1f5f9;
+  font-weight: 800;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* 3. Prescription Table */
+.nb-receipt__prescription-wrap {
+  padding: 2px 6px;
+}
+
+.nb-receipt__prescription-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 2px solid #000000;
+  font-size: 10px;
+}
+
+.nb-receipt__prescription-table th,
+.nb-receipt__prescription-table td {
+  border: 1px solid #000000;
+  padding: 1.5px 3px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.nb-receipt__prescription-table thead th {
+  background-color: #f1f5f9;
+  font-weight: 800;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.nb-receipt__prescription-table th.label-cell {
+  text-align: left;
+  padding-left: 6px;
+  background-color: #f8fafc;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* 4. Footer Details & Totals */
+.nb-receipt__footer-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 6px 2px;
+  gap: 8px;
+}
+
+.nb-receipt__qr-block {
+  width: 20%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nb-receipt__qr-block img {
+  width: 52px;
+  height: 52px;
+  border: 1px solid #000000;
+  padding: 1px;
+}
+
+.nb-receipt__totals-block {
+  width: 78%;
+}
+
+.nb-receipt__totals-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 2px solid #000000;
+  font-size: 9.5px;
+}
+
+.nb-receipt__totals-table th,
+.nb-receipt__totals-table td {
+  border: 1px solid #000000;
+  padding: 1.5px 3px;
+  height: 16px;
+  box-sizing: border-box;
+}
+
+.nb-receipt__totals-table th.label-cell {
+  background-color: #f8fafc;
+  font-weight: 800;
+  width: 25%;
+  text-align: left;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.nb-receipt__totals-table td.middle-cell {
+  width: 12%;
+  text-align: center;
+  font-weight: 700;
+}
+
+.nb-receipt__totals-table th.title-cell {
+  background-color: #f1f5f9;
+  font-weight: 800;
+  text-align: right;
+  width: 38%;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.nb-receipt__totals-table td.value-cell {
+  width: 25%;
+  text-align: center;
+  font-weight: 800;
+}
+
+.font-bold {
+  font-weight: 900 !important;
+}
+
+.text-red {
+  color: #ef4444;
+}
+
+/* Actions panel styles */
+.invoice-preview__actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+  max-width: 15cm;
+}
+
+.invoice-preview__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 1.5rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.invoice-btn-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-right: 0.5rem;
+  flex-shrink: 0;
+}
+
+.invoice-preview__btn--secondary {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.invoice-preview__btn--secondary:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.invoice-preview__btn--primary {
+  border: none;
+  background: var(--color-pos-accent, #0284c7);
+  color: #ffffff;
+}
+
+.invoice-preview__btn--primary:hover {
+  opacity: 0.92;
+}
+
+.invoice-preview__status {
+  text-align: center;
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-top: 1rem;
+}
+
+/* ========================================================================= */
+/* Print Engine: Exact 15cm x 15cm Sheet with 3cm Header & 2cm Footer Margins */
+/* Centered across all paper types (Letter, A4, or 150mm Custom)             */
+/* ========================================================================= */
+@media print {
+  @page {
+    size: auto;
+    margin: 0 !important; /* Zero out browser margins */
+  }
+
+  html, body {
+    width: 100% !important;
+    min-width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+  
+  .invoice-preview-page,
+  .invoice-preview-container,
+  .nb-receipt,
+  .nb-receipt * {
+    visibility: visible;
+  }
+
+  /* Hide app header, navigation, and preview buttons */
+  .invoice-preview__header,
+  .invoice-preview__actions,
+  .invoice-preview__status,
+  .invoice-preview__back,
+  app-header,
+  header {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  .invoice-preview-page,
+  .invoice-preview-container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    border: none !important;
+    background: transparent !important;
+  }
+
+  /*
+   * The 15cm x 15cm Sheet Container:
+   * - Centered horizontally across page: margin: 0 auto !important
+   * - Top margin: padding-top: 30mm (Exact 3.0cm top clearance for pre-printed header)
+   * - Bottom margin: padding-bottom: 20mm (Exact 2.0cm bottom clearance for pre-printed footer)
+   * - Side margins: padding-left: 5mm, padding-right: 5mm
+   * - Available inner height: 150mm - 30mm - 20mm = EXACT 100mm (10.0cm)
+   */
+  .nb-receipt {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    position: relative !important;
+    width: 150mm !important;
+    max-width: 150mm !important;
+    min-width: 150mm !important;
+    height: 150mm !important;
+    max-height: 150mm !important;
+    box-sizing: border-box !important;
+
+    /* HORIZONTAL CENTERING */
+    margin-left: auto !important;
+    margin-right: auto !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    left: auto !important;
+    right: auto !important;
+    top: 0 !important;
+
+    /* PRE-PRINTED STATIONERY MARGINS */
+    padding-top: 30mm !important;    /* 3.0 cm top clearance for pre-printed header */
+    padding-bottom: 20mm !important; /* 2.0 cm bottom clearance for pre-printed footer */
+    padding-left: 5mm !important;    /* 5 mm side margin */
+    padding-right: 5mm !important;   /* 5 mm side margin */
+
+    gap: 2px !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    overflow: hidden !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  /* Compact section styling to guarantee all rows fit easily inside 10cm */
+  .nb-receipt__metadata {
+    padding: 1.5mm 0 2.5mm !important;
+    border-bottom: 1.5px solid #000000 !important;
+  }
+
+  .nb-receipt__meta-col {
+    font-size: 10px !important;
+    line-height: 1.25 !important;
+  }
+
+  .nb-receipt__meta-col .label {
+    width: 48px !important;
+  }
+
+  .nb-receipt__table-wrap {
+    padding: 1.5mm 0 !important;
+  }
+
+  .nb-receipt__table {
+    border: 1.5px solid #000000 !important;
+    font-size: 9px !important;
+  }
+
+  .nb-receipt__table th,
+  .nb-receipt__table td {
+    padding: 1px 2px !important;
+    border: 1px solid #000000 !important;
+    line-height: 1.2 !important;
+  }
+
+  .nb-receipt__prescription-wrap {
+    padding: 1.5mm 0 !important;
+  }
+
+  .nb-receipt__prescription-table {
+    border: 1.5px solid #000000 !important;
+    font-size: 9px !important;
+  }
+
+  .nb-receipt__prescription-table th,
+  .nb-receipt__prescription-table td {
+    padding: 1px 2px !important;
+    border: 1px solid #000000 !important;
+    line-height: 1.2 !important;
+  }
+
+  .nb-receipt__footer-row {
+    padding: 1.5mm 0 0 !important;
+    gap: 8px !important;
+  }
+
+  .nb-receipt__qr-block {
+    width: 18% !important;
+  }
+
+  .nb-receipt__qr-block img {
+    width: 46px !important;
+    height: 46px !important;
+    border: 1px solid #000000 !important;
+  }
+
+  .nb-receipt__totals-block {
+    width: 80% !important;
+  }
+
+  .nb-receipt__totals-table {
+    border: 1.5px solid #000000 !important;
+    font-size: 9px !important;
+  }
+
+  .nb-receipt__totals-table th,
+  .nb-receipt__totals-table td {
+    padding: 1px 3px !important;
+    height: 14px !important;
+    border: 1px solid #000000 !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Force table background colors and borders to print sharply */
+  .nb-receipt__table th,
+  .nb-receipt__prescription-table thead th,
+  .nb-receipt__prescription-table th.label-cell,
+  .nb-receipt__totals-table th.label-cell,
+  .nb-receipt__totals-table th.title-cell {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

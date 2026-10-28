@@ -1,4 +1,5 @@
 :host {
+  --color-border: #cbd5e1;
   display: flex;
   flex: 1 1 auto;
   flex-direction: column;
@@ -31,7 +32,7 @@
   flex-direction: column;
   gap: 1rem;
   padding: 1rem;
-  border: 1px solid var(--color-border);
+  border: 1.5px solid #64748b;
   border-radius: 12px;
   background: var(--color-surface);
 }
@@ -117,6 +118,11 @@
   background: var(--color-surface);
   color: var(--color-text-heading);
   font-size: 16px;
+  transition: border-color 0.15s ease-in-out;
+}
+
+.prescription-field__input:hover {
+  border-color: #94a3b8;
 }
 
 .prescription-field__select {
@@ -196,7 +202,7 @@
 }
 
 .prescription-accordion {
-  border: 1px solid var(--color-border);
+  border: 1.5px solid #64748b;
   border-radius: 12px;
   background: #fff;
   overflow: hidden;
@@ -379,19 +385,14 @@
 
 @media (min-width: 768px), (min-width: 600px) and (min-height: 500px) {
   .prescription-card__body {
-    grid-template-columns: minmax(0, 2fr) minmax(160px, 1fr);
+    grid-template-columns: minmax(0, 3fr) minmax(130px, 1fr);
   }
 }
 
 .prescription-card__eyes {
-  display: grid;
-  gap: 1rem;
-}
-
-@media (min-width: 768px), (min-width: 600px) and (min-height: 500px) {
-  .prescription-card__eyes {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
 .prescription-card__shared {
@@ -442,6 +443,12 @@
   font-size: 0.9375rem;
   font-weight: 500;
   cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.prescription-actions__btn:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
 }
 
 .prescription-actions__btn svg {
@@ -459,3 +466,4 @@
     padding-bottom: 0.5rem;
   }
 }
+
