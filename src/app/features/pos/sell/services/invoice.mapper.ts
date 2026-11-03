@@ -37,6 +37,24 @@ export interface BuildInvoiceFromExistingOrderInput {
   qrcodeImg?: string | null;
   storeName?: string;
   storeAddress?: string;
+  notes?: string;
+  paymentMethod?: string;
+}
+
+
+export function formatReceiptPaymentMethod(method?: string | null): string {
+  const m = (method || '').toLowerCase().trim();
+  if (m === 'mixed' || m === 'split' || m === 'split payment') {
+    return 'Split Payment';
+  }
+  if (m === 'card' || m === 'mada') {
+    return 'Card';
+  }
+  if (m === 'cash') {
+    return 'Cash';
+  }
+  if (!m) return 'Cash';
+  return m.charAt(0).toUpperCase() + m.slice(1);
 }
 
 export function buildInvoiceFromExistingOrder(
@@ -61,9 +79,13 @@ export function buildInvoiceFromExistingOrder(
     storeAddress: input.storeAddress,
   });
 
+  const resolvedDetails = (input.notes !== undefined ? input.notes : (base.details || '')).trim();
+
   return {
     ...base,
     ...paidFields,
+    paymentMethod: input.paymentMethod ? formatReceiptPaymentMethod(input.paymentMethod) : base.paymentMethod,
+    details: resolvedDetails,
     salesId: input.customer.salesId ?? base.salesId,
     invoiceNo: input.customer.invoiceNo?.trim() || base.invoiceNo,
     invoiceDate: input.invoiceDate?.trim() || base.invoiceDate,
@@ -101,7 +123,7 @@ export function buildInvoiceViewModel(input: BuildInvoiceInput): InvoiceViewMode
     user: input.staffName,
     storeName: input.storeName,
     storeAddress: input.storeAddress,
-    paymentMethod: input.paymentDraft?.method ? (input.paymentDraft.method.charAt(0).toUpperCase() + input.paymentDraft.method.slice(1)) : 'Cash',
+    paymentMethod: formatReceiptPaymentMethod(input.paymentDraft?.method),
   };
 }
 

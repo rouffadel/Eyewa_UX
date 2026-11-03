@@ -38,6 +38,6 @@ describe('BottomNavComponent', () => {
 
     const buttons = compiled.querySelectorAll<HTMLButtonElement>('.bottom-nav__item');
     buttons[2].click();
-    expect(selectedTab).toBe('prescription');
+    expect(selectedTab).toBe('reports');
   });
 });

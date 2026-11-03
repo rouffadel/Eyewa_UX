@@ -11,6 +11,8 @@ export interface FramesSalesReportRow {
   NetTotal: number;
   Balance: number;
   Products: string;
+  CashAmount?: number;
+  CardAmount?: number;
 }
 
 export interface GetFramesSalesReportResponse {

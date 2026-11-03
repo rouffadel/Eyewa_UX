@@ -42,6 +42,7 @@ export function buildInvoiceFromSaveSalesResponse(
     ...mapInvoiceSummaryFields(input.fallback.paymentTotals),
     ...paymentFields,
     user: fallback.user,
+    paymentMethod: fallback.paymentMethod,
     storeName: salesPrint?.StoreName?.trim() || undefined,
     storeAddress: salesPrint?.Address?.trim() || undefined,
     qrcodeImg: input.saveResult.raw.qrcodeimg ?? null,

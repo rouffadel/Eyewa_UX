@@ -38,9 +38,9 @@ import {
   hasApiSalePrescriptionData,
   prescriptionRecordFromApiSale,
 } from './api-sale-prescription.mapper';
-import { buildSaveSalesDetailsPayload, hasPrescriptionFramesForSales } from './save-sales.mapper';
+import { buildSaveSalesDetailsPayload, hasIncompletePrescriptionFrames, hasPrescriptionFramesForSales } from './save-sales.mapper';
 import { buildInvoiceFromSaveSalesResponse } from './save-sales-response.mapper';
-import { buildInvoiceFromExistingOrder, buildInvoiceViewModel, BuildInvoiceInput } from './invoice.mapper';
+import { buildInvoiceFromExistingOrder, buildInvoiceViewModel, BuildInvoiceInput, formatReceiptPaymentMethod } from './invoice.mapper';
 import { SaveSalesService } from './save-sales.service';
 import {
   createEmptyEyePrescription,
@@ -99,6 +99,10 @@ export class SellSessionStore {
   private readonly loadedSalesInvoiceDate = signal<string | null>(null);
 
   private readonly loadedSalesQrcodeImg = signal<string | null>(null);
+
+  private readonly loadedSalesNotes = signal<string | null>(null);
+
+  private readonly loadedSalesPaymentMode = signal<string | null>(null);
 
   constructor() {
     void this.taxService.getDefaultTaxRate().then(rate => this.activeVatRate.set(rate));
@@ -537,6 +541,8 @@ export class SellSessionStore {
       this.orderPaymentSummary.set(null);
       this.loadedSalesInvoiceDate.set(null);
       this.loadedSalesQrcodeImg.set(null);
+      this.loadedSalesNotes.set(null);
+      this.loadedSalesPaymentMode.set(null);
       this.salesInsurance.set(null);
       this.selectedCoupon.set(null);
       this.lastInvoice.set(null);
@@ -718,6 +724,25 @@ export class SellSessionStore {
     }
 
     this.loadedSalesQrcodeImg.set(result.qrcodeImg ?? null);
+
+    const apiNotes =
+      (result.row as any)?.remarks ||
+      (result.row as any)?.Remarks ||
+      (result.row as any)?.notes ||
+      (result.row as any)?.Notes ||
+      null;
+    const apiPaymentMode = (result.row as any)?.PaymentMode || (result.row as any)?.paymentMode;
+    if (apiPaymentMode) {
+      this.loadedSalesPaymentMode.set(String(apiPaymentMode).trim());
+    }
+
+    if (apiNotes && typeof apiNotes === 'string' && apiNotes.trim()) {
+      this.loadedSalesNotes.set(apiNotes.trim());
+      this.prescriptionStorage.saveSalesNotes(salesId, apiNotes.trim());
+      if (result.row?.invoiceNo) {
+        this.prescriptionStorage.saveInvoiceNotes(result.row.invoiceNo, apiNotes.trim());
+      }
+    }
 
     if (result.payment && isOrderFullyPaid(result.payment)) {
       this.syncReceiptInvoice(this.resolveStaffName());
@@ -1231,6 +1256,25 @@ export class SellSessionStore {
 
   async prepareOrderInvoice(customer: Customer, orderFallback?: any): Promise<boolean> {
     this.selectCustomer(customer);
+    const orderNotes = (
+      orderFallback?.remarks ||
+      orderFallback?.notes ||
+      orderFallback?.Remarks ||
+      orderFallback?.Notes ||
+      ''
+    ).trim();
+
+    this.loadedSalesNotes.set(orderNotes || null);
+    const orderPaymentMode = (orderFallback?.paymentMode || orderFallback?.PaymentMode || '').trim();
+    this.loadedSalesPaymentMode.set(orderPaymentMode || null);
+    if (orderNotes) {
+      if (customer.invoiceNo) {
+        this.prescriptionStorage.saveInvoiceNotes(customer.invoiceNo, orderNotes);
+      }
+      if (customer.salesId) {
+        this.prescriptionStorage.saveSalesNotes(customer.salesId, orderNotes);
+      }
+    }
     await this.loadSalesDetails(customer, { forceApplyFromApi: true, persistToLocalStorage: true });
 
     let orderPayment = this.orderPaymentSummary();
@@ -1251,17 +1295,43 @@ export class SellSessionStore {
     if (orderPayment) {
       this.syncReceiptInvoice(staffName);
     } else {
+      const currentSalesId = customer.salesId;
+      const invoiceNo = customer.invoiceNo?.trim() || '';
+      const cachedRecord = this.prescriptionRecordByCustomer()[customer.id];
+      let prescriptionRecord =
+        (cachedRecord && currentSalesId && cachedRecord.salesId === currentSalesId
+          ? cachedRecord
+          : null) ??
+        (currentSalesId ? this.prescriptionStorage.getBySalesId(customer.id, currentSalesId) : null);
+
+      const invoiceSpecificNotes =
+        (invoiceNo ? this.prescriptionStorage.getInvoiceNotes(invoiceNo) : '') ||
+        (currentSalesId ? this.prescriptionStorage.getSalesNotes(currentSalesId) : '') ||
+        (prescriptionRecord && currentSalesId && prescriptionRecord.salesId === currentSalesId
+          ? prescriptionRecord.notes?.trim() || ''
+          : '') ||
+        this.loadedSalesNotes()?.trim() ||
+        '';
+
+      if (prescriptionRecord) {
+        prescriptionRecord = {
+          ...prescriptionRecord,
+          notes: invoiceSpecificNotes,
+        };
+      }
+
       const invoice = buildInvoiceViewModel({
         customer,
         cartItems: this.cartItems(),
         paymentTotals: this.paymentTotals(),
         paymentDraft: this.paymentDraft(),
-        prescriptionRecord: this.prescriptionRecordByCustomer()[customer.id] ?? null,
+        prescriptionRecord,
         latestPrescription: this.latestPrescription(),
         staffName,
         storeName: this.auth.selectedStore()?.storeName,
         storeAddress: 'Al Ahsa, 829200\n+517272723638, NB.OPTICAL@HOTMAIL.COM',
       });
+      invoice.details = invoiceSpecificNotes;
       this.lastInvoice.set(invoice);
     }
 
@@ -1346,7 +1416,11 @@ export class SellSessionStore {
       return false;
     }
 
-    if (!hasPrescriptionFramesForSales(prescriptionRecord)) {
+    const hasFrames = hasPrescriptionFramesForSales(prescriptionRecord);
+    const hasLenses = hasPrescriptionLensData(prescriptionRecord);
+    const hasIncompleteFrames = hasIncompletePrescriptionFrames(prescriptionRecord);
+
+    if (hasIncompleteFrames || (!hasFrames && !hasLenses)) {
       this.statusMessage.set('Select a product for each frame before paying.');
       return false;
     }
@@ -1426,6 +1500,48 @@ export class SellSessionStore {
         );
       }
 
+      const completedSalesId = customer.salesId ?? saveResult.salesDetails?.SaleID;
+      const invoiceNo = saveResult.salesDetails?.InvoiceNo?.trim() || customer.invoiceNo?.trim();
+      const notesToPreserve = prescriptionRecord?.notes?.trim();
+      if (invoiceNo && notesToPreserve) {
+        this.prescriptionStorage.saveInvoiceNotes(invoiceNo, notesToPreserve);
+      }
+      if (completedSalesId && notesToPreserve) {
+        this.prescriptionStorage.saveSalesNotes(completedSalesId, notesToPreserve);
+        this.loadedSalesNotes.set(notesToPreserve);
+      }
+
+      let cashPaidNow = 0;
+      let cardPaidNow = 0;
+      if (draft.method === 'mixed') {
+        cashPaidNow = Number(draft.cashAmount) || 0;
+        cardPaidNow = Number(draft.cardAmount) || 0;
+      } else if (draft.method === 'card') {
+        cashPaidNow = 0;
+        cardPaidNow = paymentAmountPaid(payable, draft, orderPaymentBeforeSave);
+      } else if (draft.method === 'cash') {
+        cashPaidNow = paymentAmountPaid(payable, draft, orderPaymentBeforeSave);
+        cardPaidNow = 0;
+      }
+
+      if (completedSalesId && (cashPaidNow > 0 || cardPaidNow > 0)) {
+        try {
+          const key = `eyewa_sales_payments_${completedSalesId}`;
+          const existingRaw = localStorage.getItem(key);
+          const history = existingRaw ? JSON.parse(existingRaw) : [];
+          history.push({
+            date: new Date().toISOString(),
+            method: draft.method,
+            cash: cashPaidNow,
+            card: cardPaidNow,
+          });
+          localStorage.setItem(key, JSON.stringify(history));
+          if (invoiceNo) {
+            localStorage.setItem(`eyewa_invoice_payments_${invoiceNo}`, JSON.stringify(history));
+          }
+        } catch {}
+      }
+
       this.clearSavedPrescription(customer.id);
       await this.loadSalesDetails(customer, {
         forceApplyFromApi: true,
@@ -1484,18 +1600,67 @@ export class SellSessionStore {
     }
 
     const currentSalesId = customer.salesId;
+    const invoiceNo = customer.invoiceNo?.trim() || '';
     const cachedRecord = this.prescriptionRecordByCustomer()[customer.id];
-    const prescriptionRecord =
-      (cachedRecord && (!currentSalesId || cachedRecord.salesId === currentSalesId)
+
+    let prescriptionRecord =
+      (cachedRecord && currentSalesId && cachedRecord.salesId === currentSalesId
         ? cachedRecord
         : null) ??
-      (currentSalesId ? this.prescriptionStorage.getBySalesId(customer.id, currentSalesId) : null) ??
-      cachedRecord ??
-      this.prescriptionStorage.getLatest(customer.id);
+      (currentSalesId ? this.prescriptionStorage.getBySalesId(customer.id, currentSalesId) : null);
+
+    const invoiceSpecificNotes =
+      (invoiceNo ? this.prescriptionStorage.getInvoiceNotes(invoiceNo) : '') ||
+      (currentSalesId ? this.prescriptionStorage.getSalesNotes(currentSalesId) : '') ||
+      (prescriptionRecord && currentSalesId && prescriptionRecord.salesId === currentSalesId
+        ? prescriptionRecord.notes?.trim() || ''
+        : '') ||
+      this.loadedSalesNotes()?.trim() ||
+      '';
+
+    if (prescriptionRecord) {
+      prescriptionRecord = {
+        ...prescriptionRecord,
+        notes: invoiceSpecificNotes,
+      };
+    }
+
+    let resolvedPaymentMethod: string | undefined = undefined;
+    try {
+      const raw = (currentSalesId ? localStorage.getItem(`eyewa_sales_payments_${currentSalesId}`) : null) ||
+        (invoiceNo ? localStorage.getItem(`eyewa_invoice_payments_${invoiceNo}`) : null);
+      if (raw) {
+        const history = JSON.parse(raw);
+        if (Array.isArray(history) && history.length > 0) {
+          let totalCash = 0;
+          let totalCard = 0;
+          for (const h of history) {
+            totalCash += Number(h.cash) || 0;
+            totalCard += Number(h.card) || 0;
+          }
+          if (totalCash > 0 && totalCard > 0) {
+            resolvedPaymentMethod = 'Split Payment';
+          } else if (totalCard > 0) {
+            resolvedPaymentMethod = 'Card';
+          } else if (totalCash > 0) {
+            resolvedPaymentMethod = 'Cash';
+          }
+        }
+      }
+    } catch {}
+
+    if (!resolvedPaymentMethod && this.loadedSalesPaymentMode()) {
+      resolvedPaymentMethod = formatReceiptPaymentMethod(this.loadedSalesPaymentMode());
+    }
+
+    if (!resolvedPaymentMethod && this.paymentDraft()?.method) {
+      resolvedPaymentMethod = formatReceiptPaymentMethod(this.paymentDraft().method);
+    }
 
     this.lastInvoice.set(
       buildInvoiceFromExistingOrder({
         customer,
+        paymentMethod: resolvedPaymentMethod,
         cartItems: this.cartItems(),
         orderPayment,
         paymentTotals: this.paymentTotals(),
@@ -1505,6 +1670,7 @@ export class SellSessionStore {
         staffName,
         invoiceDate: this.loadedSalesInvoiceDate() ?? undefined,
         qrcodeImg: this.loadedSalesQrcodeImg(),
+        notes: invoiceSpecificNotes,
         storeName: this.auth.selectedStore()?.storeName,
         storeAddress: 'Al Ahsa, 829200\n+517272723638, NB.OPTICAL@HOTMAIL.COM',
       }),

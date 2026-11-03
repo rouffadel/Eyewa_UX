@@ -77,4 +77,33 @@ describe('PrescriptionLocalStorageService', () => {
     expect(service.getLatest('114090')).toBeNull();
     expect(service.getLastSaved()).toBeNull();
   });
+
+  it('should save and get sales notes by salesId', () => {
+    service.saveSalesNotes(12345, 'Patient needs anti-glare');
+    expect(service.getSalesNotes(12345)).toBe('Patient needs anti-glare');
+  });
+
+  it('should auto-save notes and populate getBySalesId even if removed for customer', () => {
+    service.save({
+      customerId: 'cust-1',
+      salesId: 54321,
+      orderLensEnabled: true,
+      frames: [],
+      lenses: [],
+      rightEye: { sph: null, cyl: null, axis: null, add: null },
+      leftEye: { sph: null, cyl: null, axis: null, add: null },
+      pd: null,
+      nearPd: null,
+      vd: null,
+      notes: 'Express order note',
+    });
+
+    expect(service.getSalesNotes(54321)).toBe('Express order note');
+  });
+
+  it('should save and get invoice notes by invoiceNo', () => {
+    service.saveInvoiceNotes('INV-2026-999', 'Specific to invoice 999 only');
+    expect(service.getInvoiceNotes('INV-2026-999')).toBe('Specific to invoice 999 only');
+    expect(service.getInvoiceNotes('INV-2026-000')).toBe('');
+  });
 });

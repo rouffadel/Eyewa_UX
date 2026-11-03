@@ -27,7 +27,7 @@ export class BottomNavComponent implements OnInit {
   protected readonly items = signal<NavItem[]>([
     { tab: 'dashboard', i18nKey: 'nav.dashboard', ariaLabel: 'Dashboard' },
     { tab: 'sell', i18nKey: 'nav.sell', ariaLabel: 'Sell' },
-    { tab: 'prescription', i18nKey: 'nav.order', ariaLabel: 'Order' },
+    // { tab: 'prescription', i18nKey: 'nav.order', ariaLabel: 'Order' }, // Hidden temporarily
     { tab: 'reports', i18nKey: 'nav.reports', ariaLabel: 'Reports' },
     { tab: 'insurance', i18nKey: 'nav.insurance', ariaLabel: 'Insurance' },
     { tab: 'deliveries', i18nKey: 'nav.deliveries', ariaLabel: 'Deliveries' },

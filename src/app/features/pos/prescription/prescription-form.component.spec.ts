@@ -291,6 +291,33 @@ describe('PrescriptionFormComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/home/sell']);
   });
 
+  it('should save prescription when frames are selected with optical prescription values (without lenses)', async () => {
+    component['rightEyeGroup'].patchValue({ sph: 1.5, cyl: -0.5, axis: 90, add: null });
+    component['leftEyeGroup'].patchValue({ sph: 1.0, cyl: -0.25, axis: 80, add: null });
+    component['form'].controls.pd.setValue(64);
+    component['form'].controls.nearPd.setValue(62);
+    component['lensLines'].at(0)?.patchValue({
+      category: 'CR39',
+      orderLens: '',
+      price: null,
+    });
+    component['frameLines'].at(0)?.patchValue({
+      brandId: 1,
+      brandName: 'SQEYEWEAR',
+      productId: 12,
+      modelNo: 'RTA5008',
+      sellingPrice: 390,
+      quantity: 1,
+      discountPercent: null,
+    });
+    await component['onSave']();
+
+    expect(prescriptionService.save).toHaveBeenCalled();
+    expect(sellStore.applySavedPrescription).toHaveBeenCalled();
+    expect(component['successMessage']()).toBe('Prescription saved');
+    expect(router.navigate).toHaveBeenCalledWith(['/home/sell']);
+  });
+
   it('should allow save with empty frames', () => {
     prepareValidForm();
     component['frameLines'].at(0)?.patchValue({

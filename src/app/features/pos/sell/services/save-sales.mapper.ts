@@ -1,5 +1,6 @@
 import {
   calculateFrameLineTotals,
+  hasPrescriptionLensData,
   PrescriptionFrameLine,
   PrescriptionRecord,
 } from '../../prescription/models/prescription.models';
@@ -50,7 +51,8 @@ export function buildSaveSalesDetailsPayload({
     .filter((line) => hasFrameForSales(line))
     .map((line) => toSalesGrid(line, salesId));
 
-  if (grids.length === 0) {
+  const hasLenses = hasPrescriptionLensData(record);
+  if (hasIncompletePrescriptionFrames(record) || (grids.length === 0 && !hasLenses)) {
     throw new Error('Select a product for each frame before paying.');
   }
 
@@ -190,6 +192,14 @@ function hasFrameForSales(line: PrescriptionFrameLine): boolean {
     line.brandId != null &&
     line.productId != null &&
     line.sellingPrice != null
+  );
+}
+
+export function hasIncompletePrescriptionFrames(record: PrescriptionRecord): boolean {
+  return record.frames.some(
+    (line) =>
+      ((line.brandId != null || line.brandName.trim() !== '') || line.productId != null) &&
+      !hasFrameForSales(line),
   );
 }
 

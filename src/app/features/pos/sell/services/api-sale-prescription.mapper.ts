@@ -24,6 +24,25 @@ export function prescriptionRecordFromApiSale(input: ApiSalePrescriptionInput): 
   const lenses = mapLenses(orderResult.lenses);
   const row = salesResult.row;
 
+  const invoiceNo = row?.invoiceNo?.trim() || '';
+  let preservedNotes = (existingRecord?.salesId === salesId ? existingRecord?.notes?.trim() : '') || '';
+  if (!preservedNotes && invoiceNo && typeof localStorage !== 'undefined') {
+    try {
+      preservedNotes = localStorage.getItem(`eyewa_invoice_notes_${invoiceNo}`)?.trim() || '';
+    } catch {}
+  }
+  if (!preservedNotes && salesId && typeof localStorage !== 'undefined') {
+    try {
+      preservedNotes = localStorage.getItem(`eyewa_sales_notes_${salesId}`)?.trim() || '';
+    } catch {}
+  }
+  if (!preservedNotes && row) {
+    const candidate = (row as any).remarks || (row as any).Remarks || (row as any).notes || (row as any).Notes;
+    if (typeof candidate === 'string') {
+      preservedNotes = candidate.trim();
+    }
+  }
+
   return {
     id: existingRecord?.id ?? `rx-api-${salesId}-${Date.now()}`,
     customerId,
@@ -40,7 +59,7 @@ export function prescriptionRecordFromApiSale(input: ApiSalePrescriptionInput): 
         : (row?.cylIpd ?? null)
     ),
     vd: null,
-    notes: '',
+    notes: preservedNotes,
     createdAt: existingRecord?.createdAt ?? now,
     updatedAt: now,
   };

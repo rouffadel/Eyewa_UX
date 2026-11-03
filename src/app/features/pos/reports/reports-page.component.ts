@@ -80,13 +80,18 @@ export class ReportsPageComponent implements OnInit {
       totalBalance += Number(row.Balance) || 0;
       totalInsurance += Number(row.InsuranceAmount) || 0;
 
-      const mode = (row.PaymentMode || '').toLowerCase();
-      if (mode.includes('cash')) {
-        totalCash += payment;
-      } else if (mode.includes('card')) {
-        totalCard += payment;
+      if (row.CashAmount !== undefined || row.CardAmount !== undefined) {
+        totalCash += Number(row.CashAmount) || 0;
+        totalCard += Number(row.CardAmount) || 0;
       } else {
-        totalCash += payment;
+        const mode = (row.PaymentMode || '').toLowerCase();
+        if (mode.includes('card') || mode === 'mada') {
+          totalCard += payment;
+        } else if (mode.includes('cash')) {
+          totalCash += payment;
+        } else {
+          totalCash += payment;
+        }
       }
     }
 
@@ -267,17 +272,90 @@ export class ReportsPageComponent implements OnInit {
 
         const combinedRows: FramesSalesReportRow[] = orders.map((o: any) => {
           const saleId = Number(o.SalesId || o.salesId || o.SaleID || o.saleId);
+          const invoiceNo = String(o.InvoiceNo || o.invoiceNo || '').trim();
           const paymentRows = paymentsBySale.get(saleId) || [];
 
           const products = paymentRows.map(p => p.Products).filter(Boolean).join(', ')
             || o.Products || o.products || 'Frames / Lenses';
 
-          const paymentMode = paymentRows.map(p => p.PaymentMode).filter(Boolean)[0]
-            || o.PaymentMode || o.paymentMode || 'Cash';
-
           const netTotal = Number(o.GrossTotal ?? o.grossTotal ?? o.NetTotal ?? o.netTotal ?? 0);
           const paidAmount = Number(o.PaidAmount ?? o.paidAmount ?? 0);
           const balance = Number(o.Balance ?? o.balance ?? 0);
+
+          let storedCash = 0;
+          let storedCard = 0;
+          let hasStoredPayments = false;
+          try {
+            const raw = localStorage.getItem(`eyewa_sales_payments_${saleId}`) ||
+              (invoiceNo ? localStorage.getItem(`eyewa_invoice_payments_${invoiceNo}`) : null);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                hasStoredPayments = true;
+                for (const item of parsed) {
+                  storedCash += Number(item.cash) || 0;
+                  storedCard += Number(item.card) || 0;
+                }
+              }
+            }
+          } catch {}
+
+          let apiCash = 0;
+          let apiCard = 0;
+          let hasApiPaymentRows = false;
+          if (paymentRows.length > 0) {
+            hasApiPaymentRows = true;
+            for (const pr of paymentRows) {
+              const m = (pr.PaymentMode || '').toLowerCase();
+              const pAmt = Number(pr.PaymentAmount) || 0;
+              if (m.includes('card') || m === 'mada') {
+                apiCard += pAmt;
+              } else if (m.includes('cash')) {
+                apiCash += pAmt;
+              }
+            }
+          }
+
+          let cashAmount = 0;
+          let cardAmount = 0;
+
+          if (hasStoredPayments && (storedCash > 0 || storedCard > 0)) {
+            cashAmount = storedCash;
+            cardAmount = storedCard;
+          } else if (hasApiPaymentRows && (apiCash > 0 || apiCard > 0)) {
+            cashAmount = apiCash;
+            cardAmount = apiCard;
+          } else {
+            const modeStr = (o.PaymentMode || o.paymentMode || paymentRows[0]?.PaymentMode || 'Cash').toLowerCase();
+            if (modeStr.includes('card') || modeStr === 'mada') {
+              cardAmount = paidAmount;
+            } else if (modeStr.includes('cash')) {
+              cashAmount = paidAmount;
+            } else {
+              cashAmount = paidAmount;
+            }
+          }
+
+          const sumSplit = cashAmount + cardAmount;
+          if (paidAmount > sumSplit && sumSplit > 0) {
+            const diff = paidAmount - sumSplit;
+            if (cardAmount > 0 && cashAmount === 0) {
+              cardAmount += diff;
+            } else if (cashAmount > 0 && cardAmount === 0) {
+              cashAmount += diff;
+            }
+          } else if (paidAmount > 0 && sumSplit === 0) {
+            cashAmount = paidAmount;
+          }
+
+          let displayPaymentMode = 'Cash';
+          if (cardAmount > 0 && cashAmount > 0) {
+            displayPaymentMode = `Split (Cash: ${cashAmount.toFixed(2)}, Card: ${cardAmount.toFixed(2)})`;
+          } else if (cardAmount > 0) {
+            displayPaymentMode = 'Card';
+          } else {
+            displayPaymentMode = 'Cash';
+          }
 
           return {
             SaleID: saleId,
@@ -287,11 +365,13 @@ export class ReportsPageComponent implements OnInit {
             InvoicePaymentID: paymentRows[0]?.InvoicePaymentID || saleId,
             PaymentDate: o.CreatedDate || o.createdDate || o.InvoiceDate || new Date().toISOString(),
             PaymentAmount: paidAmount,
-            PaymentMode: paymentMode,
+            PaymentMode: displayPaymentMode,
             InsuranceAmount: Number(o.InsuranceAmount ?? 0),
             NetTotal: netTotal,
             Balance: balance,
             Products: products,
+            CashAmount: cashAmount,
+            CardAmount: cardAmount,
           };
         });
 

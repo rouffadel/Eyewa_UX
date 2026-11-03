@@ -161,6 +161,35 @@
   print-color-adjust: exact;
 }
 
+/* 3.5 Notes Section */
+.nb-receipt__notes-wrap {
+  padding: 2px 6px;
+}
+
+.nb-receipt__notes-box {
+  width: 100%;
+  border: 1px solid #000000;
+  padding: 2.5px 6px;
+  box-sizing: border-box;
+  font-size: 9.5px;
+  line-height: 1.25;
+  background-color: #ffffff;
+  display: flex;
+  gap: 4px;
+}
+
+.nb-receipt__notes-label {
+  font-weight: 800;
+  color: #000000;
+  flex-shrink: 0;
+}
+
+.nb-receipt__notes-text {
+  font-weight: 600;
+  color: #000000;
+  word-break: break-word;
+}
+
 /* 4. Footer Details & Totals */
 .nb-receipt__footer-row {
   display: flex;
@@ -449,6 +478,31 @@
     padding: 1px 2px !important;
     border: 1px solid #000000 !important;
     line-height: 1.2 !important;
+  }
+
+  /* 3.5 Notes Section (Print) */
+  .nb-receipt__notes-wrap {
+    padding: 1mm 0 !important;
+  }
+
+  .nb-receipt__notes-box {
+    border: 1px solid #000000 !important;
+    padding: 1.5px 4px !important;
+    font-size: 8.5px !important;
+    line-height: 1.2 !important;
+    background-color: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .nb-receipt__notes-label {
+    font-weight: 800 !important;
+    color: #000000 !important;
+  }
+
+  .nb-receipt__notes-text {
+    font-weight: 600 !important;
+    color: #000000 !important;
   }
 
   .nb-receipt__footer-row {

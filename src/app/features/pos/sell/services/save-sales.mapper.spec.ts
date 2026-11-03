@@ -1,3 +1,4 @@
+import { SalesDetailsPaymentSummary } from '../models/sales-details-grid.models';
 import { DEFAULT_PAYMENT_DRAFT } from '../models/payment.models';
 import { buildSaveSalesDetailsPayload } from './save-sales.mapper';
 
@@ -377,6 +378,9 @@ describe('buildSaveSalesDetailsPayload', () => {
             category: 'Frames - S',
             categoryId: 6,
             brandId: 8,
+            brandName: 'Brand',
+            modelNo: 'M10',
+            maxDiscount: 50,
             productId: 10,
             sellingPrice: 480,
             quantity: 1,
@@ -385,6 +389,7 @@ describe('buildSaveSalesDetailsPayload', () => {
             salesDetailsId: 107391,
           },
         ],
+        lenses: [],
         rightEye: { sph: null, cyl: null, axis: null, add: null },
         leftEye: { sph: null, cyl: null, axis: null, add: null },
         pd: null,
@@ -516,5 +521,70 @@ describe('buildSaveSalesDetailsPayload', () => {
     });
 
     expect(payload.InsuranceAmount).toBe('');
+  });
+  it('should allow building save sales payload when only lenses are ordered without frames', () => {
+    const payload = buildSaveSalesDetailsPayload({
+      customer: {
+        id: '117530',
+        displayName: 'Lens Only Cust',
+        initials: 'LC',
+        phoneMasked: '8978674245',
+        phone: '8978674245',
+        loyaltyPoints: 0,
+        lastVisit: '02-11-2026',
+        salesId: 117530,
+      },
+      record: {
+        id: 'rx-lens-only',
+        customerId: '117530',
+        salesId: 117530,
+        orderLensEnabled: true,
+        frames: [
+          {
+            category: 'Frames - P',
+            categoryId: null,
+            brandId: null,
+            brandName: '',
+            productId: null,
+            modelNo: '',
+            sellingPrice: null,
+            quantity: 1,
+            maxDiscount: null,
+            discountPercent: null,
+          },
+        ],
+        lenses: [
+          {
+            orderLenseId: null,
+            category: 'CR39',
+            orderLens: 'cmx',
+            price: 50,
+            quantity: 1,
+            originalQuantity: 0,
+          },
+        ],
+        rightEye: { sph: 0.5, cyl: 0.25, axis: 4, add: 0.75 },
+        leftEye: { sph: 0.5, cyl: 0.5, axis: 4, add: 1 },
+        pd: 43,
+        nearPd: 43,
+        vd: null,
+        notes: '',
+        createdAt: '2026-11-02T00:00:00.000Z',
+        updatedAt: '2026-11-02T00:00:00.000Z',
+      },
+      storeId: '2',
+      loginId: 1,
+      salesManId: 1,
+      payable: 50,
+      draft: {
+        ...DEFAULT_PAYMENT_DRAFT,
+        cashAmount: 50,
+      },
+    });
+
+    expect(payload.SalesGrids).toEqual([]);
+    expect(payload.NetTotal).toBe('50.00');
+    expect(payload.PaidAmount).toBe(50);
+    expect(payload.Balance).toBe('0.00');
   });
 });

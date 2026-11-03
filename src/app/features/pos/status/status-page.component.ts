@@ -189,7 +189,8 @@ export class StatusPageComponent implements OnInit {
           insuranceAmount: o.InsuranceAmount || o.insuranceAmount || 0,
           discountAmount: o.DiscountAmount || o.discountAmount || o.Discount || o.discount || 0,
           orderStatusId: o.OrderStatusId || o.orderStatusId,
-          statusName: o.StatusName || o.statusName
+          statusName: o.StatusName || o.statusName,
+          remarks: o.Remarks || o.remarks || o.Notes || o.notes || ''
         })));
         this.isLoadingOrders.set(false);
       },

@@ -140,4 +140,47 @@ describe('prescriptionRecordFromApiSale', () => {
     expect(record.frames[0].discountAmount).toBe(80);
     expect(record.frames[0].discountPercent).toBe(32);
   });
+
+  it('should preserve notes from existingRecord or localStorage', () => {
+    const salesResult: SalesDetailsResult = {
+      salesId: 9999,
+      row: null,
+      prescription: null,
+      lineItems: [],
+      payment: null,
+      qrcodeImg: null,
+    };
+    const orderResult: OrderLenseOrder = {
+      salesId: 9999,
+      lenses: [],
+      od: null,
+      os: null,
+      additional: null,
+    };
+
+    const record = prescriptionRecordFromApiSale({
+      customerId: 'cust-99',
+      salesId: 9999,
+      salesResult,
+      orderResult,
+      existingRecord: {
+        id: 'rx-old',
+        customerId: 'cust-99',
+        salesId: 9999,
+        orderLensEnabled: false,
+        frames: [],
+        lenses: [],
+        rightEye: { sph: null, cyl: null, axis: null, add: null },
+        leftEye: { sph: null, cyl: null, axis: null, add: null },
+        pd: null,
+        nearPd: null,
+        vd: null,
+        notes: 'Important patient note',
+        createdAt: '2026-11-02',
+        updatedAt: '2026-11-02',
+      },
+    });
+
+    expect(record.notes).toBe('Important patient note');
+  });
 });

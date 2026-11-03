@@ -29,6 +29,7 @@ import {
   PrescriptionLensLine,
   PrescriptionRecord,
   hasPrescriptionLensData,
+  hasPrescriptionRxData,
 } from './models/prescription.models';
 import {
   PrescriptionFrameLineComponent,
@@ -266,7 +267,9 @@ export class PrescriptionFormComponent implements OnInit {
 
     try {
       const payload = this.toPayload();
-      const isFramesOnly = payload.frames.length > 0 && !hasPrescriptionLensData(payload);
+      const hasRx = hasPrescriptionRxData(payload);
+      const hasLenses = hasPrescriptionLensData(payload);
+      const isFramesOnlyWithoutRx = payload.frames.length > 0 && !hasLenses && !hasRx;
       
       const recordData = {
         ...payload,
@@ -275,15 +278,23 @@ export class PrescriptionFormComponent implements OnInit {
       };
 
       let record: PrescriptionRecord;
-      if (!isFramesOnly) {
-        record = await this.prescriptionService.save(recordData);
+      if (!isFramesOnlyWithoutRx) {
+        try {
+          record = await this.prescriptionService.save(recordData);
+        } catch (apiErr) {
+          if (!hasLenses) {
+            record = this.prescriptionStorage.save(recordData);
+          } else {
+            throw apiErr;
+          }
+        }
       } else {
         record = this.prescriptionStorage.save(recordData);
       }
 
       this.prescriptionStorage.save(record);
 
-      if (isFramesOnly) {
+      if (isFramesOnlyWithoutRx) {
         this.sellStore.applyFramesOnlyToCart(record);
         this.successMessage.set('Frames added to cart');
       } else {
@@ -462,13 +473,7 @@ export class PrescriptionFormComponent implements OnInit {
         return osError;
       }
 
-      if (this.form.controls.pd.value == null) {
-        return 'Enter PD.';
-      }
 
-      if (this.form.controls.nearPd.value == null) {
-        return 'Enter Near PD.';
-      }
     }
 
     for (const group of frameGroupsWithData) {

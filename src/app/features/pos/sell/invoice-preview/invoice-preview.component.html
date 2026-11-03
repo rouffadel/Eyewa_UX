@@ -110,6 +110,16 @@
         </table>
       </div>
 
+      <!-- 3.5 Notes Section (Only displayed when notes exist) -->
+      @if (data.details) {
+        <div class="nb-receipt__notes-wrap">
+          <div class="nb-receipt__notes-box">
+            <span class="nb-receipt__notes-label">Notes:</span>
+            <span class="nb-receipt__notes-text">{{ data.details }}</span>
+          </div>
+        </div>
+      }
+
       <!-- 4. Footer Details & Totals -->
       <div class="nb-receipt__footer-row">
         <div class="nb-receipt__qr-block">
@@ -122,14 +132,14 @@
           <table class="nb-receipt__totals-table">
             <tbody>
               <tr>
-                <th class="label-cell">Details:</th>
-                <td class="middle-cell"></td>
+                <th class="label-cell">Payment Mode</th>
+                <td class="middle-cell value-cell">{{ data.paymentMethod || 'Cash' }}</td>
                 <th class="title-cell">Total Amount:</th>
                 <td class="value-cell font-bold">{{ data.total }}</td>
               </tr>
               <tr>
-                <th class="label-cell">Payment Mode</th>
-                <td class="middle-cell value-cell">{{ data.paymentMethod || 'Cash' }}</td>
+                <th class="label-cell"></th>
+                <td class="middle-cell"></td>
                 <th class="title-cell">Amount Paid:</th>
                 <td class="value-cell font-bold">{{ data.amountPaid }}</td>
               </tr>

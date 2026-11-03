@@ -18,11 +18,50 @@ export class PrescriptionLocalStorageService {
       updatedAt: now,
     };
 
+    if (record.salesId && record.notes?.trim()) {
+      this.saveSalesNotes(record.salesId, record.notes.trim());
+    }
+
     return this.persistRecord(record);
   }
 
   saveRecord(record: PrescriptionRecord): PrescriptionRecord {
+    if (record.salesId && record.notes?.trim()) {
+      this.saveSalesNotes(record.salesId, record.notes.trim());
+    }
     return this.persistRecord(record);
+  }
+
+  saveInvoiceNotes(invoiceNo: string, notes: string): void {
+    if (!invoiceNo || !notes?.trim()) return;
+    try {
+      localStorage.setItem(`eyewa_invoice_notes_${invoiceNo.trim()}`, notes.trim());
+    } catch {}
+  }
+
+  getInvoiceNotes(invoiceNo: string): string {
+    if (!invoiceNo) return '';
+    try {
+      return localStorage.getItem(`eyewa_invoice_notes_${invoiceNo.trim()}`) ?? '';
+    } catch {
+      return '';
+    }
+  }
+
+  saveSalesNotes(salesId: number, notes: string): void {
+    if (!salesId || !notes?.trim()) return;
+    try {
+      localStorage.setItem(`eyewa_sales_notes_${salesId}`, notes.trim());
+    } catch {}
+  }
+
+  getSalesNotes(salesId: number): string {
+    if (!salesId) return '';
+    try {
+      return localStorage.getItem(`eyewa_sales_notes_${salesId}`) ?? '';
+    } catch {
+      return '';
+    }
   }
 
   getLatest(customerId: string): PrescriptionRecord | null {
@@ -40,7 +79,7 @@ export class PrescriptionLocalStorageService {
     if (prescriptionId.startsWith('sales-')) {
       const salesId = Number.parseInt(prescriptionId.slice('sales-'.length), 10);
       if (Number.isFinite(salesId)) {
-        return records.find((entry) => entry.salesId === salesId) ?? null;
+        return this.getBySalesId(customerId, salesId);
       }
     }
 
@@ -49,7 +88,28 @@ export class PrescriptionLocalStorageService {
 
   getBySalesId(customerId: string, salesId: number): PrescriptionRecord | null {
     const records = this.getHistory(customerId);
-    return records.find((entry) => entry.salesId === salesId) ?? null;
+    let match = records.find((entry) => entry.salesId === salesId) ?? null;
+
+    if (!match) {
+      const store = this.readStore();
+      for (const key of Object.keys(store)) {
+        const found = store[key]?.find((entry) => entry.salesId === salesId);
+        if (found) {
+          match = found;
+          break;
+        }
+      }
+    }
+
+    if (match) {
+      const savedNotes = this.getSalesNotes(salesId);
+      return {
+        ...match,
+        notes: savedNotes || match.notes || '',
+      };
+    }
+
+    return null;
   }
 
   getHistory(customerId: string): PrescriptionRecord[] {
